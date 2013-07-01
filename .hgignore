@@ -1,0 +1,24 @@
+# use glob syntax.
+syntax: glob
+*.pyc
+.rope*
+html/*
+doc/_build/*
+log/*.log
+dowser/*
+tags
+**/*.orig
+*.orig
+*.ome
+db.shelf
+*.db
+*.shelf
+*.pickle
+*.pdf
+.DS_Store
+analysis/*
+out_*
+movie/*
+junk/*
+dist/*
+LSJuicer.egg-info/*

@@ -1,0 +1,4 @@
+#!/bin/bash
+#epydoc --graph all --inheritance=included --parse-only --show-imports widgets views *.pyo
+rm -rf doc/_build
+sphinx-build doc/source doc/_build

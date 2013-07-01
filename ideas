@@ -1,0 +1,11 @@
+Open files:
+    files would indicate if they have been analyzed or not and append status
+    already analyzed files should be able to load last analysis settings (rois, transients)
+    one should be able to change baseline settings
+
+Settings tab:
+    change default settings
+
+Color for rois
+streamline transient business
+figure out why plots on tabs are wrongly sized if they are not focussed on before plotting
