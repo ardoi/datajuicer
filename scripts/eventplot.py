@@ -1,18 +1,21 @@
-from mayavi import mlab
-from collections import defaultdict
-from data import transient_find as tf
-from inout import sqla as sa
-from itertools import cycle
-from pprint import pprint
-import numpy
-import webcolors
 import sys
-import fitfun
+from collections import defaultdict
+from itertools import cycle
+#from pprint import pprint
+
+import numpy
+
+import webcolors
+from mayavi import mlab
+
+from lsjuicer.data.analysis import transient_find as tf
+from lsjuicer.inout.db import sqla as sa
+#import fitfun
 
 s=sa.dbmaster.get_session()
 
 ans=s.query(sa.PixelByPixelAnalysis).all()
-an=ans[0]
+an=ans[1]
 pixels=an.fitregions[0].results[0].pixels
 el=tf.do_event_list(pixels)
 
@@ -31,7 +34,7 @@ ea_shape0 = tf.do_event_array(el,shape_params)
 ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
 loc_params = ['m2','x','y']
 ea_loc = tf.do_event_array(el,['m2','x','y'])
-x_min, x_max = ea_loc[:, 1].min() , ea_loc[:, 1].max() +1 
+x_min, x_max = ea_loc[:, 1].min() , ea_loc[:, 1].max() +1
 y_min, y_max = ea_loc[:, 2].min() , ea_loc[:, 2].max() +1
 #print x_min, x_max, y_min, y_max
 xx,yy = numpy.meshgrid(numpy.arange(x_min,x_max), numpy.arange(y_min, y_max))
@@ -192,14 +195,14 @@ for c in clusters[sgi]:
 
         if right_one:
             print 'original size ', spark.shape[0]
-            print 'new size ',spark.shape[0]+from_bad.shape[0] 
+            print 'new size ',spark.shape[0]+from_bad.shape[0]
             #mark bad labels as new groups
             for b in spark_bad[from_bad]:
                 ii = numpy.argwhere((ea_loc[shape_groups[sgi]]==b).all(axis=1))
                 labels[sgi][ii] = c
         #    plot_res(ls, alld, loc_params,only=[k])
-    
-#plot_res(labels[sgi],ea_loc[shape_groups[sgi]],loc_params)
+
+plot_res(labels[sgi],ea_loc[shape_groups[sgi]],loc_params)
 
 
 z = numpy.ones_like(xx)
@@ -231,23 +234,23 @@ for x,y,i in zip(good_l[:,1], good_l[:,2],shape_groups[sgi]):
 #pylab.plot(z[:,10,50])
 #pylab.show()
 #sys.exit(0)
-mlab.figure( size=(800,600))
-l = mlab.surf(xx.T,yy.T,z[0], warp_scale=10,representation='surface',colormap='hot')
-ms=l.mlab_source
-@mlab.animate
-def animate():
-    i = 0
-    while 1:
-        #print "frame",i
-        i+=1
-        i=i%400
-        #i=i%117
-        
-        #print z[i].shape, z[i].mean(),z[i].max()
-        ms.scalars=z[i]
-        yield
-a=animate()
-mlab.show()
+#mlab.figure( size=(800,600))
+#l = mlab.surf(xx.T,yy.T,z[0], warp_scale=10,representation='surface',colormap='hot')
+#ms=l.mlab_source
+#@mlab.animate
+#def animate():
+#    i = 0
+#    while 1:
+#        #print "frame",i
+#        i+=1
+#        i=i%400
+#        #i=i%117
+#
+#        #print z[i].shape, z[i].mean(),z[i].max()
+#        ms.scalars=z[i]
+#        yield
+#a=animate()
+#mlab.show()
 #mlab.colorbar()
 
 #import pylab
