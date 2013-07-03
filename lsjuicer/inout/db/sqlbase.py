@@ -61,6 +61,13 @@ class DBMaster(object):
         except:
             return None
 
+    def object_to_session(self, obj):
+        session = self.object_session(obj)
+        if not session:
+            session = self.get_session()
+            session.add(obj)
+        return session
+
     def get_config_setting(self, name, session):
         try:
             setting = session.query(
