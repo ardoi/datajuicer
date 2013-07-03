@@ -10,6 +10,7 @@ from lsjuicer.util.threader import FitDialog
 from lsjuicer.inout.db import sqlb2
 from lsjuicer.inout.db.sqla import dbmaster
 from lsjuicer.ui.widgets.plot_with_axes_widget import DiscontinousPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import ContinousPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 import lsjuicer.data.analysis.transient_find as tf
@@ -326,7 +327,9 @@ class PixelByPixelTab(QG.QTabWidget):
         self.plot_widget.set_data(data)
 
     def show_pixel_traces(self, checked):
-        self.pixel_trace_widget.setVisible(checked)
+        dialog = ClusterDialog(self.analysis, self)
+        dialog.show()
+        #self.pixel_trace_widget.setVisible(checked)
 
 class PixelTracesPlotWidget(QG.QWidget):
     def __init__(self, scene, pixpixw, parent=None):
@@ -394,8 +397,6 @@ class PixelTracesPlotWidget(QG.QWidget):
         #print "plot traces"
         selections= self.roi_manager.selections_by_type
         rois = selections[ISTN.ROI]
-
-
         for roi in rois:
             if roi not in self.plotnames:
                 time_4_fit, trace, fit,x,y,res = self.get_time_trace_fit(roi)
@@ -457,6 +458,46 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
             return "%.3f"%(event[self.keys[col]])
         else:
             return QC.QVariant()
+
+def normify(a):
+    #you can use preprocessing.scale instead
+    #b=10.0
+    res = (a-a.mean())/a.std()
+    #left = ss.scoreatpercentile(res,b)
+    #right = ss.scoreatpercentile(res,100-b)
+    #r2=res.clip(left,right)
+    return res
+
+class ClusterDialog(QG.QDialog):
+    def __init__(self, analysis, parent=None):
+        super(ClusterDialog, self).__init__(parent)
+        layout = QG.QHBoxLayout()
+        self.analysis = analysis
+        self.setLayout(layout)
+        do_pb = QG.QPushButton("Do")
+        layout.addWidget(do_pb)
+        do_pb.clicked.connect(self.stats)
+
+    def stats(self):
+        an = self.analysis
+        session = dbmaster.object_to_session(an)
+        pixels=an.fitregions[0].results[0].pixels
+        el=tf.do_event_list(pixels)
+
+        shape_params = ['A','tau2','d2','d']
+        ea_shape0 = tf.do_event_array(el,shape_params)
+        ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
+        loc_params = ['m2','x','y']
+        ea_loc = tf.do_event_array(el,['m2','x','y'])
+        print 'shape', ea_shape.shape
+        session.close()
+        plotwidget1 = ContinousPlotWidget(self)
+        self.layout().addWidget(plotwidget1)
+        QG.QApplication.processEvents()
+        print ea_shape[:,0],ea_shape[:,1]
+        plotwidget1.addPlot('first', ea_shape[:,0], ea_shape[:,1], type='circles', color='red')
+        plotwidget1.fitView()
+
 
 class BasicPixmapPlotWidget(QG.QWidget):
     def __init__(self, parent=None):

@@ -932,14 +932,18 @@ class PlotWithAxesWidget(QG.QWidget):
 #        path = QG.QPainterPath(start)
         group = QG.QGraphicsItemGroup()
 #        if self.xmin is not None:
-        if self.plot_datas:
+        if 1:#self.plot_datas:
+            print 'optiona'
             p1 = self.fV.mapToScene(QC.QPoint(0, 0))
-            p2 = self.fV.mapToScene(QC.QPoint(10, 10))
+            p2 = self.fV.mapToScene(QC.QPoint(1, 1))
             p = p2-p1
-            # print 'POINTS',p1,p2,p2-p1
+            r1 = self.fV.mapToScene(0,0,1,1)
+            print 'r1', r1
+            print 'POINTS',p1,p2,p2-p1
             xsize = p.x()
             ysize = p.y()
         else:
+            print 'optionb'
 #            xspan = plotd.data_x_max-plotd.data_x_min
             xspan = plotd.phys_xvalues[-1]-plotd.phys_xvalues[0]
             yspan = abs(plotd.data_y_max-plotd.data_y_min)

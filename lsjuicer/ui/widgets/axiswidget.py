@@ -72,6 +72,7 @@ class AxisWidget(QG.QWidget):
         if self.minval is not None:
             tick_count = int(
                 self.active_dimension_length/self.min_tick_distance)
+            #print self.active_dimension_length, self.min_tick_distance
             tick_gap_pix = range_size/float(tick_count)
             self.tick_positions = []
             self.tick_labels = []
@@ -154,9 +155,12 @@ class VerticalAxisWidget(AxisWidget):
 
     @property
     def active_dimension_length(self):
+        #print 'active vertical'
         if self.span:
+            #print 'span', self.span
             return self.span
         else:
+            #print 'height',self.height()
             return self.height()
 
     def my_init(self):
