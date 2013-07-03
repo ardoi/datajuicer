@@ -14,7 +14,8 @@ class DBMaster(object):
         print "starting DBMaster2"
         self.fname = "tables2.db"
         self.Base = declarative_base()
-        self.engine = create_engine('sqlite:///%s'%self.fname, echo=False,echo_pool=True, connect_args={'timeout': 30})#, poolclass=NullPool)
+        self.engine = create_engine('sqlite:///%s'%self.fname, echo=False,
+                echo_pool=True, connect_args={'timeout': 30})
         self.Session = sessionmaker(bind = self.engine)
         #self.make_tables()
         self.tables_created = False
