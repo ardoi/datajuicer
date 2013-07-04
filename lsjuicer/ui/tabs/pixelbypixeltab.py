@@ -495,7 +495,7 @@ class ClusterDialog(QG.QDialog):
         self.layout().addWidget(plotwidget1)
         QG.QApplication.processEvents()
         print ea_shape[:,0],ea_shape[:,1]
-        plotwidget1.addPlot('first', ea_shape[:,0], ea_shape[:,1], type='circles', color='red')
+        plotwidget1.addPlot('first', ea_shape[:,0], ea_shape[:,1], style='circles', color='red')
         plotwidget1.fitView()
 
 
