@@ -288,16 +288,19 @@ class PlotWithAxesWidget(QG.QWidget):
         else:
             sx = spoint[0]
             sy = spoint[1]
-        try:
-            x_out = self.scene2data_xfunc(sx)
-            if self.scene2data_yvals is None:
-                y_out = -sy  # the value from scene is also data value
-            else:
-                y_out = self.scene2data_yvals[int(sy)]
+        #try:
+        if 1:
+            #x_out = self.scene2data_xfunc(sx)
+            x_out = sx
+            y_out = - sy  # the value from scene is also data value
+            #if self.scene2data_yvals is None:
+            #    y_out = - sy  # the value from scene is also data value
+            #else:
+            #    y_out = self.scene2data_yvals[int(sy)]
 
             return QC.QPointF(x_out, y_out)
-        except:
-            return spoint
+        #except:
+        #    return spoint
 
     def data2scene(self, dpoint):
         dx = dpoint[0]
@@ -362,7 +365,7 @@ class PlotWithAxesWidget(QG.QWidget):
     def reframe(self):
         QG.QApplication.processEvents()
         print 'setting scene rect', self.scene_rect
-        self.fscene.addRect(self.scene_rect)
+        #self.fscene.addRect(self.scene_rect)
         self.fscene.setSceneRect(self.scene_rect)
         #self.fV.setViewportMargins(-2, -2, -2, -2)
         self.ranges_changed()
@@ -417,7 +420,7 @@ class PlotWithAxesWidget(QG.QWidget):
         ymin = min([pd.y_min for pd in self.plot_datas.values()])
         ymax = max([pd.y_max for pd in self.plot_datas.values()])
         print 'extents', xmin, xmax, ymin, ymax
-        self.scene_rect = QC.QRectF(xmin, ymin, xmax-xmin, ymax-ymin)
+        self.scene_rect = QC.QRectF(xmin,-ymax, xmax-xmin, ymax-ymin)
         #self.scene_rect = self.scene.sceneRect()
 
         #if dont_shrink_in_y:
@@ -528,9 +531,8 @@ class PlotWithAxesWidget(QG.QWidget):
         print 'scene is', self.fscene.sceneRect()
 #        if self.xmin is not None:
         if 1:#self.plot_datas:
-            print 'optiona'
             p1 = self.fV.mapToScene(QC.QPoint(0, 0))
-            p2 = self.fV.mapToScene(QC.QPoint(1, 1))
+            p2 = self.fV.mapToScene(QC.QPoint(10, 10))
             p = p2-p1
             r1 = self.fV.mapToScene(0,0,1,1)
             print 'r1', r1
@@ -613,7 +615,7 @@ class DiscontinousPlotWidget(PlotWithAxesWidget):
     def convert_data(self, plotd):
         if not plotd.physical_x_data:
             # pixel vs data. fluorescence data from image
-            plot_data = [QC.QPointF(x, -dy) for x, dy in
+            plot_data = [QC.QPointF(x,dy) for x, dy in
                          zip(plotd.xvalues, plotd.data)]
         else:
             # time vs data

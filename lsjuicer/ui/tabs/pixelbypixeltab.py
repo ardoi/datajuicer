@@ -489,12 +489,10 @@ class ClusterDialog(QG.QDialog):
         ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
         loc_params = ['m2','x','y']
         ea_loc = tf.do_event_array(el,['m2','x','y'])
-        print 'shape', ea_shape.shape
         session.close()
         plotwidget1 = ContinousPlotWidget(self)
         self.layout().addWidget(plotwidget1)
         QG.QApplication.processEvents()
-        print ea_shape[:,0],ea_shape[:,1]
         plotwidget1.addPlot('first', ea_shape[:,0], ea_shape[:,1], style='circles', color='red')
         plotwidget1.fitView()
 

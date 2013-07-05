@@ -89,7 +89,7 @@ class AxisWidget(QG.QWidget):
                     label_val_on_scene -= self.minval
                 # print 'value',val, label_val_on_scene, self.minval, self.pixel_size
                 # try:
-                if 0:
+                if 1:
                     if isinstance(self, HorizontalAxisWidget):
                         label_val = self.parent().scene2data(
                             [label_val_on_scene, 0]).x()
@@ -99,7 +99,7 @@ class AxisWidget(QG.QWidget):
                 # except (ValueError, IndexError, AttributeError):
                 #    print 'error'
                 #    pass
-                label_val = label_val_on_scene
+                #label_val = label_val_on_scene
                 # print "lv",label_val
                 self.tick_labels.append("%.2f" % label_val)
                 val += tick_gap_pix
