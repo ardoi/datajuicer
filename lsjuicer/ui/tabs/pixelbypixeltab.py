@@ -493,7 +493,8 @@ class ClusterDialog(QG.QDialog):
         plotwidget1 = ContinousPlotWidget(self)
         self.layout().addWidget(plotwidget1)
         QG.QApplication.processEvents()
-        plotwidget1.addPlot('first', ea_shape[:,0], ea_shape[:,1], style='circles', color='red')
+        plotwidget1.addPlot('first', ea_shape[:,1], ea_shape[:,0],
+                plotstyle={'style':'circles', 'color':'red', 'alpha':0.5})
         plotwidget1.fitView()
 
 

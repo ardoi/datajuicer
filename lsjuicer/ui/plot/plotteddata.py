@@ -5,7 +5,8 @@ import PyQt4.QtCore as QC
 
 
 class PlottedData(QC.QObject):
-    def __init__(self, y_vals, x_vals, color, size, zvalue,name, style='line'):
+    def __init__(self, y_vals, x_vals,zvalue,name,
+            style='line',alpha=1.0, color = 'black', size = 1):
         super(PlottedData, self).__init__(None)
         self.update_data(y_vals, x_vals)
         self.style = style
@@ -38,7 +39,9 @@ class PlottedData(QC.QObject):
             self.pen.setColor(QG.QColor('black'))
 
         # self.pen.setJoinStyle(QC.Qt.RoundJoin)
-        self.brush = QG.QBrush(QG.QColor(color))
+        brush_color = QG.QColor(color)
+        brush_color.setAlphaF(alpha)
+        self.brush = QG.QBrush(brush_color)
         self.Z = zvalue
 
     def update_data(self, y_vals, x_vals):

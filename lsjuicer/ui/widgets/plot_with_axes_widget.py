@@ -442,12 +442,10 @@ class PlotWithAxesWidget(QG.QWidget):
             elif pd.style == 'circles':
                 self.makeCircles(pd)
 
-    def addPlot(self, name, y_vals, x_vals, color='black', size=1,
-                style='line', hold_update=False):
+    def addPlot(self, name, y_vals, x_vals, plotstyle, hold_update=False):
         while name in self.plot_datas.keys():
             name += 'i'
-        pd = PlottedData(y_vals, x_vals, color, size,
-                         self.plot_index + 1, name, style)
+        pd = PlottedData(y_vals, x_vals, self.plot_index + 1, name, **plotstyle)
         self.plot_datas[name] = pd
         if not hold_update:
             self.updatePlots()
