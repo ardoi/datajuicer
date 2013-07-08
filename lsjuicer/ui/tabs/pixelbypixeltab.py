@@ -477,6 +477,8 @@ class ClusterDialog(QG.QDialog):
         do_pb = QG.QPushButton("Do")
         layout.addWidget(do_pb)
         do_pb.clicked.connect(self.stats)
+    def sizeHint(self):
+        return QC.QSize(1200,600)
 
     def stats(self):
         an = self.analysis
@@ -487,15 +489,31 @@ class ClusterDialog(QG.QDialog):
         shape_params = ['A','tau2','d2','d']
         ea_shape0 = tf.do_event_array(el,shape_params)
         ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
+        ea_shape = ea_shape0
         loc_params = ['m2','x','y']
         ea_loc = tf.do_event_array(el,['m2','x','y'])
         session.close()
         plotwidget1 = ContinousPlotWidget(self, antialias=False)
+        plotwidget1.resize(400,300)
         self.layout().addWidget(plotwidget1)
+
+        plotwidget2 = ContinousPlotWidget(self, antialias=False)
+        plotwidget2.resize(400,300)
+        self.layout().addWidget(plotwidget2)
+
+        plotwidget3 = ContinousPlotWidget(self, antialias=False)
+        plotwidget3.resize(400,300)
+        self.layout().addWidget(plotwidget3)
         QG.QApplication.processEvents()
+        plotwidget3.addPlot('first', ea_shape[:,2], ea_shape[:,1],
+                plotstyle={'style':'circles', 'color':'blue', 'alpha':0.25})
         plotwidget1.addPlot('first', ea_shape[:,1], ea_shape[:,0],
-                plotstyle={'style':'circles', 'color':'red', 'alpha':0.5})
+                plotstyle={'style':'circles', 'color':'red', 'alpha':0.25})
+        plotwidget2.addPlot('first', ea_shape[:,2], ea_shape[:,0],
+                plotstyle={'style':'circles', 'color':'green', 'alpha':0.25})
+        plotwidget3.fitView()
         plotwidget1.fitView()
+        plotwidget2.fitView()
 
 
 class BasicPixmapPlotWidget(QG.QWidget):
@@ -517,7 +535,6 @@ class BasicPixmapPlotWidget(QG.QWidget):
         vis_options_pb.clicked.connect(self.show_vis_options_dialog)
         vis_options_pb.setIcon(QG.QIcon('://color_wheel.png'))
         layout.addWidget(vis_options_pb)
-
     def force_new_pixmap(self, v = None):
         self.make_new_pixmap(force = True)
 
