@@ -252,9 +252,14 @@ class PlotWithAxesWidget(QG.QWidget):
         QG.QApplication.processEvents()
 
     def zoom_level_changed(self, h_zoom, v_zoom):
+        #t= self.fV.transform()
+        #print 'transform', t.m11(), t.m12(), t.m13(),t.m21(),t.m22(),t.m23(),t.m31(),t.m32(),t.m33()
+        #print 'zoom', t.m11()/self.base_transform.m11(), t.m22()/self.base_transform.m22()
+        #print 'zf', h_zoom, v_zoom
         self.reset_zoom_action.setEnabled(h_zoom > 1 or v_zoom > 1)
         self.zoom_h_label.setText('%.1f' % h_zoom)
         self.zoom_v_label.setText('%.1f' % v_zoom)
+        self.scale_aspect(h_zoom, v_zoom)
 
     def ranges_changed(self):
         # call this so that haxis is initialized to the right left/right values
@@ -441,6 +446,7 @@ class PlotWithAxesWidget(QG.QWidget):
                 self.makePath(pd)
             elif pd.style == 'circles':
                 self.makeCircles(pd)
+        self.base_transform = self.fV.transform()
 
     def addPlot(self, name, y_vals, x_vals, plotstyle, hold_update=False):
         while name in self.plot_datas.keys():
@@ -532,28 +538,21 @@ class PlotWithAxesWidget(QG.QWidget):
             p1 = self.fV.mapToScene(QC.QPoint(0, 0))
             p2 = self.fV.mapToScene(QC.QPoint(10, 10))
             p = p2-p1
-            r1 = self.fV.mapToScene(0,0,1,1)
-            print 'r1', r1
-            print 'POINTS',p1,p2,p2-p1
             xsize = p.x()
             ysize = p.y()
 
-            p1 = self.fV.mapFromScene(QC.QPoint(0, 0))
-            p2 = self.fV.mapFromScene(QC.QPoint(1, 1))
-            p = p2-p1
-            print 'POINTS back',p1,p2,p2-p1
-        else:
-            print 'optionb'
-#            xspan = plotd.data_x_max-plotd.data_x_min
-            xspan = plotd.phys_xvalues[-1]-plotd.phys_xvalues[0]
-            yspan = abs(plotd.data_y_max-plotd.data_y_min)
-            screensize = 10.  # pixels
-            # print self.fV.height(),self.fV.width()
-            xpixelsize = xspan*1 / float(self.fV.width())
-            ypixelsize = yspan*1.1 / float(
-                self.fV.height())  # add a bit for margin too
-            xsize = screensize*xpixelsize
-            ysize = screensize*ypixelsize
+        #else:
+        #    print 'optionb'
+#       #     xspan = plotd.data_x_max-plotd.data_x_min
+        #    xspan = plotd.phys_xvalues[-1]-plotd.phys_xvalues[0]
+        #    yspan = abs(plotd.data_y_max-plotd.data_y_min)
+        #    screensize = 10.  # pixels
+        #    # print self.fV.height(),self.fV.width()
+        #    xpixelsize = xspan*1 / float(self.fV.width())
+        #    ypixelsize = yspan*1.1 / float(
+        #        self.fV.height())  # add a bit for margin too
+        #    xsize = screensize*xpixelsize
+        #    ysize = screensize*ypixelsize
 
         for i, p in enumerate(scaledData):
             e = self.fscene.addEllipse(p.x()-xsize/2., p.y()-ysize/2.,
@@ -570,26 +569,48 @@ class PlotWithAxesWidget(QG.QWidget):
         if not plotd.visibility:
             group.setVisible(False)
         plotd.graphic_item = group
+        plotd.base_size = (xsize, ysize)
+        print 'base size', plotd.base_size
         return group
 
-    #def scaleAspect(self, scale):
-    #    """Scale any circle plots so that they would look like
-    #    circles under any horizontal scaling"""
-    #    if len(self.plot_datas.keys()) > 0:
-    #        for plotd in self.plot_datas.values():
-    #            if plotd.drawn:
-    #                if plotd.type == 'circles':
-    #                    children = plotd.graphic_item.childItems()
-    #                    for c in children:
-    #                        old_x = c.rect().x() + c.rect().width()/2.
-    #                        new_width = c.rect().width()/scale
-    #                        new_height = c.rect().height()
-    #                        new_x = old_x - new_width/2.
-    #                        c.setRect(
-    #                            new_x, c.rect().y(), new_width, new_height)
-    #                else:
-    #                    pass
-    #    return
+    def scale_aspect(self, h_scale, v_scale):
+        """Scale any circle plots so that they would look like
+        circles under any scaling"""
+        #if h_scale == v_scale:
+        #    return
+        #else:
+        #    new_h_scale = 1.0
+        #    new_v_scale = 1.0
+        #    if h_scale > v_scale:
+        #        new_h_scale = h_scale/v_scale
+        #    elif h_scale<v_scale:
+        #        new_v_scale = v_scale/h_scale
+        if 1:
+            if len(self.plot_datas.keys()) > 0:
+                for plotd in self.plot_datas.values():
+                    if plotd.drawn:
+                        children = plotd.graphic_item.childItems()
+                        p1 = self.fV.mapToScene(QC.QPoint(0, 0))
+                        p2 = self.fV.mapToScene(QC.QPoint(10, 10))
+                        p = p2-p1
+                        xsize = p.x()
+                        ysize = p.y()
+                        for c in children:
+                            x=c.rect().center().x()
+                            y=c.rect().center().y()
+                            c.setTransform(QG.QTransform().translate(x, y).
+                                    scale(1/(plotd.base_size[0]/xsize),1/( plotd.base_size[1]/ysize)).translate(-x, -y))
+                            #old_x = c.rect().center().x()
+                            #old_y = c.rect().center().y()
+                            #new_width = plotd.base_size[0]/h_scale
+                            #new_height = plotd.base_size[1]/v_scale
+
+                            #new_x = old_x - new_width/2.
+                            #new_y = old_y - new_height/2.
+                            #new_x = old_x - xsize/2.
+                            #new_y = old_y - ysize/2.
+                            #c.setRect(new_x, new_y, new_width, new_height)
+                            #c.setRect(new_x, new_y, xsize, ysize)
 
 
 class ContinousPlotWidget(PlotWithAxesWidget):

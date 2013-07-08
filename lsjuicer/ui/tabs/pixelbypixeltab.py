@@ -490,7 +490,7 @@ class ClusterDialog(QG.QDialog):
         loc_params = ['m2','x','y']
         ea_loc = tf.do_event_array(el,['m2','x','y'])
         session.close()
-        plotwidget1 = ContinousPlotWidget(self)
+        plotwidget1 = ContinousPlotWidget(self, antialias=False)
         self.layout().addWidget(plotwidget1)
         QG.QApplication.processEvents()
         plotwidget1.addPlot('first', ea_shape[:,1], ea_shape[:,0],
