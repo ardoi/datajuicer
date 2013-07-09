@@ -493,24 +493,27 @@ class ClusterDialog(QG.QDialog):
         loc_params = ['m2','x','y']
         ea_loc = tf.do_event_array(el,['m2','x','y'])
         session.close()
-        plotwidget1 = ContinousPlotWidget(self, antialias=False)
+        plotwidget1 = ContinousPlotWidget(self, antialias=False,
+                xlabel = shape_params[3], ylabel = shape_params[1])
         plotwidget1.resize(400,300)
         self.layout().addWidget(plotwidget1)
 
-        plotwidget2 = ContinousPlotWidget(self, antialias=False)
+        plotwidget2 = ContinousPlotWidget(self, antialias=False,
+                xlabel = shape_params[1], ylabel = shape_params[0])
         plotwidget2.resize(400,300)
         self.layout().addWidget(plotwidget2)
 
-        plotwidget3 = ContinousPlotWidget(self, antialias=False)
+        plotwidget3 = ContinousPlotWidget(self, antialias=False,
+                xlabel = shape_params[3], ylabel = shape_params[0])
         plotwidget3.resize(400,300)
         self.layout().addWidget(plotwidget3)
         QG.QApplication.processEvents()
-        plotwidget3.addPlot('first', ea_shape[:,2], ea_shape[:,1],
-                plotstyle={'style':'circles', 'color':'blue', 'alpha':0.25})
-        plotwidget1.addPlot('first', ea_shape[:,1], ea_shape[:,0],
+        plotwidget1.addPlot('second', ea_shape[:,3], ea_shape[:,1],
                 plotstyle={'style':'circles', 'color':'red', 'alpha':0.25})
-        plotwidget2.addPlot('first', ea_shape[:,2], ea_shape[:,0],
+        plotwidget2.addPlot('third', ea_shape[:,1], ea_shape[:,0],
                 plotstyle={'style':'circles', 'color':'green', 'alpha':0.25})
+        plotwidget3.addPlot('first', ea_shape[:,3], ea_shape[:,0],
+                plotstyle={'style':'circles', 'color':'blue', 'alpha':0.25})
         plotwidget3.fitView()
         plotwidget1.fitView()
         plotwidget2.fitView()

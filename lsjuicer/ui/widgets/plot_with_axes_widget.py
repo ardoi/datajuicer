@@ -13,11 +13,13 @@ from lsjuicer.static.constants import Constants
 class PlotWithAxesWidget(QG.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
 
-    def __init__(self,  parent=None, sceneClass=None, antialias=True):
+    def __init__(self,  parent=None, sceneClass=None, antialias=True, xlabel = None, ylabel = None):
         super(PlotWithAxesWidget, self).__init__(parent)
         # self.plot_sp = 250.
         self.plot_datas = {}
         self.antialias = antialias
+        self.xlabel = xlabel
+        self.ylabel = ylabel
         self.setupUI(sceneClass)
         self.plot_index = 0
         self.scene_rect = None
@@ -123,9 +125,9 @@ class PlotWithAxesWidget(QG.QWidget):
         self.vertical_scrollbar.valueChanged.connect(self.v_scroll_changed)
 
         # axis widgets
-        self.h_axis = HorizontalAxisWidget(self)
+        self.h_axis = HorizontalAxisWidget(parent=self, label = self.xlabel)
 
-        self.v_axis = VerticalAxisWidget(self)
+        self.v_axis = VerticalAxisWidget(parent=self, label = self.ylabel)
         fLayout.setContentsMargins(0, 0, 0, 0)
         fLayout.setSpacing(0)
 
@@ -448,10 +450,11 @@ class PlotWithAxesWidget(QG.QWidget):
                 self.makeCircles(pd)
         self.base_transform = self.fV.transform()
 
-    def addPlot(self, name, y_vals, x_vals, plotstyle, hold_update=False):
+    def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
         while name in self.plot_datas.keys():
             name += 'i'
-        pd = PlottedData(y_vals, x_vals, self.plot_index + 1, name, **plotstyle)
+        print 'addplot',name, min(x_vals), max(x_vals), min(y_vals),max(y_vals)
+        pd = PlottedData(x_vals, y_vals, self.plot_index + 1, name, **plotstyle)
         self.plot_datas[name] = pd
         if not hold_update:
             self.updatePlots()

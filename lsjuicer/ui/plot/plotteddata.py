@@ -5,14 +5,14 @@ import PyQt4.QtCore as QC
 
 
 class PlottedData(QC.QObject):
-    def __init__(self, y_vals, x_vals,zvalue,name,
-            style='line',alpha=1.0, color = 'black', size = 1, ):
+    def __init__(self, x_vals, y_vals,zvalue,name,
+            style='line',alpha=1.0, color = 'black', size = 1):
         super(PlottedData, self).__init__(None)
-        self.update_data(y_vals, x_vals)
         self.style = style
         self.drawn = False
         self.graphic_item = None
         self.name = name
+        self.update_data(y_vals, x_vals)
         self.visibility  =True
         #print y_vals.tolist()
         #print x_vals.tolist()
