@@ -556,7 +556,6 @@ class PlotWithAxesWidget(QG.QWidget):
             group.setVisible(False)
         plotd.graphic_item = group
         plotd.base_size = (xsize, ysize)
-        print 'base size', plotd.base_size
         return group
 
     def scale_aspect(self, h_scale, v_scale):

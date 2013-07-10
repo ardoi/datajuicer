@@ -141,7 +141,12 @@ class HorizontalAxisWidget(AxisWidget):
                 p.drawLine(QC.QLineF(pos, 1, pos, 10))
                 p.drawText(pos+5, 15, label)
             if self.label:
+                font = p.font()
+                font.setBold(True)
+                p.setFont(font)
                 p.drawText(self.width()/2, 15+self.label_space, self.label)
+                font.setBold(False)
+                p.setFont(font)
 
     def mouseReleaseEvent(self, event):
         self.relative_to_start = not self.relative_to_start
@@ -210,8 +215,14 @@ class VerticalAxisWidget(AxisWidget):
 
                 count += 1
             if self.label:
+                font = p.font()
+                font.setBold(True)
+                p.setFont(font)
+                p.drawText(self.width()/2, 15+self.label_space, self.label)
                 p.save()
                 p.translate(self.label_space/2, self.height()/2.)
                 p.rotate(-90)
                 p.drawText(0,0, self.label)
                 p.restore()
+                font.setBold(False)
+                p.setFont(font)
