@@ -453,7 +453,6 @@ class PlotWithAxesWidget(QG.QWidget):
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
         while name in self.plot_datas.keys():
             name += 'i'
-        print 'addplot',name, min(x_vals), max(x_vals), min(y_vals),max(y_vals)
         pd = PlottedData(x_vals, y_vals, self.plot_index + 1, name, **plotstyle)
         self.plot_datas[name] = pd
         if not hold_update:
@@ -538,8 +537,9 @@ class PlotWithAxesWidget(QG.QWidget):
         print 'scene is', self.fscene.sceneRect()
 #        if self.xmin is not None:
         if 1:#self.plot_datas:
+            circle_size = 10 * plotd.size
             p1 = self.fV.mapToScene(QC.QPoint(0, 0))
-            p2 = self.fV.mapToScene(QC.QPoint(10, 10))
+            p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
             p = p2-p1
             xsize = p.x()
             ysize = p.y()
@@ -593,8 +593,9 @@ class PlotWithAxesWidget(QG.QWidget):
                 for plotd in self.plot_datas.values():
                     if plotd.drawn:
                         children = plotd.graphic_item.childItems()
+                        circle_size = 10 * plotd.size
                         p1 = self.fV.mapToScene(QC.QPoint(0, 0))
-                        p2 = self.fV.mapToScene(QC.QPoint(10, 10))
+                        p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
                         p = p2-p1
                         xsize = p.x()
                         ysize = p.y()
