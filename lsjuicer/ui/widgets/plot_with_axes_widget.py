@@ -74,6 +74,8 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fV.determine_axes_span()
 
     def removeItem(self, item):
+        if not item:
+            return
         if item.scene() == self.fscene:
             self.fscene.removeItem(item)
         else:
@@ -444,10 +446,7 @@ class PlotWithAxesWidget(QG.QWidget):
         self.reframe()
         self.fitView()
         for pd in self.plot_datas.values():
-            if pd.style == 'lineV':
-                self.makePath(pd)
-            elif pd.style == 'circles':
-                self.makeCircles(pd)
+            self.redraw(pd)
         self.base_transform = self.fV.transform()
 
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
@@ -481,9 +480,9 @@ class PlotWithAxesWidget(QG.QWidget):
 
     def redraw(self, plotd):
         self.removeItem(plotd.graphic_item)
-        if plotd.type == 'line':
+        if plotd.style == 'line':
             self.makePath(plotd)
-        elif plotd.type == 'circles':
+        elif plotd.style == 'circles':
             self.makeCircles(plotd)
 
     def clear(self):
@@ -534,28 +533,12 @@ class PlotWithAxesWidget(QG.QWidget):
         scaledData = [self.data2scene((x, dy)) for x, dy in
                       zip(plotd.phys_xvalues, plotd.data)]
         group = QG.QGraphicsItemGroup()
-        print 'scene is', self.fscene.sceneRect()
-#        if self.xmin is not None:
-        if 1:#self.plot_datas:
-            circle_size = 10 * plotd.size
-            p1 = self.fV.mapToScene(QC.QPoint(0, 0))
-            p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
-            p = p2-p1
-            xsize = p.x()
-            ysize = p.y()
-
-        #else:
-        #    print 'optionb'
-#       #     xspan = plotd.data_x_max-plotd.data_x_min
-        #    xspan = plotd.phys_xvalues[-1]-plotd.phys_xvalues[0]
-        #    yspan = abs(plotd.data_y_max-plotd.data_y_min)
-        #    screensize = 10.  # pixels
-        #    # print self.fV.height(),self.fV.width()
-        #    xpixelsize = xspan*1 / float(self.fV.width())
-        #    ypixelsize = yspan*1.1 / float(
-        #        self.fV.height())  # add a bit for margin too
-        #    xsize = screensize*xpixelsize
-        #    ysize = screensize*ypixelsize
+        circle_size = 10 * plotd.size
+        p1 = self.fV.mapToScene(QC.QPoint(0, 0))
+        p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
+        p = p2-p1
+        xsize = p.x()
+        ysize = p.y()
 
         for i, p in enumerate(scaledData):
             e = self.fscene.addEllipse(p.x()-xsize/2., p.y()-ysize/2.,
