@@ -1,9 +1,13 @@
 import datetime
+from itertools import cycle
+from collections import defaultdict
 
 import numpy
 
 from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
+
+from sklearn.cluster import DBSCAN
 
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.util.threader import FitDialog
@@ -474,11 +478,12 @@ class ClusterDialog(QG.QDialog):
         layout = QG.QHBoxLayout()
         self.analysis = analysis
         self.setLayout(layout)
-        do_pb = QG.QPushButton("Do")
+        do_pb = QG.QPushButton("Get clusters")
         layout.addWidget(do_pb)
         do_pb.clicked.connect(self.stats)
+
     def sizeHint(self):
-        return QC.QSize(1200,600)
+        return QC.QSize(1300,1000)
 
     def stats(self):
         an = self.analysis
@@ -487,36 +492,131 @@ class ClusterDialog(QG.QDialog):
         el=tf.do_event_list(pixels)
 
         shape_params = ['A','tau2','d2','d']
+        loc_params = ['m2','x','y']
+        params = shape_params[:]
+        params.extend(loc_params)
+        #dictionary of parameter names and their indices
+        ics = dict(zip(params, range(len(params))))
+
+
+        event_array = tf.do_event_array(el, params)
+        #for shape parameters a normalized array is needed too
         ea_shape0 = tf.do_event_array(el,shape_params)
         ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
-        ea_shape = ea_shape0
-        loc_params = ['m2','x','y']
-        ea_loc = tf.do_event_array(el,['m2','x','y'])
+        #ea_shape = ea_shape0
+        #ea_loc = tf.do_event_array(el,['m2','x','y'])
         session.close()
-        plotwidget1 = ContinousPlotWidget(self, antialias=False,
-                xlabel = shape_params[3], ylabel = shape_params[1])
-        plotwidget1.resize(400,300)
-        self.layout().addWidget(plotwidget1)
+        tabs = QG.QTabWidget(self)
+        self.layout().addWidget(tabs)
 
-        plotwidget2 = ContinousPlotWidget(self, antialias=False,
-                xlabel = shape_params[1], ylabel = shape_params[0])
-        plotwidget2.resize(400,300)
-        self.layout().addWidget(plotwidget2)
+        shape_cluster_tab = QG.QWidget(tabs)
+        tabs.addTab(shape_cluster_tab,'Clusters by shape')
+        plot_layout = QG.QVBoxLayout()
+        shape_cluster_tab.setLayout(plot_layout)
+        shape_layout = QG.QHBoxLayout()
+        loc_layout = QG.QHBoxLayout()
+        plot_layout.addLayout(shape_layout)
+        plot_layout.addLayout(loc_layout)
 
-        plotwidget3 = ContinousPlotWidget(self, antialias=False,
-                xlabel = shape_params[3], ylabel = shape_params[0])
-        plotwidget3.resize(400,300)
-        self.layout().addWidget(plotwidget3)
+        shape_clusters = Clusterer.cluster_elements(Clusterer.cluster(ea_shape, eps = 2.0, min_samples = 50), event_array)
+        shape_plot_pairs = [('d', 'tau2'),('tau2','A'),('A', 'd')]
+        loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
+        plot_pairs = shape_plot_pairs[:]
+        plot_pairs.extend(loc_plot_pairs)
+        plotwidgets = defaultdict(dict)
+        for spp in plot_pairs:
+            x=spp[0]
+            y=spp[1]
+            plotwidget = ContinousPlotWidget(self, antialias=False,
+                xlabel = x, ylabel = y)
+            plotwidgets['shape'][spp] = plotwidget
+            if spp in shape_plot_pairs:
+                shape_layout.addWidget(plotwidgets['shape'][spp])
+            else:
+                loc_layout.addWidget(plotwidgets['shape'][spp])
+
         QG.QApplication.processEvents()
-        plotwidget1.addPlot('second', ea_shape[:,3], ea_shape[:,1],
-                plotstyle={'style':'circles', 'color':'red', 'alpha':0.25})
-        plotwidget2.addPlot('third', ea_shape[:,1], ea_shape[:,0],
-                plotstyle={'style':'circles', 'color':'green', 'alpha':0.25})
-        plotwidget3.addPlot('first', ea_shape[:,3], ea_shape[:,0],
-                plotstyle={'style':'circles', 'color':'blue', 'alpha':0.25})
-        plotwidget3.fitView()
-        plotwidget1.fitView()
-        plotwidget2.fitView()
+        colornames = cycle(['red', 'green', 'blue', 'yellow', 'orange', 'teal', 'magenta', 'lime', 'navy', 'brown'])
+        for cluster, elements  in  shape_clusters.iteritems():
+            group_name = "Group %i"%cluster
+            if cluster != -1:
+                color = colornames.next()
+            else:
+                color = 'black'
+            style={'style':'circles', 'color':color, 'alpha':0.25}
+            if cluster == -1:
+                style.update({'size':0.5,'alpha':0.75})
+
+            for spp in plot_pairs:
+                x=ics[spp[0]]
+                y=ics[spp[1]]
+                plotwidget = plotwidgets['shape'][spp]
+                plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+
+        for spp, plotwidget in plotwidgets['shape'].iteritems():
+            plotwidget.updatePlots()
+            plotwidget.fitView()
+
+        for cluster, elements  in  shape_clusters.iteritems():
+            print 'cluster', cluster,len(elements)
+            if cluster!=-1:
+                tab = QG.QWidget(tabs)
+                index = tabs.addTab(tab,'Type %i'%cluster)
+                plot_layout = QG.QVBoxLayout()
+                tab.setLayout(plot_layout)
+                data = elements[:,[ics[e] for e in loc_params]]
+                loc_ics=dict(zip(loc_params, range(len(loc_params))))
+
+                clusters = Clusterer.cluster_elements(Clusterer.cluster(data, eps = 2.5, min_samples = 15), data)
+                for spp in loc_plot_pairs:
+                    x=spp[0]
+                    y=spp[1]
+                    plotwidget = ContinousPlotWidget(self, antialias=False,
+                        xlabel = x, ylabel = y)
+                    plotwidgets[cluster][spp] = plotwidget
+                    print 'adding',spp
+                    plot_layout.addWidget(plotwidgets[cluster][spp])
+                for type_cluster, elements  in  clusters.iteritems():
+                    group_name = "Group %i"%cluster
+                    if type_cluster != -1:
+                        color = colornames.next()
+                    else:
+                        color = 'black'
+                    style={'style':'circles', 'color':color, 'alpha':0.25}
+                    if type_cluster == -1:
+                        style.update({'size':0.5,'alpha':0.75})
+
+                    print plotwidgets[cluster]
+                    for spp in loc_plot_pairs:
+                        x=loc_ics[spp[0]]
+                        y=loc_ics[spp[1]]
+                        plotwidget = plotwidgets[cluster][spp]
+                        plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+
+            tabs.setCurrentIndex(index)
+            for spp, plotwidget in plotwidgets[cluster].iteritems():
+                plotwidget.updatePlots()
+                plotwidget.fitView()
+
+class Clusterer(object):
+    @staticmethod
+    def cluster_elements(labels, data):
+        groups = {}
+        for k in set(labels):
+            members = numpy.argwhere(labels == k).flatten()
+            groups[k] = data[members]
+        return groups
+
+    @staticmethod
+    def cluster(data, eps=2.0, min_samples=100):
+        #D = metrics.euclidean_distances(data)
+        #S = 1 - (D / numpy.max(D))
+        db = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
+        #core_samples = db.core_sample_indices_
+        labels = db.labels_
+        # Number of clusters in labels, ignoring noise if present.
+        #n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
+        return labels
 
 
 class BasicPixmapPlotWidget(QG.QWidget):
