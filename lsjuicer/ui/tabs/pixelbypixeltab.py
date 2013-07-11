@@ -488,7 +488,7 @@ class ClusterWidget(QG.QWidget):
         self.setLayout(widget_layout)
         widget_layout.addLayout(self.plot_layout)
         self.rows = len(plot_pairs.keys())
-        self.columns = max([len(el) for el in plot_pairs.values()])
+        #self.columns = max([len(el) for el in plot_pairs.values()])
         self.plotwidgets = {}
         self.plot_pairs = plot_pairs
         self.make_plot_widgets()
@@ -520,7 +520,10 @@ class ClusterWidget(QG.QWidget):
                 plotwidget = ContinousPlotWidget(self, antialias=False,
                     xlabel = x, ylabel = y)
                 self.plotwidgets[spp] = plotwidget
-                self.plot_layout.addWidget(plotwidget,i,j)
+                if self.rows > 1:
+                    self.plot_layout.addWidget(plotwidget, i, j)
+                else:
+                    self.plot_layout.addWidget(plotwidget, j, 0)
         print self.plotwidgets
         QG.QApplication.processEvents()
 
@@ -532,9 +535,9 @@ class ClusterWidget(QG.QWidget):
                 color = colornames.next()
             else:
                 color = 'black'
-            style={'style':'circles', 'color':color, 'alpha':0.25}
+            style={'style':'circles', 'color':color, 'alpha':0.50}
             if cluster == -1:
-                style.update({'size':0.5, 'alpha':0.75})
+                style.update({'size':0.5, 'alpha':0.5})
             for i, kind in enumerate(self.plot_pairs.keys()):
                 for j, spp in enumerate(self.plot_pairs[kind]):
                     x = self.key[spp[0]]
@@ -612,10 +615,9 @@ class ClusterDialog(QG.QDialog):
                 loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
                 plot_pairs={'location':self.loc_plot_pairs}
                 print 'loc ics',loc_ics,data.shape
-                tab = ClusterWidget(data, plot_pairs, loc_ics, {'eps':2.0, 'min_samples':15},parent=self.tabs)
+                tab = ClusterWidget(data, plot_pairs, loc_ics, {'eps':2.5, 'min_samples':15},parent=self.tabs)
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
 
-                clusters = Clusterer.cluster_elements(Clusterer.cluster(data, eps = 2.5, min_samples = 15), data)
 
         #        for spp in loc_plot_pairs:
         #            x=spp[0]
