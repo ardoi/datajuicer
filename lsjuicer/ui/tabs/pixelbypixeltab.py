@@ -493,14 +493,42 @@ class ClusterWidget(QG.QWidget):
         self.plot_pairs = plot_pairs
         self.make_plot_widgets()
         self.key = key
+        setting_layout = QG.QHBoxLayout()
         do_pb = QG.QPushButton('Do')
         do_pb.clicked.connect(self.do)
-        widget_layout.addWidget(do_pb)
+        setting_layout.addWidget(do_pb)
+        widget_layout.addLayout(setting_layout)
         self.settings = settings
 
+        button_layout = QG.QVBoxLayout()
+        setting_layout.addLayout(button_layout)
+        ms_layout = QG.QHBoxLayout()
+        button_layout.addLayout(ms_layout)
+        min_sample_label  = QG.QLabel("Minimum core samples:",parent=self)
+        min_sample_spinbox = QG.QSpinBox(self)
+        ms_layout.addWidget(min_sample_label)
+        ms_layout.addWidget(min_sample_spinbox)
+        eps_layout = QG.QHBoxLayout()
+        button_layout.addLayout(eps_layout)
+        eps_label  = QG.QLabel("Eps:",parent=self)
+        eps_spinbox = QG.QDoubleSpinBox(self)
+        eps_layout.addWidget(eps_label)
+        eps_layout.addWidget(eps_spinbox)
+        eps_spinbox.setMinimum(0.1)
+        eps_spinbox.setMaximum(25.0)
+        eps_spinbox.setSingleStep(0.1)
+        eps_spinbox.setValue(settings['eps'])
+        min_sample_spinbox.setMinimum(1)
+        min_sample_spinbox.setMaximum(200)
+        min_sample_spinbox.setSingleStep(1)
+        min_sample_spinbox.setValue(settings['min_samples'])
+
+        self.eps_spinbox = eps_spinbox
+        self.min_sample_spinbox = min_sample_spinbox
+
     def do(self):
-        eps = self.settings['eps']
-        min_samples = self.settings['min_samples']
+        eps = self.eps_spinbox.value()
+        min_samples = self.min_sample_spinbox.value()
         self.do_cluster(eps, min_samples)
         self.do_plots()
 
@@ -529,6 +557,8 @@ class ClusterWidget(QG.QWidget):
 
     def do_plots(self):
         colornames = cycle(['red', 'green', 'blue', 'yellow', 'orange', 'teal', 'magenta', 'lime', 'navy', 'brown'])
+        for spp, plotwidget in self.plotwidgets.iteritems():
+            plotwidget.clear()
         for cluster, elements  in  self.clusters.iteritems():
             group_name = "Group %i"%cluster
             if cluster != -1:

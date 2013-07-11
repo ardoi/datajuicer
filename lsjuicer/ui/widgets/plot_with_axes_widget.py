@@ -74,10 +74,12 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fV.determine_axes_span()
 
     def removeItem(self, item):
+        print 'remove',item
         if not item:
             return
         if item.scene() == self.fscene:
             self.fscene.removeItem(item)
+            print 'removed'
         else:
             print 'no point in removing item ', item
             pass
@@ -450,8 +452,12 @@ class PlotWithAxesWidget(QG.QWidget):
         self.base_transform = self.fV.transform()
 
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
-        while name in self.plot_datas.keys():
-            name += 'i'
+        print '\naddplot', name
+        if name in self.plot_datas.keys():
+            print 'name exists updating'
+            self.updatePlot(name, y_vals, x_vals)
+            #name += 'i'
+            return
         pd = PlottedData(x_vals, y_vals, self.plot_index + 1, name, **plotstyle)
         self.plot_datas[name] = pd
         if not hold_update:
@@ -471,12 +477,12 @@ class PlotWithAxesWidget(QG.QWidget):
 
     def updatePlot(self, name, data, x_vals, only_grow=False):
         plotd = self.plot_datas[name]
-        # self.removePlotData(plotd)
+        self.removeItem(plotd.graphic_item)
         plotd.update_data(data, x_vals)
         # self.checkAndSetXvals(x_vals)
-        self.redraw(plotd)
+        #self.redraw(plotd)
 #        self.updatePlots(only_grow)
-        self.updatePlots(True)
+        #self.updatePlots()
 
     def redraw(self, plotd):
         self.removeItem(plotd.graphic_item)

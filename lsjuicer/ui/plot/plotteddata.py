@@ -16,6 +16,23 @@ class PlottedData(QC.QObject):
         self.visibility  =True
         #print y_vals.tolist()
         #print x_vals.tolist()
+
+        self.pen = QG.QPen(QC.Qt.SolidLine)
+        self.pen.setCosmetic(True)
+        self.size = size
+        if style == 'line':
+            self.pen.setColor(QG.QColor(color))
+            self.pen.setWidth(self.size)
+        else:
+            self.pen.setColor(QG.QColor('black'))
+        # self.pen.setJoinStyle(QC.Qt.RoundJoin)
+        self.pen = QG.QPen(QC.Qt.NoPen)
+        brush_color = QG.QColor(color)
+        brush_color.setAlphaF(alpha)
+        self.brush = QG.QBrush(brush_color)
+        self.Z = zvalue
+
+    def update_data(self, y_vals, x_vals):
         if len(y_vals) > 1:
             #self.y_vals_x_max = float(self.xvalues[-1])
             #self.y_vals_x_min = float(self.xvalues[0])
@@ -28,24 +45,6 @@ class PlottedData(QC.QObject):
             self.x_min = float(self.xvalues[0]) * .9
             self.y_max = float(y_vals[0]) * 1.1
             self.y_min = float(y_vals[0]) * .9
-
-        self.pen = QG.QPen(QC.Qt.SolidLine)
-        self.pen.setCosmetic(True)
-        self.size = size
-        if style == 'line':
-            self.pen.setColor(QG.QColor(color))
-            self.pen.setWidth(self.size)
-        else:
-            self.pen.setColor(QG.QColor('black'))
-
-        # self.pen.setJoinStyle(QC.Qt.RoundJoin)
-        self.pen = QG.QPen(QC.Qt.NoPen)
-        brush_color = QG.QColor(color)
-        brush_color.setAlphaF(alpha)
-        self.brush = QG.QBrush(brush_color)
-        self.Z = zvalue
-
-    def update_data(self, y_vals, x_vals):
         self.xvalues = n.arange(len(x_vals))
         self.phys_xvalues = x_vals
         self.data = y_vals
