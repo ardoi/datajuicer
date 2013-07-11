@@ -17,7 +17,6 @@ from lsjuicer.inout.db.sqla import SearchRegion, Spark
 
 from scipy import ndimage as sn
 #from skimage.morphology import watershed, is_local_maximum
-#from IPython import embed_kernel
 
 def dic2str(dic):
     return "\n".join(["%s: %.3f"%(key,dic[key]) for key in dic.keys()])
@@ -401,6 +400,7 @@ class SparkDetectTab(QG.QTabWidget):
         self.m_graphicpixmapitem.setZValue(6)
 
         #from IPython.frontend.terminal.embed import InteractiveShellEmbed
+        #from IPython import embed_kernel
         ##QC.pyqtRemoveInputHook()
         #ipshell=InteractiveShellEmbed()
         #ipshell()

@@ -1,6 +1,6 @@
 import datetime
 from itertools import cycle
-from collections import defaultdict
+#from collections import defaultdict
 
 import numpy
 
@@ -65,12 +65,12 @@ class PixelByPixelTab(QG.QTabWidget):
 
     def makefits(self):
         #t0 = time.time()
-        out = []
+        #out = []
         params = []
-        if self.limit_checkbox.isChecked():
-            stdlimit = int(self.limit_spinbox.value())
-        else:
-            stdlimit = None
+        #if self.limit_checkbox.isChecked():
+        #    stdlimit = int(self.limit_spinbox.value())
+        #else:
+        #    stdlimit = None
         for x in range(self.dx, self.data_width-self.dx):
             for y in range(self.dy, self.data_height-self.dy):
                 data = self.imagedata.trace_in_time(x + self.x0, y+self.y0,
@@ -472,6 +472,80 @@ def normify(a):
     #r2=res.clip(left,right)
     return res
 
+class ClusterWidget(QG.QWidget):
+    clusters_ready = QC.pyqtSignal(dict)
+    def __init__(self, cluster_data, plot_pairs, key, settings, parent = None, reference_data = None):
+        super(ClusterWidget, self).__init__(parent)
+
+        self.cluster_data = cluster_data
+        if reference_data is None:
+            self.reference_data = self.cluster_data
+        else:
+            self.reference_data = reference_data
+
+        widget_layout = QG.QVBoxLayout()
+        self.plot_layout = QG.QGridLayout()
+        self.setLayout(widget_layout)
+        widget_layout.addLayout(self.plot_layout)
+        self.rows = len(plot_pairs.keys())
+        self.columns = max([len(el) for el in plot_pairs.values()])
+        self.plotwidgets = {}
+        self.plot_pairs = plot_pairs
+        self.make_plot_widgets()
+        self.key = key
+        do_pb = QG.QPushButton('Do')
+        do_pb.clicked.connect(self.do)
+        widget_layout.addWidget(do_pb)
+        self.settings = settings
+
+    def do(self):
+        eps = self.settings['eps']
+        min_samples = self.settings['min_samples']
+        self.do_cluster(eps, min_samples)
+        self.do_plots()
+
+    def do_cluster(self, eps, min_samples):
+        self.clusters = Clusterer.cluster_elements(Clusterer.cluster(self.cluster_data,
+            eps = eps, min_samples = min_samples), self.reference_data)
+        print 'clusterkeys',self.clusters.keys()
+
+    def make_plot_widgets(self):
+        if self.plotwidgets:
+            return
+        for i, kind in enumerate(self.plot_pairs.keys()):
+            for j, spp in enumerate(self.plot_pairs[kind]):
+                print kind, spp
+                x = spp[0]
+                y = spp[1]
+                plotwidget = ContinousPlotWidget(self, antialias=False,
+                    xlabel = x, ylabel = y)
+                self.plotwidgets[spp] = plotwidget
+                self.plot_layout.addWidget(plotwidget,i,j)
+        print self.plotwidgets
+        QG.QApplication.processEvents()
+
+    def do_plots(self):
+        colornames = cycle(['red', 'green', 'blue', 'yellow', 'orange', 'teal', 'magenta', 'lime', 'navy', 'brown'])
+        for cluster, elements  in  self.clusters.iteritems():
+            group_name = "Group %i"%cluster
+            if cluster != -1:
+                color = colornames.next()
+            else:
+                color = 'black'
+            style={'style':'circles', 'color':color, 'alpha':0.25}
+            if cluster == -1:
+                style.update({'size':0.5, 'alpha':0.75})
+            for i, kind in enumerate(self.plot_pairs.keys()):
+                for j, spp in enumerate(self.plot_pairs[kind]):
+                    x = self.key[spp[0]]
+                    y = self.key[spp[1]]
+                    plotwidget = self.plotwidgets[spp]
+                    plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+        for spp, plotwidget in self.plotwidgets.iteritems():
+            plotwidget.updatePlots()
+            plotwidget.fitView()
+        self.clusters_ready.emit(self.clusters)
+
 class ClusterDialog(QG.QDialog):
     def __init__(self, analysis, parent=None):
         super(ClusterDialog, self).__init__(parent)
@@ -497,6 +571,9 @@ class ClusterDialog(QG.QDialog):
         params.extend(loc_params)
         #dictionary of parameter names and their indices
         ics = dict(zip(params, range(len(params))))
+        self.shape_params = shape_params
+        self.loc_params = loc_params
+        self.ics = ics
 
 
         event_array = tf.do_event_array(el, params)
@@ -508,95 +585,65 @@ class ClusterDialog(QG.QDialog):
         session.close()
         tabs = QG.QTabWidget(self)
         self.layout().addWidget(tabs)
+        self.tabs = tabs
 
-        shape_cluster_tab = QG.QWidget(tabs)
-        tabs.addTab(shape_cluster_tab,'Clusters by shape')
-        plot_layout = QG.QVBoxLayout()
-        shape_cluster_tab.setLayout(plot_layout)
-        shape_layout = QG.QHBoxLayout()
-        loc_layout = QG.QHBoxLayout()
-        plot_layout.addLayout(shape_layout)
-        plot_layout.addLayout(loc_layout)
-
-        shape_clusters = Clusterer.cluster_elements(Clusterer.cluster(ea_shape, eps = 2.0, min_samples = 50), event_array)
         shape_plot_pairs = [('d', 'tau2'),('tau2','A'),('A', 'd')]
         loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
-        plot_pairs = shape_plot_pairs[:]
-        plot_pairs.extend(loc_plot_pairs)
-        plotwidgets = defaultdict(dict)
-        for spp in plot_pairs:
-            x=spp[0]
-            y=spp[1]
-            plotwidget = ContinousPlotWidget(self, antialias=False,
-                xlabel = x, ylabel = y)
-            plotwidgets['shape'][spp] = plotwidget
-            if spp in shape_plot_pairs:
-                shape_layout.addWidget(plotwidgets['shape'][spp])
-            else:
-                loc_layout.addWidget(plotwidgets['shape'][spp])
+        self.loc_plot_pairs = loc_plot_pairs
+        plot_pairs = {'shape':shape_plot_pairs, 'location':loc_plot_pairs}
+        try:
+            shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics,{'eps':2.0, 'min_samples':50},
+                    parent= tabs, reference_data = event_array)
+            #shape_cluster_tab.do()
+            shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
+        except:
+            from IPython.frontend.terminal.embed import InteractiveShellEmbed
+            #from IPython import embed_kernel
+            QC.pyqtRemoveInputHook()
+            ipshell=InteractiveShellEmbed()
+            ipshell()
+            #embed_kernel()
+        tabs.addTab(shape_cluster_tab, 'Clusters by shape')
 
-        QG.QApplication.processEvents()
-        colornames = cycle(['red', 'green', 'blue', 'yellow', 'orange', 'teal', 'magenta', 'lime', 'navy', 'brown'])
-        for cluster, elements  in  shape_clusters.iteritems():
-            group_name = "Group %i"%cluster
-            if cluster != -1:
-                color = colornames.next()
-            else:
-                color = 'black'
-            style={'style':'circles', 'color':color, 'alpha':0.25}
-            if cluster == -1:
-                style.update({'size':0.5,'alpha':0.75})
-
-            for spp in plot_pairs:
-                x=ics[spp[0]]
-                y=ics[spp[1]]
-                plotwidget = plotwidgets['shape'][spp]
-                plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
-
-        for spp, plotwidget in plotwidgets['shape'].iteritems():
-            plotwidget.updatePlots()
-            plotwidget.fitView()
-
-        for cluster, elements  in  shape_clusters.iteritems():
-            print 'cluster', cluster,len(elements)
+    def add_loc_clusters(self, cluster_data):
+        for cluster, elements in cluster_data.iteritems():
             if cluster!=-1:
-                tab = QG.QWidget(tabs)
-                index = tabs.addTab(tab,'Type %i'%cluster)
-                plot_layout = QG.QVBoxLayout()
-                tab.setLayout(plot_layout)
-                data = elements[:,[ics[e] for e in loc_params]]
-                loc_ics=dict(zip(loc_params, range(len(loc_params))))
+                data = elements[:,[self.ics[e] for e in self.loc_params]]
+                loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
+                plot_pairs={'location':self.loc_plot_pairs}
+                print 'loc ics',loc_ics,data.shape
+                tab = ClusterWidget(data, plot_pairs, loc_ics, {'eps':2.0, 'min_samples':15},parent=self.tabs)
+                index = self.tabs.addTab(tab,'Type %i'%cluster)
 
                 clusters = Clusterer.cluster_elements(Clusterer.cluster(data, eps = 2.5, min_samples = 15), data)
-                for spp in loc_plot_pairs:
-                    x=spp[0]
-                    y=spp[1]
-                    plotwidget = ContinousPlotWidget(self, antialias=False,
-                        xlabel = x, ylabel = y)
-                    plotwidgets[cluster][spp] = plotwidget
-                    print 'adding',spp
-                    plot_layout.addWidget(plotwidgets[cluster][spp])
-                for type_cluster, elements  in  clusters.iteritems():
-                    group_name = "Group %i"%cluster
-                    if type_cluster != -1:
-                        color = colornames.next()
-                    else:
-                        color = 'black'
-                    style={'style':'circles', 'color':color, 'alpha':0.25}
-                    if type_cluster == -1:
-                        style.update({'size':0.5,'alpha':0.75})
 
-                    print plotwidgets[cluster]
-                    for spp in loc_plot_pairs:
-                        x=loc_ics[spp[0]]
-                        y=loc_ics[spp[1]]
-                        plotwidget = plotwidgets[cluster][spp]
-                        plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+        #        for spp in loc_plot_pairs:
+        #            x=spp[0]
+        #            y=spp[1]
+        #            plotwidget = ContinousPlotWidget(self, antialias=False,
+        #                xlabel = x, ylabel = y)
+        #            plotwidgets[cluster][spp] = plotwidget
+        #            plot_layout.addWidget(plotwidgets[cluster][spp])
+        #        for type_cluster, elements  in  clusters.iteritems():
+        #            group_name = "Group %i"%cluster
+        #            if type_cluster != -1:
+        #                color = colornames.next()
+        #            else:
+        #                color = 'black'
+        #            style={'style':'circles', 'color':color, 'alpha':0.25}
+        #            if type_cluster == -1:
+        #                style.update({'size':0.5,'alpha':0.75})
 
-            tabs.setCurrentIndex(index)
-            for spp, plotwidget in plotwidgets[cluster].iteritems():
-                plotwidget.updatePlots()
-                plotwidget.fitView()
+        #            for spp in loc_plot_pairs:
+        #                x=loc_ics[spp[0]]
+        #                y=loc_ics[spp[1]]
+        #                plotwidget = plotwidgets[cluster][spp]
+        #                plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+
+            self.tabs.setCurrentIndex(index)
+        #    for spp, plotwidget in plotwidgets[cluster].iteritems():
+        #        plotwidget.updatePlots()
+        #        plotwidget.fitView()
 
 class Clusterer(object):
     @staticmethod
@@ -608,12 +655,15 @@ class Clusterer(object):
         return groups
 
     @staticmethod
-    def cluster(data, eps=2.0, min_samples=100):
+    def cluster(data, eps, min_samples):
         #D = metrics.euclidean_distances(data)
         #S = 1 - (D / numpy.max(D))
+        print 'clustering', eps, min_samples
+        print data.shape, data[0]
         db = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
         #core_samples = db.core_sample_indices_
         labels = db.labels_
+        print set(labels)
         # Number of clusters in labels, ignoring noise if present.
         #n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         return labels
