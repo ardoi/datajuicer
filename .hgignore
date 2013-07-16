@@ -16,7 +16,6 @@ db.shelf
 *.pickle
 *.pdf
 .DS_Store
-analysis/*
 out_*
 movie/*
 junk/*
