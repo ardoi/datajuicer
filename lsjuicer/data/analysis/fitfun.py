@@ -8,10 +8,11 @@ import scipy.optimize as so
 import scipy.special as ss
 
 class ScaledOperation(object):
-    def __init__(self):
+    def __init__(self, scaled = True):
         self.function = None
         self.parameters = OrderedDict()
         self.unscaled_solutions = {}
+        self.scaled = scaled
 
     def set_parameter_range(self, name, minval, maxval, initial):
         #print 'Set parameter: %s min=%f max=%f init=%f'%(name,float(minval),float(maxval),float(initial))
@@ -32,20 +33,37 @@ class ScaledOperation(object):
             print p, self.parameters[p]
 
     def unscale(self, x, name):
+        if not self.scaled:
+            return x
         minval = self.parameters[name]['min']
         maxval = self.parameters[name]['max']
         return ((n.arctan(x)/n.pi+0.5)*(maxval-minval))+minval
 
+
     def scale(self, sx, name):
+        if not self.scaled:
+            return sx
         minval = self.parameters[name]['min']
         maxval = self.parameters[name]['max']
         v = n.tan(((sx-minval)/(maxval-minval)-0.5)*n.pi)
         return v
 
+    def func_for_scaled_valuees(self, x):
+        kw_args = {}
+        parameter_names = self.parameters.keys()
+        #parameter_names.sort()
+        for i,p in enumerate(parameter_names):
+            name = parameter_names[i]
+            sparam_value = x[i]
+            #print sparam_value
+            kw_args[name] = self.unscale(float(sparam_value), name)
+        return self.operation_func(kw_args)
+
     def func_for_scaled_values(self, x, *scaled_parameters):
         kw_args = {}
         parameter_names = self.parameters.keys()
-        if isinstance(scaled_parameters[0],list):
+        #print 'sp',scaled_parameters,x
+        if isinstance(scaled_parameters[0], list):
             scaled_parameters = scaled_parameters[0]
         for i,p in enumerate(scaled_parameters):
             name = parameter_names[i]
@@ -68,6 +86,7 @@ class Solver(ScaledOperation):
                     continue
         self.function = lambda x:function(arg=x,**f_params)-value
         print "Parameters of the function are: %s"%(str(self.parameters.keys()))
+
 
     def solve(self):
         ic = self.parameters['arg']['init']
@@ -106,13 +125,17 @@ class MaxSolver(Solver):
         return out
 
 class Optimizer(ScaledOperation):
-    def __init__(self, xvals, yvals):
+    def __init__(self, xvals, yvals, scaled = True):
         self.arg_vals = n.array(xvals)
         self.func0_vals = n.array(yvals)
         self.sigmas = None
         #print 'optimizer',self.arg_vals.tolist()
         #print self.func0_vals.tolist()
-        super(Optimizer,self).__init__()
+        super(Optimizer,self).__init__(scaled=scaled)
+
+    def additional_parameters(self, param_names):
+        for pn in param_names:
+            self.parameters[pn] = {}
 
     def set_function(self, function, only_function=False):
         #print 'set function',function
@@ -122,7 +145,7 @@ class Optimizer(ScaledOperation):
             raise ValueError(error)
         else:
             for v in variables:
-                if v == 'arg':
+                if v in ['arg','self']:
                     continue
                 if not only_function:
                     self.parameters[v] = {}
@@ -184,7 +207,7 @@ class Optimizer(ScaledOperation):
     def set_sigmas(self, sigmas):
         self.sigmas = sigmas
 
-    def optimize(self):
+    def optimize(self, ):
         try:
             parameter_names = self.parameters.keys()
             scaled_initial_conditions = []
@@ -192,9 +215,10 @@ class Optimizer(ScaledOperation):
                 ic = self.parameters[parameter_name]['init']
                 sic = self.scale(ic, parameter_name)
                 scaled_initial_conditions.append(sic)
-           # res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions, factor=0.01, epsfcn=1e-8)
+            #res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions,ftol=1e-12, xtol=1e-12)
             #print 'ic', scaled_initial_conditions
-            res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,scaled_initial_conditions, sigma=self.sigmas,maxfev=100000,factor=.1, epsfcn=1e-7)
+            #res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,scaled_initial_conditions, sigma=self.sigmas,maxfev=100000,factor=.1, epsfcn=1e-7, ftol=1e-12, xtol=1e-12)
+            res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,scaled_initial_conditions, sigma=self.sigmas, maxfev=100000, factor=.1, ftol=1e-12, xtol=1e-12)
             scaled_solutions = res[0].tolist()
             #print 'ss',scaled_solutions
             self.solutions = {}
@@ -224,8 +248,9 @@ class Optimizer(ScaledOperation):
             except AttributeError:
                 pass
         except:
-            #print 'exception in optimize'
-            #traceback.print_exc()
+            print 'exception in optimize'
+            import traceback
+            traceback.print_exc()
             self.solutions = {}
         #print 'sol=',self.solutions
 
