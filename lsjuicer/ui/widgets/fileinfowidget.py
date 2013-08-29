@@ -416,7 +416,7 @@ class AnalysesInfoWidget(QG.QGroupBox):
         analyses_table.setModel(analyses_model)
         table_layout.addWidget(analyses_table)
         self.setTitle("Analyses")
-        self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Minimum)
+        self.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Expanding)
 
         plot_pb = QG.QPushButton(QG.QIcon("://chart_curve_edit.png"),"New Analysis")
         load_pb = QG.QPushButton("Load")

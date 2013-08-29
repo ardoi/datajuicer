@@ -28,6 +28,7 @@ def java_check(parent):
 
 def dependencies_for_myprogram():
     from scipy.sparse.csgraph import _validation
+    id(_validation)
 
 if __name__ == "__main__":
     app = QG.QApplication(sys.argv)
@@ -41,7 +42,7 @@ if __name__ == "__main__":
     # splash.show()
     app.processEvents()
     # time.sleep(1)
-    screen_size = app.desktop().screenGeometry()
+    #screen_size = app.desktop().screenGeometry()
     # splash.hide()
 
     # defaults for conf file
