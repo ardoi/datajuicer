@@ -48,21 +48,9 @@ class ScaledOperation(object):
         v = n.tan(((sx-minval)/(maxval-minval)-0.5)*n.pi)
         return v
 
-    def func_for_scaled_valuees(self, x):
-        kw_args = {}
-        parameter_names = self.parameters.keys()
-        #parameter_names.sort()
-        for i,p in enumerate(parameter_names):
-            name = parameter_names[i]
-            sparam_value = x[i]
-            #print sparam_value
-            kw_args[name] = self.unscale(float(sparam_value), name)
-        return self.operation_func(kw_args)
-
     def func_for_scaled_values(self, x, *scaled_parameters):
         kw_args = {}
         parameter_names = self.parameters.keys()
-        #print 'sp',scaled_parameters,x
         if isinstance(scaled_parameters[0], list):
             scaled_parameters = scaled_parameters[0]
         for i,p in enumerate(scaled_parameters):
@@ -207,7 +195,7 @@ class Optimizer(ScaledOperation):
     def set_sigmas(self, sigmas):
         self.sigmas = sigmas
 
-    def optimize(self, ):
+    def optimize(self):
         try:
             parameter_names = self.parameters.keys()
             scaled_initial_conditions = []
