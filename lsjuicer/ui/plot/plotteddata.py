@@ -5,8 +5,8 @@ import PyQt4.QtCore as QC
 
 
 class PlottedData(QC.QObject):
-    def __init__(self, x_vals, y_vals,zvalue,name,
-            style='line',alpha=1.0, color = 'black', size = 1):
+    def __init__(self, x_vals, y_vals, zvalue, name,
+            style='line', alpha=1.0, color = 'black', size = 1):
         super(PlottedData, self).__init__(None)
         self.style = style
         self.drawn = False
@@ -26,7 +26,6 @@ class PlottedData(QC.QObject):
         else:
             self.pen.setColor(QG.QColor('black'))
         # self.pen.setJoinStyle(QC.Qt.RoundJoin)
-        self.pen = QG.QPen(QC.Qt.NoPen)
         brush_color = QG.QColor(color)
         brush_color.setAlphaF(alpha)
         self.brush = QG.QBrush(brush_color)

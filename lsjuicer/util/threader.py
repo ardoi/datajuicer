@@ -1,4 +1,4 @@
-from multiprocessing import Process
+from multiprocessing import Process, cpu_count
 import datetime
 import logging
 import random
@@ -344,7 +344,7 @@ class Threader(QC.QObject):
         self.workers = {}
         self.start_time = None
 
-        self.slots = 4
+        self.slots = cpu_count()
         self.last_started_worker_number = 0
         self.logger = logging.getLogger(__name__)
 

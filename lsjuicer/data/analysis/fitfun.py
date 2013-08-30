@@ -119,6 +119,8 @@ class Optimizer(ScaledOperation):
         self.sigmas = None
         #print 'optimizer',self.arg_vals.tolist()
         #print self.func0_vals.tolist()
+        self.ftol = 1.49e-8
+        self.xtol = 1.49e-8
         super(Optimizer,self).__init__(scaled=scaled)
 
     def additional_parameters(self, param_names):
@@ -204,11 +206,10 @@ class Optimizer(ScaledOperation):
                 sic = self.scale(ic, parameter_name)
                 scaled_initial_conditions.append(sic)
             #res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions,ftol=1e-12, xtol=1e-12)
-            #print 'ic', scaled_initial_conditions
-            #res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,scaled_initial_conditions, sigma=self.sigmas,maxfev=100000,factor=.1, epsfcn=1e-7, ftol=1e-12, xtol=1e-12)
-            res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,scaled_initial_conditions, sigma=self.sigmas, maxfev=100000, factor=.1, ftol=1e-12, xtol=1e-12)
+            res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,
+                    scaled_initial_conditions, sigma=self.sigmas, maxfev=100000, factor=.1,
+                    epsfcn=1e-7, ftol=self.ftol, xtol=self.xtol)
             scaled_solutions = res[0].tolist()
-            #print 'ss',scaled_solutions
             self.solutions = {}
             for i, ssol in enumerate(scaled_solutions):
                 parameter_name = parameter_names[i]

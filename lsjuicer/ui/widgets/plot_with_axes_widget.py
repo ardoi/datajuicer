@@ -448,6 +448,8 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fitView()
         for pd in self.plot_datas.values():
             self.redraw(pd)
+        #self.reframe()
+        #self.fitView()
         self.base_transform = self.fV.transform()
 
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
@@ -474,17 +476,22 @@ class PlotWithAxesWidget(QG.QWidget):
         else:
             self.removeItem(plotd.gpath)
 
-    def updatePlot(self, name, data, x_vals, only_grow=False):
+    def updatePlot(self, name, data, x_vals, only_grow=False, hold_update=False):
+        print '\n\n\n\nupdate', name
         plotd = self.plot_datas[name]
-        self.removeItem(plotd.graphic_item)
+        #self.removeItem(plotd.graphic_item)
         plotd.update_data(data, x_vals)
         # self.checkAndSetXvals(x_vals)
         #self.redraw(plotd)
 #        self.updatePlots(only_grow)
-        #self.updatePlots()
+        if not hold_update:
+            self.updatePlots()
 
     def redraw(self, plotd):
+        #print '\nredraw', plotd,  plotd.graphic_item
         self.removeItem(plotd.graphic_item)
+        del plotd.graphic_item
+        plotd.graphic_item = None
         if plotd.style == 'line':
             self.makePath(plotd)
         elif plotd.style == 'circles':
@@ -511,26 +518,30 @@ class PlotWithAxesWidget(QG.QWidget):
         return r
 
     def makePath(self, plotd):
-        plot_data = self.convert_data(plotd)
+        QG.QApplication.processEvents()
+        #plot_data = self.convert_data(plotd)
+        plot_data = [self.data2scene((x, dy)) for x, dy in
+                      zip(plotd.phys_xvalues, plotd.data)]
         start = plot_data[0]
         path = QG.QPainterPath(start)
         for p in plot_data[1:]:
             path.lineTo(p)
         plotd.boundingrect = path.boundingRect()
+        print 'brect', plotd.boundingrect
         gpath = self.fscene.addPath(path, plotd.pen)
 
         gpath.setZValue(plotd.Z)
 
         plotd.drawn = True
         self.plot_index += 1
-        # print 'visible', plotd.visibility
+        print 'visible', plotd.visibility
         if not plotd.visibility:
             gpath.setVisible(False)
         plotd.graphic_item = gpath
         # print 'makepath',
         # print 'path br', path.boundingRect()
         # print 'gitem br',gpath.boundingRect()
-
+        print 'gitem', gpath, gpath.scene()
         return
 
     def makeCircles(self, plotd):
@@ -561,7 +572,7 @@ class PlotWithAxesWidget(QG.QWidget):
             group.setVisible(False)
         plotd.graphic_item = group
         plotd.base_size = (xsize, ysize)
-        return group
+        return #group
 
     def scale_aspect(self, h_scale, v_scale):
         """Scale any circle plots so that they would look like

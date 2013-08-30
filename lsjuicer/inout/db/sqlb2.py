@@ -30,7 +30,8 @@ class DBMaster(object):
             try:
                 connection.execute(table.delete())
             except OperationalError:
-                traceback.print_exc()
+                pass
+                #traceback.print_exc()
         connection.execute("VACUUM")
         trans.commit()
         trans.close()

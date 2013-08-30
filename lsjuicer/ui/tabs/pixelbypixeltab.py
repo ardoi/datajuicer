@@ -389,10 +389,10 @@ class PixelTracesPlotWidget(QG.QWidget):
             time_4_fit, trace, fit, x, y,res = self.get_time_trace_fit(selection)
             plot_number = self.plotnames[selection]
             self.plot_widget.updatePlot('data %i'%(plot_number), trace, \
-                   time_4_fit)
+                   time_4_fit, hold_update=True)
             self.plot_widget.updatePlot('fit %i'%(plot_number), fit, \
                    time_4_fit)
-            self.plot_widget.fitView()
+            #self.plot_widget.fitView()
             self.events_model.set_events(res)
         else:
             self.plot_traces()
@@ -404,18 +404,19 @@ class PixelTracesPlotWidget(QG.QWidget):
         for roi in rois:
             if roi not in self.plotnames:
                 time_4_fit, trace, fit,x,y,res = self.get_time_trace_fit(roi)
-                self.plot_widget.addPlot('data %i'%(self.plotted), trace, \
-                       time_4_fit,size=1, color='gray',physical=False)
-
-                self.plot_widget.addPlot('fit %i'%(self.plotted), fit, \
-                       time_4_fit,size=3,color='red', physical=False)
+                style={'color':'gray'}
+                self.plot_widget.addPlot('data %i'%(self.plotted),
+                       time_4_fit, trace, style)
+                style={'color':'red','size':3}
+                self.plot_widget.addPlot('fit %i'%(self.plotted),
+                       time_4_fit,fit, style)
 
                 self.plotnames[roi] = self.plotted
                 self.plotted += 1
                 self.events_model.set_events(res)
             self.plot_made = True
 
-        self.plot_widget.fitView()
+        #self.plot_widget.fitView()
 
 
 class EventFitParametersDataModel(QC.QAbstractTableModel):
@@ -573,7 +574,8 @@ class ClusterWidget(QG.QWidget):
                     x = self.key[spp[0]]
                     y = self.key[spp[1]]
                     plotwidget = self.plotwidgets[spp]
-                    plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
+                    plotwidget.addPlot(group_name, elements[:,x], elements[:,y],
+                            plotstyle = style, hold_update = True)
         for spp, plotwidget in self.plotwidgets.iteritems():
             plotwidget.updatePlots()
             plotwidget.fitView()
