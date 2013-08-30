@@ -7,6 +7,7 @@ import logging
 from subprocess import Popen, PIPE
 
 import PyQt4.QtGui as QG
+import PyQt4.QtCore as QC
 
 from lsjuicer.util import config
 from lsjuicer.ui.windows.main import MainUI
@@ -36,6 +37,8 @@ if __name__ == "__main__":
     # app.setStyle(QG.QStyleFactory.create('Plastique'))
     # app.setStyle(QG.QStyleFactory.create('Cleanlooks'))
     app.setStyle(QG.QStyleFactory.create('Macintosh (aqua)'))
+    #make sure icons are shown in menus
+    app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
     print 'Available styles: %s' % (str(QG.QStyleFactory.keys().join(' : ')))
     logo = QG.QPixmap(":/juicerlogo.png")
     # splash = QG.QSplashScreen(logo)
@@ -90,6 +93,9 @@ if __name__ == "__main__":
     # util.config.Config.set_property('ome_folder', ome_folder)
 
     config.default_configuration()
+    ome_folder = config.dbmaster.get_config_setting_value('ome_folder')
+    if not os.path.isdir(ome_folder):
+        os.mkdir(ome_folder)
     gui = MainUI()
     ret = java_check(gui)
 

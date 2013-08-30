@@ -95,7 +95,6 @@ class OMEXMLMaker(QC.QObject):
             #print self.tool_dir
         else:
             tool_dir = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','..','..','lib','bftools'))
-        print 'tool dir',tool_dir
         self.convert_cmd = os.path.join(tool_dir,'bfconvert')+' -no-upgrade -compression zlib  "{0}" "{1}"'
         self.toconvert = {}
         self.logger = logging.getLogger(__name__)
@@ -105,7 +104,8 @@ class OMEXMLMaker(QC.QObject):
             hh.setFormatter(logging.Formatter(log_format))
             self.logger.addHandler(hh)
             self.logger.setLevel(logging.DEBUG)
-        self.logger.info("Maker")
+        self.logger.info("OMXMLMaker created")
+        self.logger.info('Bioformats directory is: {}'.format(tool_dir))
         self.done = 0
         self.signals = signals
 

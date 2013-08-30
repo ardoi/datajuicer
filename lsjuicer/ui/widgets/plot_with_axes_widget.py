@@ -151,7 +151,6 @@ class PlotWithAxesWidget(QG.QWidget):
         action_toolbutton = QG.QToolButton(self)
         action_toolbutton.setIcon(QG.QIcon(QG.QPixmap("://lightbulb.png")))
         action_toolbutton.setToolTip("Actions")
-        action_toolbutton.setPopupMode
         menu = QG.QMenu()
         reset_zoom_action = menu.addAction(QG.QIcon(
             QG.QPixmap("://bomb.png")), "Reset zoom levels")

@@ -559,7 +559,8 @@ class PixelFittedSyntheticImage(Image):
 class MicroscopeImage(Image):
     """Representation of image recorded by the microscope"""
     __tablename__ = "microscope_images"
-    ome_dir = os.path.join(os.getenv('HOME'), '.JuicerTemp')
+    #ome_dir = os.path.join(os.getenv('HOME'), '.JuicerTemp')
+    ome_dir = dbmaster.get_config_setting_value('ome_folder')
     id = Column(Integer, ForeignKey('images.id'), primary_key=True)
     _file_hash = Column(String(200), nullable=False)#, unique=True)
     _file_name = Column(String(500), nullable=False)

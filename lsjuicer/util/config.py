@@ -15,7 +15,6 @@ def default_configuration():
     for key in default:
         if dbmaster.get_config_setting_value(key):
             print "config value: %s=%s" % (key, str(default[key]))
-
             continue
         else:
             print "setting default config value: %s=%s"\
