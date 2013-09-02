@@ -24,7 +24,7 @@ class PlottedData(QC.QObject):
             self.pen.setColor(QG.QColor(color))
             self.pen.setWidth(self.size)
         else:
-            self.pen.setColor(QG.QColor('black'))
+            self.pen.setStyle(QC.Qt.NoPen)
         # self.pen.setJoinStyle(QC.Qt.RoundJoin)
         brush_color = QG.QColor(color)
         brush_color.setAlphaF(alpha)

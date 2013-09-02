@@ -10,6 +10,7 @@ from lsjuicer.data.analysis import fitfun
 def get_logger(name):
     logger = logging.getLogger(__name__)
     if not logger.root.handlers and not logger.handlers:
+    #if not logger.handlers:
         hh = logging.StreamHandler(sys.stdout)
         log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
         hh.setFormatter(logging.Formatter(log_format))
@@ -48,6 +49,8 @@ class Region(object):
         self._right = right
         self.maximum = maximum
         self.bad = False
+        self.aic_line = 0
+        self.aic_curve = 0
         self.fit_res=[]
         #print '\n'+"#"*10,"new region",self
         self._all_time_data = time_data
@@ -105,7 +108,7 @@ class Region(object):
         #print oo.solutions
         #print '\n',self
         logger = get_logger(__name__)
-        logger.info("region:%s"%self)
+        logger.info("\nregion:%s"%self)
         oo = self.fit_curve()
         if not oo:
             self.bad = True
@@ -137,6 +140,8 @@ class Region(object):
         aicc_line = oo2.aicc()
        # print "AICc line",aicc_line
         logger.info("AICc line %f"%aicc_line)
+        self.aic_line = aicc_line
+        self.aic_curve = aicc_curve
         if aicc_curve < 1.01 * aicc_line:
         #if aicc_line/aicc_curve < 0.99:
             self.bad = False
@@ -147,8 +152,8 @@ class Region(object):
         logger.info("bad: %s"%str(self.bad))
 
     def __repr__(self):
-        return "<left:%i right:%i max:%i size:%i bad:%s>"%(self.left, self.right,
-                self.maximum, self.size, str(self.bad))
+        return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>"%(self.left, self.right,
+                self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
 def clean_min_max(minima, maxima, smooth_data):
     """Clean up the minima, maxima lists. First only the highest maxima between minima are taken. Then, then only the lowest minimum between maxima is used"""
@@ -248,7 +253,7 @@ def find_transient_boundaries(data, baseline = None):
     f = data
     fu = nd.uniform_filter(f, 3)
     time_data = n.arange(len(data))
-    smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),30)
+    smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),10)
     d1f = n.diff(smooth_data) - 0
     smooth_d1 = nd.uniform_filter(d1f,25)
     d2f = n.diff(smooth_d1)
@@ -311,8 +316,10 @@ def find_transient_boundaries(data, baseline = None):
 
     count=0
     max_count = 100
+    logger=get_logger(__name__)
     while count < max_count:
         #print '\n new search',count
+        logger.info('\nsearch number {}'.format(count))
         regions = []
         if not maxima:
             #nothing found in pixel
@@ -398,6 +405,7 @@ def fit_regs(f, plot=False , baseline = None):
         #p.plot(fu,'-',color='magenta')
         p.xlim(0, len(f))
         ax=p.gca()
+    print regs
     for i,r in enumerate(regs):
         le = r.left
         ri = r.right
