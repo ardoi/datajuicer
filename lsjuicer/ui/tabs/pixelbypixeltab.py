@@ -13,8 +13,8 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.util.threader import FitDialog
 from lsjuicer.inout.db import sqlb2
 from lsjuicer.inout.db.sqla import dbmaster
-from lsjuicer.ui.widgets.plot_with_axes_widget import DiscontinousPlotWidget
-from lsjuicer.ui.widgets.plot_with_axes_widget import ContinousPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 import lsjuicer.data.analysis.transient_find as tf
@@ -338,7 +338,7 @@ class PixelByPixelTab(QG.QTabWidget):
 class PixelTracesPlotWidget(QG.QWidget):
     def __init__(self, scene, pixpixw, parent=None):
         super(PixelTracesPlotWidget, self).__init__(parent)
-        self.plot_widget = DiscontinousPlotWidget(parent=self)
+        self.plot_widget = TracePlotWidget(parent=self)
         layout = QG.QVBoxLayout()
         #original image
         self.pixpixw = pixpixw
@@ -391,8 +391,9 @@ class PixelTracesPlotWidget(QG.QWidget):
             self.plot_widget.updatePlot('data %i'%(plot_number), trace, \
                    time_4_fit, hold_update=True)
             self.plot_widget.updatePlot('fit %i'%(plot_number), fit, \
-                   time_4_fit)
+                   time_4_fit, hold_update=True)
             #self.plot_widget.fitView()
+            QC.QTimer.singleShot(5, self.plot_widget.updatePlots)
             self.events_model.set_events(res)
         else:
             self.plot_traces()
@@ -546,7 +547,7 @@ class ClusterWidget(QG.QWidget):
                 print kind, spp
                 x = spp[0]
                 y = spp[1]
-                plotwidget = ContinousPlotWidget(self, antialias=False,
+                plotwidget = TracePlotWidget(self, antialias=False,
                     xlabel = x, ylabel = y)
                 self.plotwidgets[spp] = plotwidget
                 if self.rows > 1:
@@ -712,7 +713,7 @@ class BasicPixmapPlotWidget(QG.QWidget):
         pixmaker = PixmapMaker(pc)
         self.pixmaker = pixmaker
 
-        self.plot_widget = DiscontinousPlotWidget(parent=self)
+        self.plot_widget = PixmapPlotWidget(parent=self)
         self.scene = self.plot_widget.fscene
         layout = QG.QVBoxLayout()
         self.setLayout(layout)

@@ -51,10 +51,9 @@ class AxisWidget(QG.QWidget):
         painter.setRenderHint(QG.QPainter.HighQualityAntialiasing)
 
     def set_range(self, minimum, maximum):
-        # print 'set_range', minimum, maximum
+        #print 'set range', minimum, maximum, self
         self.minval = minimum
         self.maxval = maximum
-        pixels_per_full_range = self.active_dimension_length
         if self.base_min is not None:
             self.pixels_shifted = -(minimum - self.base_min)/self.pixel_size
         self.repaint()
@@ -64,14 +63,13 @@ class AxisWidget(QG.QWidget):
         return (self.maxval-self.minval)/float(self.active_dimension_length)
 
     def zoom_changed(self, minimum, maximum):
-        # print 'zoom change',minimum, maximum, self
         self.base_min = minimum
         self.base_max = maximum
         self.set_range(minimum, maximum)
 
     def calculate_ticks_for_range(self):
         """
-        range_size: width for horizontal plot and height for vertical
+        range_size: width for horizontal plot and height for vertical in pixels
         pixel_value: size of pixel (either in time or space depending on direction)
         """
         range_size = self.active_dimension_length
@@ -82,12 +80,13 @@ class AxisWidget(QG.QWidget):
             self.tick_positions = []
             self.tick_labels = []
             start_pos = self.pixels_shifted % tick_gap_pix
+            #pixel value where tick is drawn
             val = start_pos + self.start_offset
             #+1 to avoid rounding errors resulting in the last tick not being made
             while val <= self.start_offset + range_size + 1:
                 self.tick_positions.append(val)
                 label_val_on_scene = self.minval + (
-                    val-self.start_offset)*self.pixel_size
+                    val-self.start_offset) * self.pixel_size
                 if self.relative_to_start:
                     label_val_on_scene -= self.minval
                 # print 'value',val, label_val_on_scene, self.minval, self.pixel_size
@@ -107,9 +106,6 @@ class AxisWidget(QG.QWidget):
                 self.tick_labels.append("%.2f" % label_val)
                 val += tick_gap_pix
                 # print val,label_val,
-            # print 'start/end',start_pos
-            # print 'pos', self.tick_positions
-            # print 'label', self.tick_labels
         else:
             self.tick_positions = []
 
@@ -152,17 +148,9 @@ class HorizontalAxisWidget(AxisWidget):
         self.relative_to_start = not self.relative_to_start
         self.calculate_ticks()
         self.repaint()
-    # def setHmax(self, h):
-    #    self.hmax = int(h)
-    #    self.updateGeometry()
-    # def resetHmax(self):
-    #    self.hmax = self.max_limit
-    #    self.updateGeometry()
 
 
 class VerticalAxisWidget(AxisWidget):
-    # active_dimension_length = 569-260#property(QG.QWidget.height)
-    # active_dimension_length = property(QG.QWidget.height)
 
     @property
     def active_dimension_length(self):
@@ -179,15 +167,6 @@ class VerticalAxisWidget(AxisWidget):
 
     def my_init(self):
         self.min_tick_distance = 70.0  # pixels
-    # def setVmax(self, v):
-    #    self.vmax = int(v)
-    #    self.updateGeometry()
-    # def resetVmax(self):
-    #    self.vmax = self.max_limit
-    #    self.updateGeometry()
-    # def maximumSizeHint(self):
-    #    print 'sh',self.vmax
-    #    return QC.QSize(self.min_limit,self.vmax)
 
     def calculate_ticks(self):
         self.calculate_ticks_for_range()
@@ -202,7 +181,6 @@ class VerticalAxisWidget(AxisWidget):
                        # QG.QBrush(QG.QColor('yellow')))
                        self.palette().brush(QG.QPalette.Midlight))
             self.painterStyle(p)
-            # p.drawLine(QC.QLineF(0,0,self.width(),0))
             p.drawLine(QC.QLineF(39+self.label_space, 0, 39+self.label_space, self.height()))
             count = 0
             for pos, label in zip(self.tick_positions, self.tick_labels):
@@ -210,7 +188,6 @@ class VerticalAxisWidget(AxisWidget):
                 if count == 0:
                     p.drawText(self.label_space, pos + 15, label)
                 else:
-                    # p.drawText(0, pos - 5, label)
                     p.drawText(self.label_space, pos + 15, label)
 
                 count += 1
@@ -222,7 +199,6 @@ class VerticalAxisWidget(AxisWidget):
                 p.save()
                 p.translate(self.label_space/2, self.height()/2.)
                 p.rotate(-90)
-                p.drawText(0,0, self.label)
                 p.restore()
                 font.setBold(False)
                 p.setFont(font)

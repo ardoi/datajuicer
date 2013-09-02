@@ -7,7 +7,7 @@ from lsjuicer.ui.scenes import LSMDisplay
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
 from lsjuicer.static.constants import Constants
 from lsjuicer.static import selection_types
-from lsjuicer.ui.widgets.plot_with_axes_widget import DiscontinousPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain, PipeChainWidget
 from lsjuicer.data.data import ImageDataMaker
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
@@ -428,7 +428,7 @@ class AnalysisImageTab(QG.QWidget):
         self.aw.add_tab(next_tab, next_icon, self.analysis_mode)
 
     def makePlotArea(self):
-        return DiscontinousPlotWidget(sceneClass=LSMDisplay, parent=self)
+        return PixmapPlotWidget(sceneClass=LSMDisplay, parent=self)
 
     def show_events(self,event_times):
         self.lsmPlot.addHLines(event_times,Constants.EVENTS, 'cyan')

@@ -1,7 +1,7 @@
 import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
 
-class SparkFluorescencePlotWidget(ContinousPlotWidget):
+class SparkFluorescencePlotWidget(PixmapPlotWidget):
 
     def __init__(self, *args, **kwargs):
         super(SparkFluorescencePlotWidget, self).__init__(*args, **kwargs)

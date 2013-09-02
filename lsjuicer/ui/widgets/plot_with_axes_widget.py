@@ -1,7 +1,7 @@
 import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
-from scipy.interpolate import interp1d
-import numpy as n
+#from scipy.interpolate import interp1d
+#import numpy as n
 
 from lsjuicer.ui.scenes import PlotDisplay
 from lsjuicer.ui.views import ZoomView
@@ -31,6 +31,7 @@ class PlotWithAxesWidget(QG.QWidget):
         self.xmin = None
         self.zeroline = 1
         self.gpix = None
+        self.updating = False
         # fill view by default
         self.aspect_ratio = QC.Qt.IgnoreAspectRatio
         self.Hlines = {Constants.EVENTS: [], Constants.GAPS: []}
@@ -43,21 +44,6 @@ class PlotWithAxesWidget(QG.QWidget):
                 if 1:
                     self.Hlines[linetype].append(self.makeHLine(loc, color))
 
-    def addPixmap(self, pixmap, xvals=None, yvals=None):
-        if xvals is not None:
-            self.checkAndSetXvals(xvals)
-#        self.scene2data_xvals = xvals
-        if yvals is not None:
-            self.scene2data_yvals = yvals
-        brush = QG.QBrush(QG.QColor('black'))
-        self.fscene.setBackgroundBrush(brush)
-        self.gpix = self.fscene.addPixmap(pixmap)
-        rect = QC.QRectF(0, 0, pixmap.width(), pixmap.height())
-        if self.scene_rect == rect:
-            return
-        self.scene_rect = rect  # path.boundingRect()
-        self.reframe()
-        self.fitView()
 
     def replacePixmap(self, pixmap):
         if self.gpix:
@@ -82,7 +68,6 @@ class PlotWithAxesWidget(QG.QWidget):
             print 'removed'
         else:
             print 'no point in removing item ', item
-            pass
         return
 
     def toggle_plot(self, plot_name, state):
@@ -275,6 +260,9 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fV.alert_horizontal_range_change()
 
     def v_scroll_changed(self, value=None):
+        #Stupid hack to make make sure that vertical scrollbar does not emit weird numbers
+        if self.updating:
+            return
         self.fV.alert_vertical_range_change()
 
     def hor_scroll_range(self, minv, maxv):
@@ -291,33 +279,7 @@ class PlotWithAxesWidget(QG.QWidget):
         for line in hlines:
             line.setVisible(visible)
 
-    def scene2data(self, spoint):
-        if isinstance(spoint, QC.QPointF):
-            sx = spoint.x()
-            sy = - spoint.y()
-        else:
-            sx = spoint[0]
-            sy = spoint[1]
-        #try:
-        if 1:
-            #x_out = self.scene2data_xfunc(sx)
-            x_out = sx
-            y_out = - sy  # the value from scene is also data value
-            #if self.scene2data_yvals is None:
-            #    y_out = - sy  # the value from scene is also data value
-            #else:
-            #    y_out = self.scene2data_yvals[int(sy)]
 
-            return QC.QPointF(x_out, y_out)
-        #except:
-        #    return spoint
-
-    def data2scene(self, dpoint):
-        dx = dpoint[0]
-        dy = dpoint[1]
-        #ret = QC.QPointF(self.data2scene_xfunc(dx), -dy)
-        ret = QC.QPointF(dx, -dy)
-        return ret
 
     def addText(self, loc, height, label):
         font = QG.QFont()
@@ -378,10 +340,14 @@ class PlotWithAxesWidget(QG.QWidget):
         #self.fscene.addRect(self.scene_rect)
         self.fscene.setSceneRect(self.scene_rect)
         #self.fV.setViewportMargins(-2, -2, -2, -2)
-        self.ranges_changed()
         QG.QApplication.processEvents()
+        self.ranges_changed()
 
     def updatePlots(self):
+        if self.updating:
+            return
+        self.updating = True
+        print '\nupdateplots called'
         #QG.QApplication.processEvents()
         self.plot_index = 0
         #rects = []
@@ -425,12 +391,12 @@ class PlotWithAxesWidget(QG.QWidget):
         #for rect in rects:
         #    srect = srect.united(rect)
 
-        xmin = min([pd.x_min for pd in self.plot_datas.values()])
-        xmax = max([pd.x_max for pd in self.plot_datas.values()])
-        ymin = min([pd.y_min for pd in self.plot_datas.values()])
-        ymax = max([pd.y_max for pd in self.plot_datas.values()])
-        print 'extents', xmin, xmax, ymin, ymax
-        self.scene_rect = QC.QRectF(xmin,-ymax, xmax-xmin, ymax-ymin)
+        self.xmin = min([pd.x_min for pd in self.plot_datas.values()])
+        self.xmax = max([pd.x_max for pd in self.plot_datas.values()])
+        self.ymin = min([pd.y_min for pd in self.plot_datas.values()])
+        self.ymax = max([pd.y_max for pd in self.plot_datas.values()])
+        print 'extents', self.ymin, self.ymax, self.xmin, self.xmax
+        self.scene_rect = QC.QRectF(self.xmin,-self.ymax, self.xmax-self.xmin, self.ymax-self.ymin)
         #self.scene_rect = self.scene.sceneRect()
 
         #if dont_shrink_in_y:
@@ -448,9 +414,10 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fitView()
         for pd in self.plot_datas.values():
             self.redraw(pd)
-        #self.reframe()
-        #self.fitView()
         self.base_transform = self.fV.transform()
+        self.updating = False
+        #Stupid hack to make make sure that vertical scrollbar does not emit weird numbers
+        self.ranges_changed()
 
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
         print '\naddplot', name
@@ -527,21 +494,19 @@ class PlotWithAxesWidget(QG.QWidget):
         for p in plot_data[1:]:
             path.lineTo(p)
         plotd.boundingrect = path.boundingRect()
-        print 'brect', plotd.boundingrect
         gpath = self.fscene.addPath(path, plotd.pen)
 
         gpath.setZValue(plotd.Z)
 
         plotd.drawn = True
         self.plot_index += 1
-        print 'visible', plotd.visibility
         if not plotd.visibility:
             gpath.setVisible(False)
         plotd.graphic_item = gpath
         # print 'makepath',
         # print 'path br', path.boundingRect()
         # print 'gitem br',gpath.boundingRect()
-        print 'gitem', gpath, gpath.scene()
+        #print 'gitem', gpath, gpath.scene()
         return
 
     def makeCircles(self, plotd):
@@ -614,47 +579,125 @@ class PlotWithAxesWidget(QG.QWidget):
                             #c.setRect(new_x, new_y, new_width, new_height)
                             #c.setRect(new_x, new_y, xsize, ysize)
 
+class PixmapPlotWidget(PlotWithAxesWidget):
+    def scene2data(self, spoint):
+        if isinstance(spoint, QC.QPointF):
+            sx = spoint.x()
+            sy = - spoint.y()
+        else:
+            sx = spoint[0]
+            sy = spoint[1]
+        #try:
+        if 1:
+            #x_out = self.scene2data_xfunc(sx)
+            x_out = sx
+            y_out = self.ymax - sy  # the value from scene is also data value
+            #if self.scene2data_yvals is None:
+            #    y_out = - sy  # the value from scene is also data value
+            #else:
+            #    y_out = self.scene2data_yvals[int(sy)]
 
-class ContinousPlotWidget(PlotWithAxesWidget):
+            return QC.QPointF(x_out, y_out)
 
-    def convert_data(self, plotd):
-        plot_data = [self.data2scene((x, dy)) for x, dy in
-                     zip(plotd.phys_xvalues, plotd.data)]
-        return plot_data
+    def data2scene(self, dpoint):
+        dx = dpoint[0]
+        dy = dpoint[1]
+        #ret = QC.QPointF(self.data2scene_xfunc(dx), -dy)
+        ret = QC.QPointF(dx, self.ymax - dy)
+        return ret
+
+    def addPixmap(self, pixmap, xvals=None, yvals=None):
+        #FIXME uncomment and edit to get non pixel values an axes
+        #if xvals is not None:
+        #    self.checkAndSetXvals(xvals)
+#        self.scene2data_xvals = xvals
+        if yvals is not None:
+            self.scene2data_yvals = yvals
+        brush = QG.QBrush(QG.QColor('black'))
+
+        self.xmax = pixmap.width()
+        self.xmin = 0
+        self.ymax = pixmap.height()
+        self.ymin = 0
+
+        self.fscene.setBackgroundBrush(brush)
+        self.gpix = self.fscene.addPixmap(pixmap)
+        #self.gpix.setPos(0, pixmap.height())
+        rect = QC.QRectF(0, 0, pixmap.width(), pixmap.height())
+        if self.scene_rect == rect:
+            return
+        self.scene_rect = rect  # path.boundingRect()
+        self.reframe()
+        self.fitView()
+
+class TracePlotWidget(PlotWithAxesWidget):
+    def scene2data(self, spoint):
+        if isinstance(spoint, QC.QPointF):
+            sx = spoint.x()
+            sy = - spoint.y()
+        else:
+            sx = spoint[0]
+            sy = spoint[1]
+        #try:
+        if 1:
+            #x_out = self.scene2data_xfunc(sx)
+            x_out = sx
+            y_out = - sy  # the value from scene is also data value
+            #if self.scene2data_yvals is None:
+            #    y_out = - sy  # the value from scene is also data value
+            #else:
+            #    y_out = self.scene2data_yvals[int(sy)]
+
+            return QC.QPointF(x_out, y_out)
+
+    def data2scene(self, dpoint):
+        dx = dpoint[0]
+        dy = dpoint[1]
+        #ret = QC.QPointF(self.data2scene_xfunc(dx), -dy)
+        ret = QC.QPointF(dx, -dy)
+        return ret
+
+
+#class ContinousPlotWidget(PlotWithAxesWidget):
+
+    #def convert_data(self, plotd):
+    #    plot_data = [self.data2scene((x, dy)) for x, dy in
+    #                 zip(plotd.phys_xvalues, plotd.data)]
+    #    return plot_data
 
     #def checkAndSetXvals(self, x_vals):
     #    self.data2scene_xfunc = lambda x: x
     #    self.scene2data_xfunc = lambda x: x
 
 
-class DiscontinousPlotWidget(PlotWithAxesWidget):
+#class DiscontinousPlotWidget(PlotWithAxesWidget):
     # For plotting data from a linescan image, i.e, the averaged fluorescence
     # signal. As the recording can have gaps, we have to take care of
     # discontinuities. This is done by plotting by pixel count and then
     # associating a count with a time through the data2scene function.
 
-    def convert_data(self, plotd):
-        if not plotd.physical_x_data:
-            # pixel vs data. fluorescence data from image
-            plot_data = [QC.QPointF(x,dy) for x, dy in
-                         zip(plotd.xvalues, plotd.data)]
-        else:
-            # time vs data
-            plot_data = [self.data2scene((x, dy)) for x, dy in
-                         zip(plotd.phys_xvalues, plotd.data)]
-        return plot_data
+    #def convert_data(self, plotd):
+    #    if not plotd.physical_x_data:
+    #        # pixel vs data. fluorescence data from image
+    #        plot_data = [QC.QPointF(x,dy) for x, dy in
+    #                     zip(plotd.xvalues, plotd.data)]
+    #    else:
+    #        # time vs data
+    #        plot_data = [self.data2scene((x, dy)) for x, dy in
+    #                     zip(plotd.phys_xvalues, plotd.data)]
+    #    return plot_data
 
-    def checkAndSetXvals(self, x_vals):
-        # We assume that all data plotted on is given with the same dx
-        # (because the data originally comes from a linescan with a given
-        # pixelsize).
-        if not self.max_data_len:
-            self.max_data_len = len(x_vals)
-            if not isinstance(x_vals, list):
-                self.scene2data_xvals = x_vals.tolist()
-            else:
-                self.scene2data_xvals = x_vals
-            self.data2scene_xfunc = interp1d(
-                x_vals, n.arange(len(x_vals)))
-            self.scene2data_xfunc = interp1d(
-                n.arange(len(x_vals)), x_vals)
+    #def checkAndSetXvals(self, x_vals):
+    #    # We assume that all data plotted on is given with the same dx
+    #    # (because the data originally comes from a linescan with a given
+    #    # pixelsize).
+    #    if not self.max_data_len:
+    #        self.max_data_len = len(x_vals)
+    #        if not isinstance(x_vals, list):
+    #            self.scene2data_xvals = x_vals.tolist()
+    #        else:
+    #            self.scene2data_xvals = x_vals
+    #        self.data2scene_xfunc = interp1d(
+    #            x_vals, n.arange(len(x_vals)))
+    #        self.scene2data_xfunc = interp1d(
+    #            n.arange(len(x_vals)), x_vals)

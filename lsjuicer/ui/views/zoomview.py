@@ -12,7 +12,7 @@ class ZoomView(QG.QGraphicsView):
     #scaleSignal = QC.pyqtSignal(float)
     #centerSignal = QC.pyqtSignal(float)
     #visibleRectSignal = QC.pyqtSignal(QC.QRectF)
-    def __init__(self, parent=None, locked = False):
+    def __init__(self, parent=None, locked = True):
         super(ZoomView, self).__init__(parent)
         #full_view is False if the scene does not take up the entire view.
         #For example in cases when fitview keeps the aspect ratio of the scene
@@ -41,10 +41,10 @@ class ZoomView(QG.QGraphicsView):
             self.hor_range_changed.emit(left, right)
 
     def alert_vertical_range_change(self):
-        #print 'ver range change'
+        print 'ver range change'
         if not self.zooming_ver:
             top, bottom = self.visible_vertical_range()
-            #print 'top bot', top, bottom
+            print 'top bot', top, bottom
             self.ver_range_changed.emit(top, bottom)
 
     def visible_horizontal_range(self):
@@ -176,7 +176,7 @@ class ZoomView(QG.QGraphicsView):
         """
         poly = self.mapFromScene(self.sceneRect())
         scene_rect = poly.boundingRect()
-        widget_width = self.rect().width()
+        #widget_width = self.rect().width()
         widget_height = self.rect().height()
         v_axis_start_loc = max(0, scene_rect.top())
         if v_axis_start_loc == 0:

@@ -5,7 +5,7 @@ import numpy
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.data.data import PixmapMaker
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
-from lsjuicer.ui.widgets.plot_with_axes_widget import DiscontinousPlotWidget, SparkFluorescencePlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget, SparkFluorescencePlotWidget
 from lsjuicer.util import helpers
 from lsjuicer.ui.scenes import FDisplay
 from lsjuicer.data.spark import SparkData
@@ -614,7 +614,7 @@ class SparkDetectTab(QG.QTabWidget):
         main_layout = QG.QGridLayout()
         self.setLayout(main_layout)
         #label = QG.QLabel('sparks')
-        self.sparksplot = DiscontinousPlotWidget(self)
+        self.sparksplot = PixmapPlotWidget(self)
         main_layout.addWidget(self.sparksplot,0,0)
         main_layout.setRowStretch(0,1)
         main_layout.setRowStretch(1,3)

@@ -7,7 +7,7 @@ from lsjuicer.util.helpers import round_point
 
 class SnapROIItem(QG.QGraphicsRectItem):
 
-    def __init__(self, selection_type, number, size = None, parent = None):
+    def __init__(self, selection_type, number, size = None, update_on_release = False, parent = None):
         super(SnapROIItem, self).__init__(parent)
         self.active = False
         self.pen = selection_type.appearance.pen
@@ -33,6 +33,9 @@ class SnapROIItem(QG.QGraphicsRectItem):
         self.editable = True
         self.counter = 0
         self.resizable = True
+        self.update_on_release = update_on_release
+        self.emit = False
+
         if size:
             self.resizable = False
 
@@ -57,9 +60,8 @@ class SnapROIItem(QG.QGraphicsRectItem):
         self.setPen(self.pen)
         self.setEditable(True)
         self.initialized = True
-
-
-
+        if self.update_on_release:
+            self.sender.selection_changed.emit()
 
     def mousePressEvent(self,event):
         self.cursorPositionBasedStyling(event)
@@ -84,16 +86,16 @@ class SnapROIItem(QG.QGraphicsRectItem):
                     round_point(new_pos)
                     r.translate(new_pos)
             else:
-                new_pos = pos-event.lastScenePos()
+                new_pos = pos - event.lastScenePos()
                 round_point(new_pos)
                 r.translate(new_pos)
             rn = r.normalized()
             if self.rect() != rn:
-                emit = True
+                self.emit = True
             else:
-                emit = False
+                self.emit = False
             self.setRect(rn)
-            if emit:
+            if self.emit and not self.update_on_release:
                 self.sender.selection_changed.emit()
 
         QG.QGraphicsRectItem.mouseMoveEvent(self,event)

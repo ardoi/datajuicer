@@ -610,7 +610,7 @@ class FixedSizeSnapROI(Selection):
             end_point = start_point + QC.QPointF(size, size)
             self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
-        self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf,size=size)
+        self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf,size=size, update_on_release = True)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
         self._name = "Pixel"
 

@@ -5,7 +5,7 @@ import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
 import numpy as n
 
-from lsjuicer.ui.widgets.plot_with_axes_widget import DiscontinousPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.scenes import FDisplay
 from lsjuicer.ui.items.transient import VisualTransientCollection
 from lsjuicer.ui.items.selection import BoundaryManager, SelectionDataModel
@@ -318,7 +318,7 @@ class TransientTab(QG.QTabWidget):
         #self.setCornerWidget(self.closePB)
         #self.closePB.setEnabled(False)
 
-        self.fplot = DiscontinousPlotWidget(sceneClass = FDisplay, antialias = True, parent = None)
+        self.fplot = TracePlotWidget(sceneClass = FDisplay, antialias = True, parent = None)
         #self.plotAndZoomLayout = QG.QVBoxLayout()
         #self.zoomButtonLayout  = QG.QHBoxLayout()
         #self.plotAndZoomLayout.addWidget(self.fplot)

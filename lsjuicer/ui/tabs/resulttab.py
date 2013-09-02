@@ -3,7 +3,7 @@ import PyQt4.QtGui as QG
 import numpy as n
 import datetime
 
-from lsjuicer.ui.widgets.plot_with_axes_widget import ContinousPlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.scenes.displays import FDisplay
 from lsjuicer.ui.views.dataviews import CopyTableView
 
@@ -475,7 +475,7 @@ class ResultTab(QG.QTabWidget):
         plot_widget = QG.QWidget()
         layout = QG.QVBoxLayout()
         plot_widget.setLayout(layout)
-        plot = ContinousPlotWidget(sceneClass = FDisplay, parent = plot_widget)
+        plot = TracePlotWidget(sceneClass = FDisplay, parent = plot_widget)
         plot.updateLocation.connect(self.updateCoords)
         layout.addWidget(plot)
         #w = QG.QWidget()
