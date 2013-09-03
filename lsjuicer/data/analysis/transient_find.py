@@ -688,7 +688,7 @@ def fit_regs(f, plot=False , baseline = None):
             baseline_f -= res
         baseline_fit_params = n.polyfit(time, baseline_f, 4)
         pf_fun = n.poly1d(baseline_fit_params)
-        final['baseline2'] = baseline_fit_params
+        final['baseline'] = baseline_fit_params
 
     return final
 
