@@ -22,3 +22,5 @@ junk/*
 dist/*
 LSJuicer.egg-info/*
 *.qrc
+bin/.ipynb_checkpoints
+pixfit.ipynb

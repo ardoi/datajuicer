@@ -197,7 +197,7 @@ class Optimizer(ScaledOperation):
     def set_sigmas(self, sigmas):
         self.sigmas = sigmas
 
-    def optimize(self):
+    def optimize(self, max_fev = 100000):
         try:
             parameter_names = self.parameters.keys()
             scaled_initial_conditions = []
@@ -207,7 +207,7 @@ class Optimizer(ScaledOperation):
                 scaled_initial_conditions.append(sic)
             #res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions,ftol=1e-12, xtol=1e-12)
             res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,
-                    scaled_initial_conditions, sigma=self.sigmas, maxfev=100000, factor=.1,
+                    scaled_initial_conditions, sigma=self.sigmas, maxfev=max_fev, factor=.1,
                     epsfcn=1e-7, ftol=self.ftol, xtol=self.xtol)
             scaled_solutions = res[0].tolist()
             self.solutions = {}
@@ -238,8 +238,8 @@ class Optimizer(ScaledOperation):
                 pass
         except:
             print 'exception in optimize'
-            import traceback
-            traceback.print_exc()
+            #import traceback
+            #traceback.print_exc()
             self.solutions = {}
         #print 'sol=',self.solutions
 
@@ -431,7 +431,7 @@ def ff40_start_tau(arg, tau2, mu,d):
     return fit_func_1(arg, tau2, mu, d, 12500., 6000.)
 
 
-def f5(arg, tau2, d, d2, m2, A, B, C):
+def f5(arg, tau2, d,  m2, A, B):
     """same as fit_func_4 but between has a plateau after the rising phase"""
     t=arg
     #mu1 = mu
@@ -444,6 +444,7 @@ def f5(arg, tau2, d, d2, m2, A, B, C):
     f3 = n.exp(-(t-mu2)/tau2)*(1-n.exp(-2.))
     f = A*(f2*((t>mu1)-(t>mu2))+f3*(t>mu2))+B
     return f
+
 
 def ff5_bl(arg, tau2, m2,d2, d,s,A,B,C):
     #start of decay after plateau
@@ -507,28 +508,20 @@ def ff5(arg, tau2, d, d2, m2, s, A, B, C):
     a2e = t/tau2
 
     a31e = (2.*(d*(d + m) + s2))/n.power(d,2)
-    #a31 = n.power(E,a31e)
     a32 = ss.erf((2.*s2 + d*(m - t))/(sqrt2*d*s)) - \
             ss.erf((2*s2 + d*(d + m - t))/(sqrt2*d*s))
 
     a33e = 2.*t/d
-    #a33 = n.power(E,a33e)
     a34 = (2.*B + C)*E2 - A*E2*ss.erf((m - t)/(sqrt2*s)) +\
             A*ss.erf((d + m - t)/(sqrt2*s)) + (-A + (A + C)*E2)*\
             ss.erf((d + d2 + m - t)/(sqrt2*s))
-    #a3 = A*a31*a32 + a33*a34
 
     a4e = (4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
-    #a4 = n.power(E,a4e)
     a5 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
 
-    #a1a2 = n.power(E,a1e+a2e)
     a1a4 = n.power(E,a4e+a1e)
     a1a2a31 = n.power(E,a1e+a2e+a31e)
     a1a2a33 = n.power(E,a1e+a2e+a33e)
-    #res = a1*(a2*a3 +  a4*(-A + (A + C)*E2)*a5)
-    #res = a1a2*(A*a31*a32 + a33*a34) + a1a4*(-A + (A + C)*E2)*a5
-    #res = A*a1a2*a31*a32 + a1a2*a33*a34 + a1a4*(-A + (A + C)*E2)*a5
     mask = a32==0.0
     a1a2a31[mask]=0
     res = A*a1a2a31*a32 + a1a2a33*a34 + a1a4*(-A + (A + C)*E2)*a5
