@@ -290,10 +290,31 @@ class FittedPixel(dbmaster.Base):
     y = Column(Integer, nullable=False)
     event_count = Column(Integer, nullable=False)
     baseline = Column(PickleType)
-    event_parameters = Column(PickleType)
 
+class PixelEvent(dbmaster.Base):
+    __tablename__ = "pixel_events"
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("fitted_pixels.id"))
+    result = relationship("FittedPixel", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
 
+    event_id = Column(Integer, ForeignKey("events.id"))
+    event = relationship("Event", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
+    parameters = Column(PickleType)
 
+class Event(dbmaster.Base):
+    __tablename__ = "events"
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("pixelbypixelfitregion_results.id"))
+    result = relationship("PixelByPixelRegionFitResult", backref=backref("events", cascade='all, delete, delete-orphan'), order_by=id)
+    category_id = Column(Integer, ForeignKey("event_categories.id"))
+    category = relationship("EventCategory", backref=backref("events", cascade='all, delete, delete-orphan'), order_by=id)
+
+class EventCategory(dbmaster.Base):
+    __tablename__ = "event_categories"
+    id = Column(Integer, primary_key=True)
+    name = Column(String)
+    eps = Column(Float)
+    min_size = Column(Integer)
 
 class SearchRegion(dbmaster.Base):
     """Search region for SparkDetect"""

@@ -11,7 +11,7 @@ from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPi
 from lsjuicer.inout.db.sqla import dbmaster
 from lsjuicer.ui.widgets.clusterwidget import ClusterDialog
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
-from lsjuicer.ui.widgets.pixeltracespolotwidget import PixelTracesPlotWidget
+from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
 from lsjuicer.util.threader import FitDialog
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN

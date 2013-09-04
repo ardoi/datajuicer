@@ -212,6 +212,7 @@ class ClusterDialog(QG.QDialog):
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
 
     def add_loc_clusters(self, cluster_data):
+        #TODO remove existing tabs when making new
         for cluster, elements in cluster_data.iteritems():
             if cluster!=-1:
                 data = elements[:,[self.ics[e] for e in self.loc_params]]
