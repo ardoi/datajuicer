@@ -9,6 +9,7 @@ from PyQt4 import QtCore as QC
 from lsjuicer.inout.db import sqlb2
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
+from lsjuicer.inout.db.sqla import PixelEvent
 from lsjuicer.ui.widgets.clusterwidget import ClusterDialog
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
 from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
@@ -124,12 +125,16 @@ class PixelByPixelTab(QG.QTabWidget):
             fitted_pixel.y = xy[1]
             if res:
                 fitted_pixel.baseline = res['baseline']
-                fitted_pixel.event_count = len(res['transients'])
-                fitted_pixel.event_parameters = res['transients']
+                #fitted_pixel.event_count = len(res['transients'])
+                for c,transient in res['transients'].iteritems():
+                    pixel_event = PixelEvent()
+                    pixel_event.pixel = fitted_pixel
+                    pixel_event.parameters = transient
+                #fitted_pixel.event_parameters = res['transients']
             else:
                 fitted_pixel.event_count = 0
         session2.close()
-        print self.analysis, session
+        #print self.analysis, session
         session.commit()
         session.close()
         print 'saving done'
@@ -275,7 +280,7 @@ class PixelByPixelTab(QG.QTabWidget):
         #+1 because in results the indices are skewed by one
         #print self.fit_result.id, max_index
         sample_pixel = self.fit_result.get_fitted_pixel(max_index[1], max_index[0])
-        for key in sample_pixel.event_parameters[0]:
+        for key in sample_pixel.pixel_events[0].parameters:
             param_combo.addItem(key)
         param_combo.addItem('Events')
         param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)

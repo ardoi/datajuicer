@@ -288,18 +288,23 @@ class FittedPixel(dbmaster.Base):
     result = relationship("PixelByPixelRegionFitResult", backref=backref("pixels", cascade='all, delete, delete-orphan'), order_by=id)
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
-    event_count = Column(Integer, nullable=False)
+    #event_count = Column(Integer, nullable=False)
     baseline = Column(PickleType)
+
+    @property
+    def event_count(self):
+        return len(self.pixel_events)
 
 class PixelEvent(dbmaster.Base):
     __tablename__ = "pixel_events"
     id = Column(Integer, primary_key=True)
-    result_id = Column(Integer, ForeignKey("fitted_pixels.id"))
-    result = relationship("FittedPixel", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
+    pixel_id = Column(Integer, ForeignKey("fitted_pixels.id"))
+    pixel = relationship("FittedPixel", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
 
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
     parameters = Column(PickleType)
+
 
 class Event(dbmaster.Base):
     __tablename__ = "events"
@@ -314,7 +319,7 @@ class EventCategory(dbmaster.Base):
     id = Column(Integer, primary_key=True)
     name = Column(String)
     eps = Column(Float)
-    min_size = Column(Integer)
+    min_samples = Column(Integer)
 
 class SearchRegion(dbmaster.Base):
     """Search region for SparkDetect"""
@@ -416,7 +421,7 @@ class Image(dbmaster.Base):
     _exp_info_id = Column(Integer, ForeignKey("exp_info.id"))
     _exp_info = relationship("ExperimentalInfo",
             backref=backref("image", order_by=id), uselist=False)
-    __mapper_args__ = { 'polymorphic_identity':'analysis', 'polymorphic_on':type}
+    __mapper_args__ = { 'polymorphic_identity':'image', 'polymorphic_on':type}
 
     @property
     def exp_info(self):
@@ -580,8 +585,8 @@ class PixelFittedSyntheticImage(Image):
 class MicroscopeImage(Image):
     """Representation of image recorded by the microscope"""
     __tablename__ = "microscope_images"
+    id = Column(Integer, ForeignKey('images.id'), primary_key=True)
     #ome_dir = os.path.join(os.getenv('HOME'), '.JuicerTemp')
-    ome_dir = dbmaster.get_config_setting_value('ome_folder')
     id = Column(Integer, ForeignKey('images.id'), primary_key=True)
     _file_hash = Column(String(200), nullable=False)#, unique=True)
     _file_name = Column(String(500), nullable=False)
@@ -589,6 +594,10 @@ class MicroscopeImage(Image):
     __mapper_args__ = {
         'polymorphic_identity':'microscope_image'
     }
+
+    @property
+    def ome_dir(self):
+        return dbmaster.get_config_setting_value('ome_folder')
 
     @property
     def file_hash(self):

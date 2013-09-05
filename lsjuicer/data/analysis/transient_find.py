@@ -751,10 +751,10 @@ def make_data_by_size(results, key, number ):
         x = res.x
         y = res.y
         try:
-            transients = res.event_parameters.values()
-            transients.sort(key=lambda x:x['A'], reverse = True)
+            transients = res.pixel_events
+            transients.sort(key=lambda x:x.parameters['A'], reverse = True)
             transient = transients[number]
-            val = transient[key]
+            val = transient.parameters[key]
             out[y,x]=val
         except:
             #traceback.print_exc()
@@ -872,9 +872,9 @@ def full_res(time, result, only_bl = False):
     f = baseline
     if only_bl:
         return f
-    for i,t in enumerate(result.event_parameters.values()):
+    for i,t in enumerate(result.pixel_events):
         #print 'transient',i
-        res = fitfun.ff6(time, **t)
+        res = fitfun.ff6(time, **t.parameters)
         if True not in n.isnan(res):
             f+=res
         else:
