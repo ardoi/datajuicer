@@ -270,11 +270,11 @@ class PixelByPixelTab(QG.QTabWidget):
         self.res = results
         param_combo = QG.QComboBox()
         events = tf.data_events(self.res)
-        max_n = int(events.max())
         #convert numpy.int64 to python int so that sqlalchemy can
         #understand it
-        max_index = [int(el) for el in
-                numpy.unravel_index(events.argmax(), events.shape)]
+        max_n = int(events.max())
+        #max_index = [int(el) for el in
+        #        numpy.unravel_index(events.argmax(), events.shape)]
         #+1 because in results the indices are skewed by one
         #print self.fit_result.id, max_index
         #sample_pixel = self.fit_result.get_fitted_pixel(max_index[1], max_index[0])
@@ -297,22 +297,22 @@ class PixelByPixelTab(QG.QTabWidget):
         self.layout().addLayout(hlayout)
         self.t_number = 0
         self.param = "A"
-        pb_show_pixel_traces  = QG.QPushButton("Show pixel data")
-        pb_show_pixel_traces.setCheckable(True)
-        pb_show_pixel_traces.clicked.connect(self.show_pixel_traces)
-        pb_make_new_stack = QG.QPushButton("New stack from fit")
-        pb_make_new_stack.clicked.connect(self.make_new_stack)
-        hlayout.addWidget(pb_show_pixel_traces)
-        hlayout.addWidget(pb_make_new_stack)
+        pb_do_clustering  = QG.QPushButton("Do clustering")
+        pb_do_clustering.setCheckable(True)
+        pb_do_clustering.clicked.connect(self.do_clustering)
+        #pb_make_new_stack = QG.QPushButton("New stack from fit")
+        #pb_make_new_stack.clicked.connect(self.make_new_stack)
+        hlayout.addWidget(pb_do_clustering)
+        #hlayout.addWidget(pb_make_new_stack)
         self.show_res()
         session.close()
 
-    def make_new_stack(self):
-        new_data = tf.clean_plot_data(self.res)
-        bl = tf.clean_plot_data(self.res, only_bl = True)
-        print new_data
-        print bl
-        pass
+    #def make_new_stack(self):
+    #    new_data = tf.clean_plot_data(self.res)
+    #    bl = tf.clean_plot_data(self.res, only_bl = True)
+    #    #print new_data
+    #    #print bl
+    #    pass
 
     def param_combo_changed(self, param):
         self.param = str(param)
@@ -329,7 +329,7 @@ class PixelByPixelTab(QG.QTabWidget):
             data = tf.make_data_by_size(self.res, self.param, self.t_number)
         self.plot_widget.set_data(data)
 
-    def show_pixel_traces(self, checked):
+    def do_clustering(self, checked):
         dialog = ClusterDialog(self.analysis, self)
         dialog.show()
         #self.pixel_trace_widget.setVisible(checked)

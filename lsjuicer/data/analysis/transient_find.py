@@ -911,8 +911,9 @@ def fitted_pixel_ff0(pixel, event = 0):
     #possible bug if baseline is higher than A
     region = pixel.result.region
     #times = n.arange(region.start_frame, region.end_frame,1.0)
+    #FIXME probably has to be changed to actual time
     times = n.arange(0, region.end_frame-region.start_frame,1.0)
-    param = pixel.event_parameters[event]
+    param = pixel.pixel_events[event].parameters
     f_vals = fitfun.ff6(times, **param)
     baseline_f = n.poly1d(pixel.baseline)
     baseline = baseline_f(times)
@@ -926,20 +927,21 @@ def fitted_pixel_max(pixel, event = 0):
 def do_event_list(pixs):
     events=[]
     for p in pixs:
-        for event_no in p.event_parameters:
+        for i, pixel_event in  enumerate(p.pixel_events):
             event={}
             event['pixel']=p
-            event['n']=event_no
+            event['n']= i
             event['x'] = p.x
             event['y'] = p.y
-            ep = p.event_parameters[event_no]
+            event['id']= pixel_event.id
+            ep = pixel_event.parameters
             for param in ep:
                 if param=='A':
-                    event[param]=fitted_pixel_max(p, event_no)
+                    #use dF/F0 instead of raw A value
+                    # -1 because fitted_pixel_max returns F/F0
+                    event[param]=fitted_pixel_max(p, i) - 1
                 else:
                     event[param] = ep[param]
-            if p.x == 30 and p.y==10:
-                print event
             events.append(event)
             #break
     return events
@@ -949,7 +951,5 @@ def do_event_array(elist, names):
     for i,e in enumerate(elist):
         for j,name in enumerate(names):
             out[i,j] = e[name]
-        if out[i,1]==30 and out[i,2]==10:
-            print out[i,:]
     return out
 

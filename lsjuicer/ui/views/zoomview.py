@@ -41,10 +41,8 @@ class ZoomView(QG.QGraphicsView):
             self.hor_range_changed.emit(left, right)
 
     def alert_vertical_range_change(self):
-        print 'ver range change'
         if not self.zooming_ver:
             top, bottom = self.visible_vertical_range()
-            print 'top bot', top, bottom
             self.ver_range_changed.emit(top, bottom)
 
     def visible_horizontal_range(self):
@@ -58,7 +56,7 @@ class ZoomView(QG.QGraphicsView):
     def visible_vertical_range(self):
         if 0:#self.zoom_count_ver:
             rect = self.mapToScene(self.viewport().geometry()).boundingRect()
-            print rect
+            #print rect
         else:
             pass
             #for some reason the view shows more of the scene than it should. In other cases this is fine, but with 0 zoom level this effect causes the axis ticks to go wrong. To prevent that we use the known scene rectangle

@@ -71,6 +71,9 @@ class ClusterWidget(QG.QWidget):
         min_sample_spinbox.setMaximum(200)
         min_sample_spinbox.setSingleStep(1)
         min_sample_spinbox.setValue(settings['min_samples'])
+        save_pb = QG.QPushButton("Save")
+        button_layout.addWidget(save_pb)
+        save_pb.clicked.connect(self.save)
 
         self.eps_spinbox = eps_spinbox
         self.min_sample_spinbox = min_sample_spinbox
@@ -129,6 +132,11 @@ class ClusterWidget(QG.QWidget):
             plotwidget.fitView()
         self.clusters_ready.emit(self.clusters)
 
+    def save(self):
+        print 'save'
+        print self.clusters
+
+
 class Clusterer(object):
     @staticmethod
     def cluster_elements(labels, data):
@@ -142,12 +150,12 @@ class Clusterer(object):
     def cluster(data, eps, min_samples):
         #D = metrics.euclidean_distances(data)
         #S = 1 - (D / numpy.max(D))
-        print 'clustering', eps, min_samples
-        print data.shape, data[0]
+        #print 'clustering', eps, min_samples
+        #print data.shape, data[0]
         db = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
         #core_samples = db.core_sample_indices_
         labels = db.labels_
-        print set(labels)
+        #print set(labels)
         # Number of clusters in labels, ignoring noise if present.
         #n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
         return labels
@@ -209,6 +217,7 @@ class ClusterDialog(QG.QDialog):
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
 
     def add_loc_clusters(self, cluster_data):
+        """Add a tab for each shape cluster to be analyzed based on location"""
         #TODO remove existing tabs when making new
         for cluster, elements in cluster_data.iteritems():
             if cluster!=-1:
@@ -218,34 +227,6 @@ class ClusterDialog(QG.QDialog):
                 print 'loc ics',loc_ics,data.shape
                 tab = ClusterWidget(data, plot_pairs, loc_ics, {'eps':2.5, 'min_samples':15},parent=self.tabs)
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
-
-
-        #        for spp in loc_plot_pairs:
-        #            x=spp[0]
-        #            y=spp[1]
-        #            plotwidget = ContinousPlotWidget(self, antialias=False,
-        #                xlabel = x, ylabel = y)
-        #            plotwidgets[cluster][spp] = plotwidget
-        #            plot_layout.addWidget(plotwidgets[cluster][spp])
-        #        for type_cluster, elements  in  clusters.iteritems():
-        #            group_name = "Group %i"%cluster
-        #            if type_cluster != -1:
-        #                color = colornames.next()
-        #            else:
-        #                color = 'black'
-        #            style={'style':'circles', 'color':color, 'alpha':0.25}
-        #            if type_cluster == -1:
-        #                style.update({'size':0.5,'alpha':0.75})
-
-        #            for spp in loc_plot_pairs:
-        #                x=loc_ics[spp[0]]
-        #                y=loc_ics[spp[1]]
-        #                plotwidget = plotwidgets[cluster][spp]
-        #                plotwidget.addPlot(group_name, elements[:,x], elements[:,y], plotstyle = style, hold_update = True)
-
             self.tabs.setCurrentIndex(index)
-        #    for spp, plotwidget in plotwidgets[cluster].iteritems():
-        #        plotwidget.updatePlots()
-        #        plotwidget.fitView()
 
 
