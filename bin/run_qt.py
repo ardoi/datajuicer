@@ -103,4 +103,5 @@ if __name__ == "__main__":
         sys.exit(0)
     gui.show()
     gui.showMaximized()
+    gui.raise_()
     app.exec_()
