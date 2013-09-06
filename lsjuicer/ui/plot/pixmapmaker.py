@@ -75,35 +75,39 @@ class PixmapMaker(object):
         #    print 'nans'
         # dd = n.ma.masked_array(dd,nans)
         # array of dd values that are not nan (for stats)
-        if n.any(nans):
-            ddn = dd[n.invert(n.isnan(dd))]
-            # array where nan has been replaced by neigbourhood average
-            nan_coords = n.where(nans)
-            y_nan, x_nan = nan_coords
-            for y, x in zip(y_nan, x_nan):
-                dd[y, x] = nearest_average(dd, x, y)
-        else:
-            ddn = dd
-        if self.blur:
-        # if 1:
-            # dd = helpers.blur_image(dd, self.blur)
-            pix_size = self.pipechain.pixel_size
-            blur = self.blur * n.ones(pix_size.shape) / pix_size
-            # the gaussian filter takes arguments in
-            # different order - [y,x] instead of [x,y]
-            blur = blur[::-1]
-            # use the same blur in temporal direction(x) as in spatial(y)
-            blur[1] = blur[0]
-            blur = self.blur * n.ones(pix_size.shape)
-            # print 'blur settings',blur, pix_size, self.blur,type(blur)
-            # print dd.shape
-            # dd = sn.gaussian_filter(dd, blur)
-            dd = sn.uniform_filter(dd, blur)
+        allnans = n.all(nans)
+        if not allnans:
+            if n.any(nans):
+                ddn = dd[n.invert(n.isnan(dd))]
+                print 'ddn',ddn
+                print 'dd',dd
+                # array where nan has been replaced by neigbourhood average
+                nan_coords = n.where(nans)
+                y_nan, x_nan = nan_coords
+                for y, x in zip(y_nan, x_nan):
+                    dd[y, x] = nearest_average(dd, x, y)
+            else:
+                ddn = dd
+            if self.blur:
+            # if 1:
+                # dd = helpers.blur_image(dd, self.blur)
+                pix_size = self.pipechain.pixel_size
+                blur = self.blur * n.ones(pix_size.shape) / pix_size
+                # the gaussian filter takes arguments in
+                # different order - [y,x] instead of [x,y]
+                blur = blur[::-1]
+                # use the same blur in temporal direction(x) as in spatial(y)
+                blur[1] = blur[0]
+                blur = self.blur * n.ones(pix_size.shape)
+                # print 'blur settings',blur, pix_size, self.blur,type(blur)
+                # print dd.shape
+                # dd = sn.gaussian_filter(dd, blur)
+                dd = sn.uniform_filter(dd, blur)
 
-        # saturation
-        cut_max = self.pipechain.percentage_value(self.saturation)
-        dd = exposure.rescale_intensity(dd, in_range=(ddn.min(), cut_max),
-                                        out_range=(0.0, 1.0))
+            # saturation
+            cut_max = self.pipechain.percentage_value(self.saturation)
+            dd = exposure.rescale_intensity(dd, in_range=(ddn.min(), cut_max),
+                                            out_range=(0.0, 1.0))
         # print '\ndd',dd,cut_max
         # colormap for image
         # if n.any(nans):
@@ -115,7 +119,7 @@ class PixmapMaker(object):
         # print dd
         dd = n.ma.masked_array(dd, nans)
         cmap = cm.get_cmap(self.colormap)
-        cmap.set_bad(color='k')
+        cmap.set_bad(color='r')
         d2 = cmap.__call__(dd, bytes=True)
         # print '\nd2',d2
         d2.shape = (dd.size, 4)
@@ -144,7 +148,7 @@ class PixmapMaker(object):
 
 def nearest_average(data, x, y):
     margin = 1
-    while True:
+    while margin<5:
         x0 = max(0, x - margin)
         x1 = min(data.shape[1], x + margin + 1)
         y0 = max(0, y - margin)
@@ -157,3 +161,4 @@ def nearest_average(data, x, y):
         else:
             margin += 1
             continue
+    return 0.0

@@ -169,7 +169,6 @@ class PixelByPixelTab(QG.QTabWidget):
         traces = (x - 2*self.dx)*(y - 2*self.dy)
         return traces
 
-
     def set_info_text(self):
         text = self.settings_text + "<br><br>" + self.status
         self.info_widget.setHtml(text)
@@ -250,7 +249,6 @@ class PixelByPixelTab(QG.QTabWidget):
             self.fit_result = self.analysis.fitregions[0].results[0]
             self.get_res()
 
-
     def get_res(self):
         results = {}
         session = dbmaster.object_session(self.fit_result)
@@ -279,8 +277,11 @@ class PixelByPixelTab(QG.QTabWidget):
                 numpy.unravel_index(events.argmax(), events.shape)]
         #+1 because in results the indices are skewed by one
         #print self.fit_result.id, max_index
-        sample_pixel = self.fit_result.get_fitted_pixel(max_index[1], max_index[0])
-        for key in sample_pixel.pixel_events[0].parameters:
+        #sample_pixel = self.fit_result.get_fitted_pixel(max_index[1], max_index[0])
+        #FIXME Bad bad bad
+        parameters=['A','m2', 'tau2', 'd', 'd2', 's']
+        #for key in sample_pixel.pixel_events[0].parameters:
+        for key in parameters:
             param_combo.addItem(key)
         param_combo.addItem('Events')
         param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)

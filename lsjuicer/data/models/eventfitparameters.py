@@ -12,7 +12,6 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
         self.emit(QC.SIGNAL('modelAboutToBeReset()'))
         self.events = res.pixel_events
         self.rows = res.event_count
-        #print 'events', self.events, self.columns
         self.emit(QC.SIGNAL('modelReset()'))
         self.emit(QC.SIGNAL('layoutChanged()'))
 
@@ -44,7 +43,4 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
             return "%.3f"%(event.parameters[self.keys[col]])
         else:
             return QC.QVariant()
-
-
-
 

@@ -87,8 +87,8 @@ class Worker(Process):
             # f=10.0
         except:
             # self.logger.info("job %i failed"%self.current_job_id)
-            print '\n\n\nboooooo'
-            self.logger.info("job %i failed %s" % (
+            #print '\n\n\nboooooo'
+            self.logger.warning("job %i failed %s" % (
                 self.current_job_id, traceback.format_exc()))
             f = None
         self.logger.info("job %i returning" % self.current_job_id)
