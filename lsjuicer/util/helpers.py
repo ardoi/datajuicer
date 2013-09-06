@@ -544,7 +544,12 @@ def rect_from_dict(dict_in):
 #    else:
 #        return (intersected,
 #                [rect_l1.left(), rect_l1.right(), rect_l1.top(), rect_l1.bottom()], 0)
-
+def ipython_shell():
+    from IPython.frontend.terminal.embed import InteractiveShellEmbed
+    #from IPython import embed_kernel
+    QC.pyqtRemoveInputHook()
+    ipshell=InteractiveShellEmbed()
+    ipshell()
 
 @timeIt
 def evolve_in_bits(qin, a, b, times=1):

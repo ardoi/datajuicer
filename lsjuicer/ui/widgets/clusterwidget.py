@@ -10,6 +10,7 @@ from PyQt4 import QtCore as QC
 from lsjuicer.inout.db.sqla import dbmaster
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
+from lsjuicer.util.helpers import ipython_shell
 
 def normify(a):
     #you can use preprocessing.scale instead
@@ -203,11 +204,7 @@ class ClusterDialog(QG.QDialog):
             #shape_cluster_tab.do()
             shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
         except:
-            from IPython.frontend.terminal.embed import InteractiveShellEmbed
-            #from IPython import embed_kernel
-            QC.pyqtRemoveInputHook()
-            ipshell=InteractiveShellEmbed()
-            ipshell()
+            ipython_shell()
             #embed_kernel()
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
 

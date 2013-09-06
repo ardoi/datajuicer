@@ -9,6 +9,7 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, PickleType
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import joinedload
 
 from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.static.constants import ImageStates
@@ -271,8 +272,10 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
             session = dbmaster.get_session()
             new_session = True
         try:
-            pixel = session.query(FittedPixel).filter(FittedPixel.result==self).\
-                filter(FittedPixel.x==int(x)).filter(FittedPixel.y==int(y)).one()
+            pixel = session.query(FittedPixel).options(joinedload(FittedPixel.pixel_events)).\
+                    filter(FittedPixel.result==self).\
+                    filter(FittedPixel.x==int(x)).\
+                    filter(FittedPixel.y==int(y)).one()
             ret = pixel
         except NoResultFound:
             ret = None
