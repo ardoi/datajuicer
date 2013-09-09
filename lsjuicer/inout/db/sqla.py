@@ -324,6 +324,10 @@ class EventCategory(dbmaster.Base):
     category_type = relationship("EventCategoryType")
     eps = Column(Float)
     min_samples = Column(Integer)
+    description = Column(String)
+
+    def __str__(self):
+        return "min samples={}, eps={:.2f}".format(self.min_samples, self.eps)
 
 class EventCategoryType(dbmaster.Base):
     __tablename__ = "event_category_types"
@@ -342,7 +346,7 @@ class EventCategoryLocationType(EventCategoryType):
     }
 
 class EventCategoryShapeType(EventCategoryType):
-    """Category of events based on their location"""
+    """Category of events based on their shape"""
     __tablename__ = "event_category_shape_types"
     id = Column(ForeignKey("event_category_types.id"), primary_key=True)
     __mapper_args__ = {

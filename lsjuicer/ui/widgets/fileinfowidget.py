@@ -112,7 +112,7 @@ class DBComboAddBox(QG.QWidget):
             self.populate_combobox()
             self.add_pb.setChecked(False)
 
-    def __init__(self, db_class, parent = None):
+    def __init__(self, db_class, show_None = True, parent = None):
         super(DBComboAddBox, self).__init__(parent)
         layout = QG.QVBoxLayout()
         field_layout = QG.QHBoxLayout()
@@ -121,6 +121,7 @@ class DBComboAddBox(QG.QWidget):
         layout.addLayout(field_layout)
         self.setLayout(layout)
         self.db_class = db_class
+        self.show_None = show_None
 
         combo = QG.QComboBox()
         add_pb = QG.QToolButton()
@@ -144,7 +145,8 @@ class DBComboAddBox(QG.QWidget):
     def populate_combobox(self):
         session = dbmaster.get_session()
         items = session.query(self.db_class).all()
-        self.combo.addItem("None")
+        if self.show_None:
+            self.combo.addItem("None")
         for item in items:
             self.combo.addItem(item.name)
         dbmaster.end_session(session)

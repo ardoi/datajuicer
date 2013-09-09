@@ -235,18 +235,21 @@ class EventCategoryWidget(QG.QWidget):
     def __init__(self, category_class, parent = None):
         super(EventCategoryWidget, self).__init__(parent)
         self.category_class = category_class
+        self.cat_type = None
         layout = QG.QVBoxLayout()
         self.setLayout(layout)
         gbox = QG.QGroupBox("Clustering settings")
         settings_layout = MyFormLikeLayout()
         gbox.setLayout(settings_layout)
         layout.addWidget(gbox)
-        combo = DBComboAddBox(category_class)
+        combo = DBComboAddBox(category_class, show_None = False)
         self.combo=combo
         combo.combo.currentIndexChanged[QC.QString].connect(self.update_settings)
         settings_layout.add_row("Type", combo)
         settings_combo = QG.QComboBox()
+        settings_combo.currentIndexChanged.connect(self.update_spinboxes)
         settings_layout.add_row("Parameters", settings_combo)
+        self.settings_combo =settings_combo
 
         #ms_layout = QG.QHBoxLayout()
         #settings_edit_layout.addLayout(ms_layout)
@@ -262,8 +265,8 @@ class EventCategoryWidget(QG.QWidget):
         #eps_layout.addWidget(eps_spinbox)
         eps_spinbox.setMinimum(0.1)
         eps_spinbox.setMaximum(25.0)
-        eps_spinbox.setSingleStep(0.1)
-        min_sample_spinbox.setMinimum(1)
+        eps_spinbox.setSingleStep(0.05)
+        min_sample_spinbox.setMinimum(2)
         min_sample_spinbox.setMaximum(200)
         min_sample_spinbox.setSingleStep(1)
         settings_layout.add_row("Edit settings", edit_checkbox)
@@ -275,8 +278,19 @@ class EventCategoryWidget(QG.QWidget):
         self.eps_spinbox = eps_spinbox
         self.save_pb = save_pb
         edit_checkbox.toggled.connect(self.toggle_edit)
+        self.edit_checkbox = edit_checkbox
         self.toggle_edit(False)
         self.save_pb.clicked.connect(self.save)
+        self.activate()
+
+    def activate(self):
+        name = self.combo.get_value()
+        if name:
+            self.update_settings(name)
+            self.edit_checkbox.setEnabled(True)
+        else:
+            self.edit_checkbox.setEnabled(False)
+
 
     def save(self):
         sess = dbmaster.get_session()
@@ -292,19 +306,65 @@ class EventCategoryWidget(QG.QWidget):
         print existing
         if existing:
             print "settings alread exist",(samples, eps)
-        pass
+            QG.QMessageBox.information(self, "Category exists",
+                    """<p style='font-weight:normal;'>A <strong
+                    style='color:navy;'>{}</strong> category with parameters
+                    <br><strong style='color:navy'>{}</strong> already exists</p>"""
+                    .format(temp_cat_type.category_type, str(existing[0])))
+        else:
+            ec = sa.EventCategory()
+            ec.eps = eps
+            ec.min_samples = samples
+            ec.category_type = self.cat_type
+            sess.add(ec)
+            sess.commit()
+            self.activate()
+            self.settings_combo.setCurrentIndex(self.settings_combo.count()-1)
+        sess.close()
 
     def toggle_edit(self, state):
         self.min_sample_spinbox.setEnabled(state)
         self.eps_spinbox.setEnabled(state)
         self.save_pb.setEnabled(state)
 
-    def update_settings(self, name):
+    def get_category_type_by_name(self, name):
         sess = dbmaster.get_session()
         temp = self.category_class()
-        settings = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+        cat_type = sess.query(sa.EventCategoryType).\
+                filter(sa.EventCategoryType.name == str(name)).\
+                filter(sa.EventCategoryType.category_type == temp.category_type).one()
+        sess.close()
+        return cat_type
+
+    def update_settings(self, name):
+        if not name:
+            #DBComboBox updates stuff internally and can remove entries
+            #To keep this function from crashing such calls are ignored here
+            return
+        sess = dbmaster.get_session()
+        temp = self.category_class()
+        print 'update',name, temp.category_type
+        print self.combo.combo.currentIndex()
+        self.settings = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
                 filter(sa.EventCategoryType.category_type == temp.category_type).\
                 filter(sa.EventCategoryType.name == str(name)).all()
         del temp
-        print settings
+        self.cat_type = self.get_category_type_by_name(name)
+        self.settings_combo.clear()
+        if not self.settings:
+            #self.toggle_edit(True)
+            self.edit_checkbox.setEnabled(True)
+            self.edit_checkbox.toggle()
+        else:
+            print self.settings
+            for s in self.settings:
+                self.settings_combo.addItem(str(s))
         sess.close()
+
+    def update_spinboxes(self, index):
+        setting = self.settings[index]
+        self.min_sample_spinbox.setValue(setting.min_samples)
+        self.eps_spinbox.setValue(setting.eps)
+
+
+
