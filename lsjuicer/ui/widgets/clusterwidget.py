@@ -11,7 +11,7 @@ from lsjuicer.inout.db.sqla import dbmaster
 import lsjuicer.inout.db.sqla as sa
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
-from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout
+from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout, FocusLineEdit
 from lsjuicer.util.helpers import ipython_shell
 
 def normify(a):
@@ -250,30 +250,27 @@ class EventCategoryWidget(QG.QWidget):
         settings_combo.currentIndexChanged.connect(self.update_spinboxes)
         settings_layout.add_row("Parameters", settings_combo)
         self.settings_combo =settings_combo
+        self.settings_combo.setMinimumWidth(250)
 
-        #ms_layout = QG.QHBoxLayout()
-        #settings_edit_layout.addLayout(ms_layout)
-        #min_sample_label  = QG.QLabel("Minimum core samples:",parent=self)
         edit_checkbox = QG.QCheckBox(self)
         min_sample_spinbox = QG.QSpinBox(self)
-        #ms_layout.addWidget(min_sample_label)
-        #ms_layout.addWidget(min_sample_spinbox)
-        #eps_layout = QG.QHBoxLayout()
-        #eps_label  = QG.QLabel("Eps:",parent=self)
         eps_spinbox = QG.QDoubleSpinBox(self)
-        #eps_layout.addWidget(eps_label)
-        #eps_layout.addWidget(eps_spinbox)
         eps_spinbox.setMinimum(0.1)
         eps_spinbox.setMaximum(25.0)
         eps_spinbox.setSingleStep(0.05)
         min_sample_spinbox.setMinimum(2)
         min_sample_spinbox.setMaximum(200)
         min_sample_spinbox.setSingleStep(1)
+        desc_edit = FocusLineEdit()
+        desc_edit.set_default_text("optional")
+        self.desc_edit = desc_edit
         settings_layout.add_row("Edit settings", edit_checkbox)
+        settings_layout.add_row("Description", desc_edit)
         settings_layout.add_row("Minimum core sample", min_sample_spinbox)
         settings_layout.add_row("EPS", eps_spinbox)
         save_pb = QG.QPushButton("Save")
         settings_layout.add_row("", save_pb)
+
         self.min_sample_spinbox = min_sample_spinbox
         self.eps_spinbox = eps_spinbox
         self.save_pb = save_pb
@@ -298,12 +295,20 @@ class EventCategoryWidget(QG.QWidget):
         samples = self.min_sample_spinbox.value()
         name = self.combo.get_value()
         eps = self.eps_spinbox.value()
-        existing = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+        desc = self.desc_edit.get_text()
+        print 'desc'
+
+        #build a query to find matchin categories
+        query = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
                 filter(sa.EventCategoryType.category_type == temp_cat_type.category_type).\
                 filter(sa.EventCategoryType.name == name).\
                 filter(sa.EventCategory.eps == eps).\
-                filter(sa.EventCategory.min_samples == samples).all()
-        print existing
+                filter(sa.EventCategory.min_samples == samples)
+        #categories which are exactly the same
+        existing = query.filter(sa.EventCategory.description == desc).all()
+        #categories with different description
+        different_desc = query.filter(sa.EventCategory.description != desc).all()
+        #we don't want categories with same settings but different descriptions
         if existing:
             print "settings alread exist",(samples, eps)
             QG.QMessageBox.information(self, "Category exists",
@@ -311,21 +316,30 @@ class EventCategoryWidget(QG.QWidget):
                     style='color:navy;'>{}</strong> category with parameters
                     <br><strong style='color:navy'>{}</strong> already exists</p>"""
                     .format(temp_cat_type.category_type, str(existing[0])))
+        elif different_desc:
+            print 'desc'
+            ec = different_desc[0]
+            ec.description = desc
+            sess.commit()
+            self.reload_settings()
+            #self.activate()
         else:
             ec = sa.EventCategory()
             ec.eps = eps
             ec.min_samples = samples
+            ec.description = desc
             ec.category_type = self.cat_type
             sess.add(ec)
             sess.commit()
             self.activate()
-            self.settings_combo.setCurrentIndex(self.settings_combo.count()-1)
+            self.settings_combo.setCurrentIndex(self.settings_combo.count() - 1)
         sess.close()
 
     def toggle_edit(self, state):
         self.min_sample_spinbox.setEnabled(state)
         self.eps_spinbox.setEnabled(state)
         self.save_pb.setEnabled(state)
+        self.desc_edit.setEnabled(state)
 
     def get_category_type_by_name(self, name):
         sess = dbmaster.get_session()
@@ -334,21 +348,25 @@ class EventCategoryWidget(QG.QWidget):
                 filter(sa.EventCategoryType.name == str(name)).\
                 filter(sa.EventCategoryType.category_type == temp.category_type).one()
         sess.close()
+        del temp
         return cat_type
+
+    def reload_settings(self):
+        name = self.combo.get_value()
+        sess = dbmaster.get_session()
+        temp = self.category_class()
+        self.settings = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+                filter(sa.EventCategoryType.category_type == temp.category_type).\
+                filter(sa.EventCategoryType.name == str(name)).all()
+        del temp
+        sess.close()
 
     def update_settings(self, name):
         if not name:
             #DBComboBox updates stuff internally and can remove entries
             #To keep this function from crashing such calls are ignored here
             return
-        sess = dbmaster.get_session()
-        temp = self.category_class()
-        print 'update',name, temp.category_type
-        print self.combo.combo.currentIndex()
-        self.settings = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
-                filter(sa.EventCategoryType.category_type == temp.category_type).\
-                filter(sa.EventCategoryType.name == str(name)).all()
-        del temp
+        self.reload_settings()
         self.cat_type = self.get_category_type_by_name(name)
         self.settings_combo.clear()
         if not self.settings:
@@ -356,15 +374,20 @@ class EventCategoryWidget(QG.QWidget):
             self.edit_checkbox.setEnabled(True)
             self.edit_checkbox.toggle()
         else:
-            print self.settings
+            #print self.settings
             for s in self.settings:
                 self.settings_combo.addItem(str(s))
-        sess.close()
+        #sess.close()
 
     def update_spinboxes(self, index):
-        setting = self.settings[index]
-        self.min_sample_spinbox.setValue(setting.min_samples)
-        self.eps_spinbox.setValue(setting.eps)
-
+        try:
+            setting = self.settings[index]
+            self.min_sample_spinbox.setValue(setting.min_samples)
+            self.eps_spinbox.setValue(setting.eps)
+            self.desc_edit.set_text(setting.description)
+        except IndexError:
+            self.min_sample_spinbox.setValue(0)
+            self.eps_spinbox.setValue(0)
+            self.desc_edit.set_text("")
 
 

@@ -31,11 +31,17 @@ class FocusLineEdit(QG.QLineEdit):
             self.default_text = text
         if self.default_text:
             self.setText(self.default_text)
+
     def get_text(self):
         if str(self.text()) == self.default_text:
             return ''
         else:
-            return self.text()
+            return str(self.text())
+
+    def set_text(self, text):
+        self.set_default_text()
+        if text:
+            self.setText(text)
 
 
 class AddSQLPropertyDialog(QG.QDialog):
