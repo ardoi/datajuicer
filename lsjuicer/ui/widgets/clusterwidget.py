@@ -8,8 +8,10 @@ from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
 
 from lsjuicer.inout.db.sqla import dbmaster
+import lsjuicer.inout.db.sqla as sa
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
+from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout
 from lsjuicer.util.helpers import ipython_shell
 
 def normify(a):
@@ -229,4 +231,80 @@ class ClusterDialog(QG.QDialog):
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
             self.tabs.setCurrentIndex(index)
 
+class EventCategoryWidget(QG.QWidget):
+    def __init__(self, category_class, parent = None):
+        super(EventCategoryWidget, self).__init__(parent)
+        self.category_class = category_class
+        layout = QG.QVBoxLayout()
+        self.setLayout(layout)
+        gbox = QG.QGroupBox("Clustering settings")
+        settings_layout = MyFormLikeLayout()
+        gbox.setLayout(settings_layout)
+        layout.addWidget(gbox)
+        combo = DBComboAddBox(category_class)
+        self.combo=combo
+        combo.combo.currentIndexChanged[QC.QString].connect(self.update_settings)
+        settings_layout.add_row("Type", combo)
+        settings_combo = QG.QComboBox()
+        settings_layout.add_row("Parameters", settings_combo)
 
+        #ms_layout = QG.QHBoxLayout()
+        #settings_edit_layout.addLayout(ms_layout)
+        #min_sample_label  = QG.QLabel("Minimum core samples:",parent=self)
+        edit_checkbox = QG.QCheckBox(self)
+        min_sample_spinbox = QG.QSpinBox(self)
+        #ms_layout.addWidget(min_sample_label)
+        #ms_layout.addWidget(min_sample_spinbox)
+        #eps_layout = QG.QHBoxLayout()
+        #eps_label  = QG.QLabel("Eps:",parent=self)
+        eps_spinbox = QG.QDoubleSpinBox(self)
+        #eps_layout.addWidget(eps_label)
+        #eps_layout.addWidget(eps_spinbox)
+        eps_spinbox.setMinimum(0.1)
+        eps_spinbox.setMaximum(25.0)
+        eps_spinbox.setSingleStep(0.1)
+        min_sample_spinbox.setMinimum(1)
+        min_sample_spinbox.setMaximum(200)
+        min_sample_spinbox.setSingleStep(1)
+        settings_layout.add_row("Edit settings", edit_checkbox)
+        settings_layout.add_row("Minimum core sample", min_sample_spinbox)
+        settings_layout.add_row("EPS", eps_spinbox)
+        save_pb = QG.QPushButton("Save")
+        settings_layout.add_row("", save_pb)
+        self.min_sample_spinbox = min_sample_spinbox
+        self.eps_spinbox = eps_spinbox
+        self.save_pb = save_pb
+        edit_checkbox.toggled.connect(self.toggle_edit)
+        self.toggle_edit(False)
+        self.save_pb.clicked.connect(self.save)
+
+    def save(self):
+        sess = dbmaster.get_session()
+        temp_cat_type= self.category_class()
+        samples = self.min_sample_spinbox.value()
+        name = self.combo.get_value()
+        eps = self.eps_spinbox.value()
+        existing = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+                filter(sa.EventCategoryType.category_type == temp_cat_type.category_type).\
+                filter(sa.EventCategoryType.name == name).\
+                filter(sa.EventCategory.eps == eps).\
+                filter(sa.EventCategory.min_samples == samples).all()
+        print existing
+        if existing:
+            print "settings alread exist",(samples, eps)
+        pass
+
+    def toggle_edit(self, state):
+        self.min_sample_spinbox.setEnabled(state)
+        self.eps_spinbox.setEnabled(state)
+        self.save_pb.setEnabled(state)
+
+    def update_settings(self, name):
+        sess = dbmaster.get_session()
+        temp = self.category_class()
+        settings = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+                filter(sa.EventCategoryType.category_type == temp.category_type).\
+                filter(sa.EventCategoryType.name == str(name)).all()
+        del temp
+        print settings
+        sess.close()

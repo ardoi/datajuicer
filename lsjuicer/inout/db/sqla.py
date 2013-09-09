@@ -320,9 +320,34 @@ class Event(dbmaster.Base):
 class EventCategory(dbmaster.Base):
     __tablename__ = "event_categories"
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    category_type_id = Column(Integer, ForeignKey("event_category_types.id"))
+    category_type = relationship("EventCategoryType")
     eps = Column(Float)
     min_samples = Column(Integer)
+
+class EventCategoryType(dbmaster.Base):
+    __tablename__ = "event_category_types"
+    id = Column(Integer, primary_key=True)
+    name = Column(String, unique=True)
+    description = Column(String)
+    category_type = Column(String)
+    __mapper_args__ = { 'polymorphic_identity':'event_category_type', 'polymorphic_on':category_type}
+
+class EventCategoryLocationType(EventCategoryType):
+    """Category of events based on their location"""
+    __tablename__ = "event_category_location_types"
+    id = Column(ForeignKey("event_category_types.id"), primary_key=True)
+    __mapper_args__ = {
+        'polymorphic_identity':'location'
+    }
+
+class EventCategoryShapeType(EventCategoryType):
+    """Category of events based on their location"""
+    __tablename__ = "event_category_shape_types"
+    id = Column(ForeignKey("event_category_types.id"), primary_key=True)
+    __mapper_args__ = {
+        'polymorphic_identity':'shape'
+    }
 
 class SearchRegion(dbmaster.Base):
     """Search region for SparkDetect"""

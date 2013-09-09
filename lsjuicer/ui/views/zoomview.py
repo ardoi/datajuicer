@@ -191,31 +191,27 @@ class ZoomView(QG.QGraphicsView):
                 1.25**self.zoom_count_ver)
         #self.scaleSignal.emit(scaleFactor)
 
-    def mousePressEvent(self, event):
-        """Overridden to catch right click and reset original zoom"""
-        #pass
-        #if event.button() == QC.Qt.RightButton:
-        #    factor = self.transform().m11()
-        #    self.scale(self.originalZoom/factor,1)
-        #    self.scaleSignal.emit(self.originalZoom/factor)
-        #    #print factor
-        #elif event.button() == QC.Qt.LeftButton:
-        #    self.dragging = True
-        #    #print 'dragging',self.dragging
+    #def mousePressEvent(self, event):
+    #    """Overridden to catch right click and reset original zoom"""
+    #    #pass
+    #    #if event.button() == QC.Qt.RightButton:
+    #    #    factor = self.transform().m11()
+    #    #    self.scale(self.originalZoom/factor,1)
+    #    #    self.scaleSignal.emit(self.originalZoom/factor)
+    #    #    #print factor
+    #    #elif event.button() == QC.Qt.LeftButton:
+    #    #    self.dragging = True
+    #    #    #print 'dragging',self.dragging
 
-        QG.QGraphicsView.mousePressEvent(self,event)
+    #    QG.QGraphicsView.mousePressEvent(self,event)
 
-    def mouseReleaseEvent(self, event):
-        #if event.button() == QC.Qt.LeftButton:
-        #    self.dragging = False
-        #    #print 'dragging',self.dragging
+    #def mouseReleaseEvent(self, event):
+    #    QG.QGraphicsView.mouseReleaseEvent(self,event)
 
-        QG.QGraphicsView.mouseReleaseEvent(self,event)
-
-    def mouseMoveEvent(self, event):
-    #    if self.dragging:
-    #        print self.mapToScene(self.viewport().geometry()).boundingRect()
-        QG.QGraphicsView.mouseMoveEvent(self,event)
+    #def mouseMoveEvent(self, event):
+    ##    if self.dragging:
+    ##        print self.mapToScene(self.viewport().geometry()).boundingRect()
+    #    QG.QGraphicsView.mouseMoveEvent(self,event)
 
     #def resizeEvent(self, event):
     #    print '\n\n\nresize',self.scene()

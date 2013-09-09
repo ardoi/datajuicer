@@ -106,7 +106,6 @@ class AddSQLPropertyWidget(QG.QWidget):
 class DBComboAddBox(QG.QWidget):
     """Combo box with an 'Add' button to add options"""
     def show_add_dialog(self):
-        print "show dialog"
         add_dialog = AddSQLPropertyDialog(self.db_class, parent = self)
         if add_dialog.exec_():
             self.combo.clear()
@@ -158,6 +157,7 @@ class DBComboAddBox(QG.QWidget):
         ind = self.combo.findText(text)
         if ind>-1:
             self.combo.setCurrentIndex(ind)
+
     def get_value(self):
         return str(self.combo.currentText())
 
@@ -480,7 +480,10 @@ class MyFormLikeLayout(QG.QVBoxLayout):
         row=QG.QHBoxLayout()
         #row.setContentsMargins(0,0,0,0)
         row.addWidget(QG.QLabel(name))
-        row.addWidget(widget)
+        if isinstance(widget, QG.QWidget):
+            row.addWidget(widget)
+        else:
+            row.addLayout(widget)
         self.addLayout(row)
 
 class ExpInfoWidget(QG.QGroupBox):
@@ -590,7 +593,7 @@ class ExpInfoWidget(QG.QGroupBox):
                     print '\n setting',self.exp_info, prop_name, prop_obj
                     setattr(self.exp_info, prop_name, prop_obj)
                     print 'prop', self.exp_info.project, self.exp_info._project
-            print self.spins, self.lines,self.spins+self.lines
+            #print self.spins, self.lines,self.spins+self.lines
             for attr in self.spins + self.lines:
                 val = attr.get_value()
                 print attr, val
