@@ -38,7 +38,6 @@ class PixmapMaker(object):
         self.last_frame = None
         self.settings = sa.dbmaster.get_config_setting_value(
             "visualization_options_reference")
-        print 'settings', self.settings
         self.pipechain = pipechain
         self._pixmap = None
         self.force = False
@@ -79,8 +78,6 @@ class PixmapMaker(object):
         if not allnans:
             if n.any(nans):
                 ddn = dd[n.invert(n.isnan(dd))]
-                print 'ddn',ddn
-                print 'dd',dd
                 # array where nan has been replaced by neigbourhood average
                 nan_coords = n.where(nans)
                 y_nan, x_nan = nan_coords

@@ -12,7 +12,6 @@ import lsjuicer.inout.db.sqla as sa
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout, FocusLineEdit
-from lsjuicer.util.helpers import ipython_shell
 
 def normify(a):
     #you can use preprocessing.scale instead
@@ -24,11 +23,14 @@ def normify(a):
     return res
 
 class ClusterWidget(QG.QWidget):
+
     clusters_ready = QC.pyqtSignal(dict)
-    def __init__(self, cluster_data, plot_pairs, key, settings, parent = None, reference_data = None):
+
+    def __init__(self, cluster_data, plot_pairs, key, category_class, parent = None, reference_data = None):
         super(ClusterWidget, self).__init__(parent)
 
         self.cluster_data = cluster_data
+        self.category_class = category_class
         if reference_data is None:
             self.reference_data = self.cluster_data
         else:
@@ -45,48 +47,30 @@ class ClusterWidget(QG.QWidget):
         self.make_plot_widgets()
         self.key = key
         setting_layout = QG.QHBoxLayout()
-        do_pb = QG.QPushButton('Do')
-        do_pb.clicked.connect(self.do)
+        do_pb = QG.QPushButton('Do clustering')
+        if self.category_class == sa.EventCategoryShapeType:
+            action_pb = QG.QPushButton("Cluster by Location")
+            action_pb.clicked.connect(self.emit_ready)
+        elif self.category_class == sa.EventCategoryLocationType:
+            action_pb = QG.QPushButton("Save clusters")
+            action_pb.clicked.connect(self.save_clusters)
+        self.category_widget = EventCategoryWidget(self.category_class)
+        setting_layout.addWidget(self.category_widget)
         setting_layout.addWidget(do_pb)
+        setting_layout.addWidget(action_pb)
+        do_pb.clicked.connect(self.do)
         widget_layout.addLayout(setting_layout)
-        self.settings = settings
+        QC.QTimer.singleShot(50, lambda:self.do())
 
-        button_layout = QG.QVBoxLayout()
-        setting_layout.addLayout(button_layout)
-        ms_layout = QG.QHBoxLayout()
-        button_layout.addLayout(ms_layout)
-        min_sample_label  = QG.QLabel("Minimum core samples:",parent=self)
-        min_sample_spinbox = QG.QSpinBox(self)
-        ms_layout.addWidget(min_sample_label)
-        ms_layout.addWidget(min_sample_spinbox)
-        eps_layout = QG.QHBoxLayout()
-        button_layout.addLayout(eps_layout)
-        eps_label  = QG.QLabel("Eps:",parent=self)
-        eps_spinbox = QG.QDoubleSpinBox(self)
-        eps_layout.addWidget(eps_label)
-        eps_layout.addWidget(eps_spinbox)
-        eps_spinbox.setMinimum(0.1)
-        eps_spinbox.setMaximum(25.0)
-        eps_spinbox.setSingleStep(0.1)
-        eps_spinbox.setValue(settings['eps'])
-        min_sample_spinbox.setMinimum(1)
-        min_sample_spinbox.setMaximum(200)
-        min_sample_spinbox.setSingleStep(1)
-        min_sample_spinbox.setValue(settings['min_samples'])
-        save_pb = QG.QPushButton("Save")
-        button_layout.addWidget(save_pb)
-        save_pb.clicked.connect(self.save)
-
-        self.eps_spinbox = eps_spinbox
-        self.min_sample_spinbox = min_sample_spinbox
 
     def do(self):
-        eps = self.eps_spinbox.value()
-        min_samples = self.min_sample_spinbox.value()
+        eps = self.category_widget.eps
+        min_samples = self.category_widget.samples
         self.do_cluster(eps, min_samples)
         self.do_plots()
 
     def do_cluster(self, eps, min_samples):
+        print 'do_cluster', eps, min_samples
         self.clusters = Clusterer.cluster_elements(Clusterer.cluster(self.cluster_data,
             eps = eps, min_samples = min_samples), self.reference_data)
         print 'clusterkeys',self.clusters.keys()
@@ -132,9 +116,11 @@ class ClusterWidget(QG.QWidget):
         for spp, plotwidget in self.plotwidgets.iteritems():
             plotwidget.updatePlots()
             plotwidget.fitView()
+
+    def emit_ready(self):
         self.clusters_ready.emit(self.clusters)
 
-    def save(self):
+    def save_clusters(self):
         print 'save'
         print self.clusters
 
@@ -172,6 +158,7 @@ class ClusterDialog(QG.QDialog):
         do_pb = QG.QPushButton("Get clusters")
         layout.addWidget(do_pb)
         do_pb.clicked.connect(self.stats)
+        self.do_pb = do_pb
 
     def sizeHint(self):
         return QC.QSize(1300,1000)
@@ -208,26 +195,27 @@ class ClusterDialog(QG.QDialog):
         loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
         self.loc_plot_pairs = loc_plot_pairs
         plot_pairs = {'shape':shape_plot_pairs, 'location':loc_plot_pairs}
-        try:
-            shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics,{'eps':2.0, 'min_samples':50},
-                    parent= tabs, reference_data = event_array)
-            #shape_cluster_tab.do()
-            shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
-        except:
-            ipython_shell()
-            #embed_kernel()
+        shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics, sa.EventCategoryShapeType,
+                parent= tabs, reference_data = event_array)
+        shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
+        self.do_pb.setVisible(False)
+
 
     def add_loc_clusters(self, cluster_data):
         """Add a tab for each shape cluster to be analyzed based on location"""
-        #TODO remove existing tabs when making new
+        if self.tabs.count()>1:
+            for i in range(1, self.tabs.count())[::-1]:
+                w = self.tabs.widget(i)
+                w.deleteLater()
+                self.tabs.removeTab(i)
         for cluster, elements in cluster_data.iteritems():
             if cluster!=-1:
                 data = elements[:,[self.ics[e] for e in self.loc_params]]
                 loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
                 plot_pairs={'location':self.loc_plot_pairs}
                 print 'loc ics',loc_ics,data.shape
-                tab = ClusterWidget(data, plot_pairs, loc_ics, {'eps':2.5, 'min_samples':15},parent=self.tabs)
+                tab = ClusterWidget(data, plot_pairs, loc_ics,sa.EventCategoryLocationType, parent=self.tabs)
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
             self.tabs.setCurrentIndex(index)
 
@@ -236,6 +224,7 @@ class EventCategoryWidget(QG.QWidget):
         super(EventCategoryWidget, self).__init__(parent)
         self.category_class = category_class
         self.cat_type = None
+        self.category = None
         layout = QG.QVBoxLayout()
         self.setLayout(layout)
         gbox = QG.QGroupBox("Clustering settings")
@@ -288,51 +277,89 @@ class EventCategoryWidget(QG.QWidget):
         else:
             self.edit_checkbox.setEnabled(False)
 
+    @property
+    def eps(self):
+        return self.eps_spinbox.value()
+
+    @property
+    def samples(self):
+        samples = self.min_sample_spinbox.value()
+        return samples
 
     def save(self):
         sess = dbmaster.get_session()
         temp_cat_type= self.category_class()
-        samples = self.min_sample_spinbox.value()
+        samples = self.samples
         name = self.combo.get_value()
-        eps = self.eps_spinbox.value()
+        eps = self.eps
         desc = self.desc_edit.get_text()
-        print 'desc'
 
-        #build a query to find matchin categories
-        query = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
-                filter(sa.EventCategoryType.category_type == temp_cat_type.category_type).\
-                filter(sa.EventCategoryType.name == name).\
-                filter(sa.EventCategory.eps == eps).\
-                filter(sa.EventCategory.min_samples == samples)
-        #categories which are exactly the same
-        existing = query.filter(sa.EventCategory.description == desc).all()
-        #categories with different description
-        different_desc = query.filter(sa.EventCategory.description != desc).all()
-        #we don't want categories with same settings but different descriptions
-        if existing:
-            print "settings alread exist",(samples, eps)
-            QG.QMessageBox.information(self, "Category exists",
-                    """<p style='font-weight:normal;'>A <strong
-                    style='color:navy;'>{}</strong> category with parameters
-                    <br><strong style='color:navy'>{}</strong> already exists</p>"""
-                    .format(temp_cat_type.category_type, str(existing[0])))
-        elif different_desc:
-            print 'desc'
-            ec = different_desc[0]
-            ec.description = desc
+        #TODO only make new category if the saved one has events associated with it
+        #(we dont want to change the settings for used categories)
+        make_new = False
+
+        if self.category:
+            sess.add(self.category)
+            if not self.category.events:
+                #no events so category can be updated
+                print 'category update'
+                self.category.eps = eps
+                self.category.min_samples = samples
+                self.category.description = desc
+                self.category_type = self.cat_type
+                #self.reload_settings()
+                sess.commit()
+                self.activate()
+            else:
+                print 'description update'
+                #events exist but only description is different. update description
+                if self.category.eps == eps and self.category.min_samples == samples and \
+                        self.category.description != desc:
+                    self.category.description = desc
+                    self.reload_settings()
+                else:
+                    make_new = True
             sess.commit()
-            self.reload_settings()
-            #self.activate()
+            #sess.expunge(self.category)
         else:
-            ec = sa.EventCategory()
-            ec.eps = eps
-            ec.min_samples = samples
-            ec.description = desc
-            ec.category_type = self.cat_type
-            sess.add(ec)
-            sess.commit()
-            self.activate()
-            self.settings_combo.setCurrentIndex(self.settings_combo.count() - 1)
+            make_new = True
+
+        if make_new:
+            #build a query to find matching categories
+            query = sess.query(sa.EventCategory).join(sa.EventCategoryType).\
+                    filter(sa.EventCategoryType.category_type == temp_cat_type.category_type).\
+                    filter(sa.EventCategoryType.name == name).\
+                    filter(sa.EventCategory.eps == eps).\
+                    filter(sa.EventCategory.min_samples == samples)
+            #categories which are exactly the same
+            existing = query.filter(sa.EventCategory.description == desc).first()
+            #categories with different description
+            different_desc = query.filter(sa.EventCategory.description != desc).first()
+            #we don't want categories with same settings but different descriptions
+            if existing:
+                print "settings alread exist",(samples, eps)
+                QG.QMessageBox.information(self, "Category exists",
+                        """<p style='font-weight:normal;'>A <strong
+                        style='color:navy;'>{}</strong> category with parameters
+                        <br><strong style='color:navy'>{}</strong> already exists</p>"""
+                        .format(temp_cat_type.category_type, str(existing[0])))
+            elif different_desc:
+                ec = different_desc
+                ec.description = desc
+                sess.commit()
+                self.reload_settings()
+                #self.activate()
+            else:
+                ec = sa.EventCategory()
+                ec.eps = eps
+                ec.min_samples = samples
+                ec.description = desc
+                ec.category_type = self.cat_type
+                sess.add(ec)
+                sess.commit()
+                self.activate()
+                self.settings_combo.setCurrentIndex(self.settings_combo.count() - 1)
+        self.toggle_edit(True)
         sess.close()
 
     def toggle_edit(self, state):
@@ -340,6 +367,7 @@ class EventCategoryWidget(QG.QWidget):
         self.eps_spinbox.setEnabled(state)
         self.save_pb.setEnabled(state)
         self.desc_edit.setEnabled(state)
+        self.edit_checkbox.setChecked(state)
 
     def get_category_type_by_name(self, name):
         sess = dbmaster.get_session()
@@ -370,21 +398,25 @@ class EventCategoryWidget(QG.QWidget):
         self.cat_type = self.get_category_type_by_name(name)
         self.settings_combo.clear()
         if not self.settings:
-            #self.toggle_edit(True)
             self.edit_checkbox.setEnabled(True)
-            self.edit_checkbox.toggle()
+            self.edit_checkbox.setChecked(True)
+            self.category = None
         else:
             #print self.settings
             for s in self.settings:
                 self.settings_combo.addItem(str(s))
+            self.category = self.settings[0]
         #sess.close()
 
     def update_spinboxes(self, index):
         try:
             setting = self.settings[index]
+            self.category = setting
             self.min_sample_spinbox.setValue(setting.min_samples)
             self.eps_spinbox.setValue(setting.eps)
             self.desc_edit.set_text(setting.description)
+            #self.toggle_edit(False)
+            #self.edit_checkbox
         except IndexError:
             self.min_sample_spinbox.setValue(0)
             self.eps_spinbox.setValue(0)

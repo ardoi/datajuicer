@@ -32,6 +32,9 @@ class PlottedData(QC.QObject):
         self.Z = zvalue
 
     def update_data(self, y_vals, x_vals):
+        self.xvalues = n.arange(len(x_vals))
+        self.phys_xvalues = x_vals
+        self.data = y_vals
         if len(y_vals) > 1:
             #self.y_vals_x_max = float(self.xvalues[-1])
             #self.y_vals_x_min = float(self.xvalues[0])
@@ -44,7 +47,4 @@ class PlottedData(QC.QObject):
             self.x_min = float(self.xvalues[0]) * .9
             self.y_max = float(y_vals[0]) * 1.1
             self.y_min = float(y_vals[0]) * .9
-        self.xvalues = n.arange(len(x_vals))
-        self.phys_xvalues = x_vals
-        self.data = y_vals
 
