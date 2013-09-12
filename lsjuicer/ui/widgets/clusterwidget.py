@@ -26,16 +26,25 @@ class ClusterWidget(QG.QWidget):
 
     clusters_ready = QC.pyqtSignal(dict)
 
-    def __init__(self, cluster_data, plot_pairs, key, category_class, parent = None, reference_data = None):
+    def __init__(self, data, parameter_names, plot_pairs, key, category_class, normalize = False,
+                 parent = None):
+        """
+        Arguments
+        ---------
+        data : entire data array (possibly containing more columns than needed for clustering)
+        parameter_names : the names of the parameters clustering is to be performed for
+        plot_pairs : pairs parameter names plots are desired for
+        key : dictionary mapping parameter name to its index in data
+        normalize : whether to normalize data or not
+
+        """
         super(ClusterWidget, self).__init__(parent)
-
-        self.cluster_data = cluster_data
+        self.data = data
         self.category_class = category_class
-        if reference_data is None:
-            self.reference_data = self.cluster_data
-        else:
-            self.reference_data = reference_data
-
+        indices = [key[el] for el in parameter_names]
+        self.cluster_data = data[:, indices]
+        if normalize:
+            self.cluster_data = numpy.apply_along_axis(normify, 0, self.cluster_data)
         widget_layout = QG.QVBoxLayout()
         self.plot_layout = QG.QGridLayout()
         self.setLayout(widget_layout)
@@ -54,6 +63,7 @@ class ClusterWidget(QG.QWidget):
         elif self.category_class == sa.EventCategoryLocationType:
             action_pb = QG.QPushButton("Save clusters")
             action_pb.clicked.connect(self.save_clusters)
+        self.action_pb = action_pb
         self.category_widget = EventCategoryWidget(self.category_class)
         setting_layout.addWidget(self.category_widget)
         setting_layout.addWidget(do_pb)
@@ -72,15 +82,14 @@ class ClusterWidget(QG.QWidget):
     def do_cluster(self, eps, min_samples):
         print 'do_cluster', eps, min_samples
         self.clusters = Clusterer.cluster_elements(Clusterer.cluster(self.cluster_data,
-            eps = eps, min_samples = min_samples), self.reference_data)
-        print 'clusterkeys',self.clusters.keys()
+            eps = eps, min_samples = min_samples), self.data)
+        #print 'clusterkeys',self.clusters.keys()
 
     def make_plot_widgets(self):
         if self.plotwidgets:
             return
         for i, kind in enumerate(self.plot_pairs.keys()):
             for j, spp in enumerate(self.plot_pairs[kind]):
-                print kind, spp
                 x = spp[0]
                 y = spp[1]
                 plotwidget = TracePlotWidget(self, antialias=False,
@@ -90,7 +99,6 @@ class ClusterWidget(QG.QWidget):
                     self.plot_layout.addWidget(plotwidget, i, j)
                 else:
                     self.plot_layout.addWidget(plotwidget, j, 0)
-        print self.plotwidgets
         QG.QApplication.processEvents()
 
     def do_plots(self):
@@ -118,11 +126,43 @@ class ClusterWidget(QG.QWidget):
             plotwidget.fitView()
 
     def emit_ready(self):
+        print 'ready', self.clusters[0.0][0]
         self.clusters_ready.emit(self.clusters)
 
     def save_clusters(self):
-        print 'save'
-        print self.clusters
+        #print 'save', self.clusters
+        #print self.clusters
+        #TODO remove existing events
+        self.action_pb.setEnabled(False)
+        QG.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
+        sess = dbmaster.get_session()
+
+        def get_pixelevent_by_id(event_id):
+            event_id = int(event_id)
+            result = sess.query(sa.PixelEvent).filter(sa.PixelEvent.id == event_id).one()
+            return result
+
+        category = self.category_widget.category
+        stats = []
+        for event_no in self.clusters:
+            if event_no == -1:
+                continue
+            event = sa.Event()
+            event.category = category
+            stats.append(self.clusters[event_no].shape[0])
+            for pixel_event_line in self.clusters[event_no]:
+                pe_id = pixel_event_line[-1]
+                pixel_event = get_pixelevent_by_id(pe_id)
+                result = pixel_event.pixel.result
+                event.result = result
+                pixel_event.event = event
+        save_string = "<strong>Saved events:</strong><br><br>"+"<br>".join(["{}: {} pixels".format(i+1, el) for i,el in enumerate(stats)])
+        print save_string
+        sess.commit()
+        sess.close()
+        self.action_pb.setEnabled(True)
+        QG.QApplication.restoreOverrideCursor()
+        QG.QMessageBox.information(self, "", save_string)
 
 
 class Clusterer(object):
@@ -166,13 +206,17 @@ class ClusterDialog(QG.QDialog):
     def stats(self):
         an = self.analysis
         session = dbmaster.object_to_session(an)
+        #FIXME bad bad
         pixels=an.fitregions[0].results[0].pixels
         el=tf.do_event_list(pixels)
 
+        #TODO these should not be hardcoded
         shape_params = ['A','tau2','d2','d']
         loc_params = ['m2','x','y']
+        id_param = 'id'
         params = shape_params[:]
         params.extend(loc_params)
+        params.append(id_param)
         #dictionary of parameter names and their indices
         ics = dict(zip(params, range(len(params))))
         self.shape_params = shape_params
@@ -181,9 +225,9 @@ class ClusterDialog(QG.QDialog):
 
 
         event_array = tf.do_event_array(el, params)
+        self.event_array = event_array
         #for shape parameters a normalized array is needed too
-        ea_shape0 = tf.do_event_array(el,shape_params)
-        ea_shape = numpy.apply_along_axis(normify, 0, ea_shape0)
+        #ea_shape0 = tf.do_event_array(el,shape_params)
         #ea_shape = ea_shape0
         #ea_loc = tf.do_event_array(el,['m2','x','y'])
         session.close()
@@ -195,8 +239,10 @@ class ClusterDialog(QG.QDialog):
         loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
         self.loc_plot_pairs = loc_plot_pairs
         plot_pairs = {'shape':shape_plot_pairs, 'location':loc_plot_pairs}
-        shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics, sa.EventCategoryShapeType,
-                parent= tabs, reference_data = event_array)
+        #shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics, sa.EventCategoryShapeType,
+        #        parent= tabs, reference_data = event_array)
+        shape_cluster_tab = ClusterWidget(event_array, shape_params, plot_pairs, ics, sa.EventCategoryShapeType,
+                                          normalize = True, parent= tabs)
         shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
         self.do_pb.setVisible(False)
@@ -204,18 +250,20 @@ class ClusterDialog(QG.QDialog):
 
     def add_loc_clusters(self, cluster_data):
         """Add a tab for each shape cluster to be analyzed based on location"""
+        print 'add_loc', cluster_data
         if self.tabs.count()>1:
             for i in range(1, self.tabs.count())[::-1]:
                 w = self.tabs.widget(i)
                 w.deleteLater()
                 self.tabs.removeTab(i)
         for cluster, elements in cluster_data.iteritems():
-            if cluster!=-1:
-                data = elements[:,[self.ics[e] for e in self.loc_params]]
-                loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
+            print 'cluster',elements
+            if cluster != -1:
+                #data = elements[:,[self.ics[e] for e in self.loc_params]]
+                #loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
                 plot_pairs={'location':self.loc_plot_pairs}
-                print 'loc ics',loc_ics,data.shape
-                tab = ClusterWidget(data, plot_pairs, loc_ics,sa.EventCategoryLocationType, parent=self.tabs)
+                tab = ClusterWidget(elements, self.loc_params, plot_pairs, self.ics,
+                                    sa.EventCategoryLocationType, parent=self.tabs)
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
             self.tabs.setCurrentIndex(index)
 
@@ -255,7 +303,7 @@ class EventCategoryWidget(QG.QWidget):
         self.desc_edit = desc_edit
         settings_layout.add_row("Edit settings", edit_checkbox)
         settings_layout.add_row("Description", desc_edit)
-        settings_layout.add_row("Minimum core sample", min_sample_spinbox)
+        settings_layout.add_row("Minimum core samples", min_sample_spinbox)
         settings_layout.add_row("EPS", eps_spinbox)
         save_pb = QG.QPushButton("Save")
         settings_layout.add_row("", save_pb)
@@ -293,6 +341,8 @@ class EventCategoryWidget(QG.QWidget):
         name = self.combo.get_value()
         eps = self.eps
         desc = self.desc_edit.get_text()
+
+
 
         #TODO only make new category if the saved one has events associated with it
         #(we dont want to change the settings for used categories)
@@ -390,6 +440,7 @@ class EventCategoryWidget(QG.QWidget):
         sess.close()
 
     def update_settings(self, name):
+        """Update categorytype"""
         if not name:
             #DBComboBox updates stuff internally and can remove entries
             #To keep this function from crashing such calls are ignored here
@@ -409,6 +460,7 @@ class EventCategoryWidget(QG.QWidget):
         #sess.close()
 
     def update_spinboxes(self, index):
+        """Update category settings"""
         try:
             setting = self.settings[index]
             self.category = setting
