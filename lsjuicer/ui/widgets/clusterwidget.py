@@ -47,6 +47,8 @@ class ClusterWidget(QG.QWidget):
             self.cluster_data = numpy.apply_along_axis(normify, 0, self.cluster_data)
         widget_layout = QG.QVBoxLayout()
         self.plot_layout = QG.QGridLayout()
+        self.plot_layout.setContentsMargins(0,0,0,0)
+        self.plot_layout.setSpacing(0)
         self.setLayout(widget_layout)
         widget_layout.addLayout(self.plot_layout)
         self.rows = len(plot_pairs.keys())

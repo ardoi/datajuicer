@@ -59,6 +59,14 @@ class AxisWidget(QG.QWidget):
         self.repaint()
 
     @property
+    def tick_count(self):
+        tick_count = int(
+            self.active_dimension_length/self.min_tick_distance)
+        #draw at least 3 ticks
+        return max(3, tick_count)
+
+
+    @property
     def pixel_size(self):
         return (self.maxval-self.minval)/float(self.active_dimension_length)
 
@@ -74,9 +82,7 @@ class AxisWidget(QG.QWidget):
         """
         range_size = self.active_dimension_length
         if self.minval is not None:
-            tick_count = int(
-                self.active_dimension_length/self.min_tick_distance)
-            tick_gap_pix = range_size/float(tick_count)
+            tick_gap_pix = range_size/float(self.tick_count)
             self.tick_positions = []
             self.tick_labels = []
             start_pos = self.pixels_shifted % tick_gap_pix
