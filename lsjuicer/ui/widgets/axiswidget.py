@@ -130,7 +130,7 @@ class HorizontalAxisWidget(AxisWidget):
         if self.tick_positions:
             p = QG.QPainter(self)
             p.fillRect(QC.QRect(0, 0, self.width(), 20 + self.label_space),
-                       self.palette().brush(QG.QPalette.Midlight))
+                       self.palette().brush(QG.QPalette.Base))
             self.painterStyle(p)
             p.drawLine(QC.QLineF(0, 0, self.width(), 0))
             for pos, label in zip(self.tick_positions, self.tick_labels):
@@ -179,7 +179,7 @@ class VerticalAxisWidget(AxisWidget):
                        # QC.Qt.magenta)
                        # p.fillRect(QC.QRect(0, 0, self.width(), 20),
                        # QG.QBrush(QG.QColor('yellow')))
-                       self.palette().brush(QG.QPalette.Midlight))
+                       self.palette().brush(QG.QPalette.Base))
             self.painterStyle(p)
             p.drawLine(QC.QLineF(39+self.label_space, 0, 39+self.label_space, self.height()))
             count = 0
