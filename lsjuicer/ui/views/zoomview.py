@@ -91,18 +91,14 @@ class ZoomView(QG.QGraphicsView):
         ver_factor = 1.0
         self.zooming_ver = False
         self.zooming_hor = False
-        if self.locked:
+        if event.modifiers() & QC.Qt.ShiftModifier:
+            #zoom in y
             self.zooming_ver = True
+        elif event.modifiers() & QC.Qt.ControlModifier:
             self.zooming_hor = True
         else:
-            if event.modifiers() & QC.Qt.ShiftModifier:
-                #zoom in y
-                self.zooming_ver = True
-            elif event.modifiers() & QC.Qt.ControlModifier:
-                self.zooming_hor = True
-            else:
-                self.zooming_hor = True
-                self.zooming_ver = True
+            self.zooming_hor = True
+            self.zooming_ver = True
 
 
         #print 'zoom',self.zoom_count_hor, self.zoom_count_ver
