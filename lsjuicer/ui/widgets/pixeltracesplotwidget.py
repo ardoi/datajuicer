@@ -57,7 +57,7 @@ class PixelTracesPlotWidget(QG.QWidget):
         time_4_fit = numpy.arange(len(trace))
         res_4_fit = self.pixpixw.fit_result.get_fitted_pixel(x, y)
         #res_4_fit = self.pixpixw.res['fits'][(int(x)+1, int(y)+1)]
-        fit = tf.full_res(time_4_fit, res_4_fit)
+        fit = tf.res_all(time_4_fit, res_4_fit)
         return time_4_fit, trace, fit, x, y, res_4_fit
 
     def trace_plot_update(self, selection):

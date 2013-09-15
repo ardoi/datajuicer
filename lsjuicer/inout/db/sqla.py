@@ -1,5 +1,6 @@
 import hashlib
 import os
+from collections import defaultdict
 
 import numpy as n
 
@@ -284,6 +285,16 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
             session.close()
         return ret
 
+    def event_types(self):
+        if not self.events:
+            return None
+        else:
+            out = defaultdict(list)
+            for event in self.events:
+                out[event.category.category_type.name].append(event.id)
+            return out
+
+
 class FittedPixel(dbmaster.Base):
     __tablename__ = "fitted_pixels"
     id = Column(Integer, primary_key=True)
@@ -335,7 +346,8 @@ class EventCategoryType(dbmaster.Base):
     name = Column(String, unique=True)
     description = Column(String)
     category_type = Column(String)
-    __mapper_args__ = { 'polymorphic_identity':'event_category_type', 'polymorphic_on':category_type}
+    __mapper_args__ = { 'polymorphic_identity':'event_category_type',
+            'polymorphic_on':category_type}
 
 class EventCategoryLocationType(EventCategoryType):
     """Category of events based on their location"""
@@ -473,6 +485,15 @@ class Image(dbmaster.Base):
         assert value >= 1, "Number of channels cannot be less than 1. %i given"%value
         self._channels = value
 
+    @property
+    def channel_names(self):
+        if hasattr(self, "_channel_names"):
+            return self._channel_names
+        else:
+            out = {}
+            for i in range(self.channels):
+                out[i] = ""
+            return out
 
     @property
     def comment(self):
@@ -577,6 +598,33 @@ class PixelFittedSyntheticImage(Image):
         self.image_width = reg.width - 2*pixelfitresult.fit_settings['padding']
         self.image_height = reg.height - 2*pixelfitresult.fit_settings['padding']
         self.channels = 2
+        self.syn_image_data = None
+        self._channel_names = {0:'fit', 1:'baseline'}
+        if pixelfitresult.events:
+            #channel with all events
+            self.channels += 1
+            self._channel_names[self.channels-1] = "all events"
+            event_types = pixelfitresult.event_types()
+            self.event_types = event_types
+            print 'ET',event_types
+            event_type_keys = event_types.keys()
+            event_type_keys.sort()
+            for et in event_type_keys:
+                events = len(event_types[et])
+                if events == 1:
+                    #if only one event of type then one extra channel is enough
+                    self.channels += 1
+                    self._channel_names[self.channels-1] = et
+                else:
+                    #for more than one event we need one channel per event
+                    #plus summary channel of all events of type
+                    self.channels += 1
+                    self._channel_names[self.channels-1] = et+" all"
+                    for i in range(events):
+                        self.channels += 1
+                        self._channel_names[self.channels-1] = "{} {}".format(et,i)
+        print self._channel_names
+
         self.image_frames = reg.frames
         analysis = reg.analysis
         self.record_date = analysis.date
@@ -600,16 +648,39 @@ class PixelFittedSyntheticImage(Image):
         results['fits'] = pixelfitresult.pixels
         self.results = results
 
-
-    def image_data(self, a=None):
-        new_data = tf.clean_plot_data(self.results)
-        bl = tf.clean_plot_data(self.results, only_bl = True)
+    def make_image_data(self):
+        print 'Making image data'
+        sd = tf.SyntheticData(self.results)
+        new_data = sd.get_fit()
+        bl = sd.get_baseline()
+        ch_data = [new_data, bl]
+        if self.event_types:
+            event_type_keys = self.event_types.keys()
+            event_type_keys.sort()
+            all_event_ids = []
+            [all_event_ids.extend(el) for el in self.event_types.values()]
+            ch_data.append(sd.get_events(all_event_ids))
+            for et in event_type_keys:
+                #per category events
+                events = self.event_types[et]
+                ch_data.append(sd.get_events(events))
+                if len(events) > 1:
+                    #summed data for all items from one category
+                    for event_id in events:
+                        ch_data.append(sd.get_events([event_id]))
+        #events = sd.get_events(True)
         shape = [1]
         shape.extend(new_data.shape)
-        new_data.shape = shape
-        bl.shape = shape
-        out = n.vstack((new_data, bl))
-        return out
+        for el in ch_data:
+            el.shape = shape
+        out = n.vstack(ch_data)
+        self.syn_image_data = out
+
+    def image_data(self, a=None):
+        if self.syn_image_data is None:
+            self.make_image_data()
+        #FIXME why is this called 4 times on image load??
+        return self.syn_image_data
 
     def get_pixel_size(self, im_type):
         return n.array((1.0,1.0))

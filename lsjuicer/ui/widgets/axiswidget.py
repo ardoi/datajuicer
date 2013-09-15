@@ -151,6 +151,8 @@ class HorizontalAxisWidget(AxisWidget):
                 p.setFont(font)
 
     def mouseReleaseEvent(self, event):
+        #for horizontal axis it's possible to set first tick to relative
+        #values instead of absolute location
         self.relative_to_start = not self.relative_to_start
         self.calculate_ticks()
         self.repaint()

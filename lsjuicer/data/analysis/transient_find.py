@@ -824,46 +824,73 @@ def make_raw(res):
     sess.close()
     return out
 
-def clean_plot_data(results, only_bl=False):
-    out = n.zeros((results['frames'], results['height'], results['width']),dtype='float')
-    times = n.arange(results['frames'])
-    for res in results['fits']:
-        #print '\n',res
-        x = res.x
-        y = res.y
-        #try:
-        if 1:
-            #transients = results['fits'][res]['transients'].values()
-            #transients.sort(key=lambda x:x['A'], reverse = True)
-            #fit_params = transients[0]
-            #vals = fitfun.ff5(times, **fit_params)
-            #rrr=results['fits'][res]
-            vals = full_res(times, res, only_bl)
-            #vals = non_waves(times, rrr)
-            out[:,y,x]=vals
-        #except:
-        #    pass
-        #print out
-        #break
-    return out
 
-def full_res(time, result, only_bl = False):
-    #pf = n.poly1d(result['baseline'])
-    if result.baseline is None:
-        return n.array([n.nan]*time.size)
-    pf = n.poly1d(result.baseline)
-    baseline = pf(time)
-    f = baseline
-    if only_bl:
+
+
+class SyntheticData(object):
+    def __init__(self, results):
+        self.results = results
+        self.times = n.arange(results['frames'])
+        self.func = None
+        self.filter = None
+
+    def zeros(self):
+        out = n.zeros((self.results['frames'], self.results['height'],
+            self.results['width']),dtype='float')
+        return out
+
+
+    def make_res(self):
+        out = self.zeros()
+        for res in self.results['fits']:
+            x = res.x
+            y = res.y
+            out[:,y,x] = self.func(res)
+        self.filter = None
+        self.func = None
+        return out
+
+    def func_fit(self, result):
+        f = n.zeros_like(self.times, dtype='float')
+        for i,t in enumerate(result.pixel_events):
+            if self.filter:
+                #skip pixelevents that are not part of any event
+                if not t.event_id in self.filter:
+                    continue
+            res = fitfun.ff6(self.times, **t.parameters)
+            if True not in n.isnan(res):
+                f+=res
+            else:
+                print "NAN for", t
         return f
-    for i,t in enumerate(result.pixel_events):
-        #print 'transient',i
-        res = fitfun.ff6(time, **t.parameters)
-        if True not in n.isnan(res):
-            f+=res
-        else:
-            print "NAN for", t
-    return f
+
+    def func_baseline(self, result):
+        if result.baseline is None:
+            return n.array([n.nan]*self.times.size)
+        pf = n.poly1d(result.baseline)
+        baseline = pf(self.times)
+        return baseline
+
+    def func_all(self, result):
+        return self.func_fit(result) + self.func_baseline(result)
+
+    def get_fit(self):
+        self.func = self.func_fit
+        return self.make_res()
+
+    def get_events(self, filter):
+        self.func = self.func_fit
+        self.filter = filter
+        return self.make_res()
+
+    def get_baseline(self):
+        self.func = self.func_baseline
+        return self.make_res()
+
+    def get_all(self):
+        self.func = self.func_all
+        return self.make_res()
+
 
 def get_job(joblist, coords):
     for j in joblist:

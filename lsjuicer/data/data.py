@@ -103,7 +103,7 @@ class ImageDataMaker(object):
 
     @staticmethod
     def _data_from_mimage_data(mimage_data, imagedata):
-        print 'data is',mimage_data.shape,mimage_data
+        #print 'data is',mimage_data.shape,mimage_data
         imagedata.all_image_data = mimage_data
         imagedata.space_origin = 0.0
         imagedata.time_origin = 0.0
@@ -131,6 +131,9 @@ class ImageData(object):
     @property
     def channels(self):
         return self.all_image_data.shape[0]
+    @property
+    def channel_names(self):
+        return self.mimage.channel_names
     @property
     def frames(self):
         return self.all_image_data.shape[1]

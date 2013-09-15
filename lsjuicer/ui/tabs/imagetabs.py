@@ -127,9 +127,11 @@ class AnalysisImageTab(QG.QWidget):
             vis_options = VisualizationOptionsWidget(pc, self, channel)
             vis_layout.addWidget(vis_options)
             vis_options.settings_changed.connect(self.make_new_pixmap)
-        for channel in range(channels):
-            print '\nchannel:',channel
-            self.channel_combobox.addItem("Channel %i"%channel)
+        channel_names = self.imagedata.channel_names
+        for channel, name in channel_names.iteritems():
+            ch_str = 'ch{}: {}'.format(channel, name)
+            print ch_str
+            self.channel_combobox.addItem(ch_str)
 
 
         self.control_layout.addWidget(pipegroupbox)
