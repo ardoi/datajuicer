@@ -299,7 +299,8 @@ class FittedPixel(dbmaster.Base):
     __tablename__ = "fitted_pixels"
     id = Column(Integer, primary_key=True)
     result_id = Column(Integer, ForeignKey("pixelbypixelfitregion_results.id"))
-    result = relationship("PixelByPixelRegionFitResult", backref=backref("pixels", cascade='all, delete, delete-orphan'), order_by=id)
+    result = relationship("PixelByPixelRegionFitResult", backref=backref("pixels",
+                                        cascade='all, delete, delete-orphan'), order_by=id)
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
     #event_count = Column(Integer, nullable=False)
@@ -313,7 +314,8 @@ class PixelEvent(dbmaster.Base):
     __tablename__ = "pixel_events"
     id = Column(Integer, primary_key=True)
     pixel_id = Column(Integer, ForeignKey("fitted_pixels.id"))
-    pixel = relationship("FittedPixel", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
+    pixel = relationship("FittedPixel", backref=backref("pixel_events",
+                            cascade='all, delete, delete-orphan', lazy=False), order_by=id)
 
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)

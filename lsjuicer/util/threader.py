@@ -31,7 +31,7 @@ class Worker(Process):
     def kill(self):
         session = sqlb2.dbmaster.get_session()
         session.add(self.worker)
-        self.logger.info("killing worker %i" % self.worker.id)
+        self.logger.warning("killing worker %i" % self.worker.id)
         try:
             current_job = session.query(sqlb2.Job).\
                 filter(sqlb2.Job.worker_id == self.worker.id).\
@@ -40,7 +40,7 @@ class Worker(Process):
             current_job.timed_out = True
             current_job.finished = True
             current_job.end_time = datetime.datetime.now()
-            self.logger.info("killing worker %i, job %i" % (
+            self.logger.warning("killing worker %i, job %i" % (
                 self.worker.id, current_job.id))
         except NoResultFound:
             # the job has finished so no need to kill anything
@@ -79,26 +79,26 @@ class Worker(Process):
         args = job_params
         data = args['data']
         # xy = args['coords']
-        self.logger.info("job %i starting" % self.current_job_id)
+        self.logger.debug("job %i starting" % self.current_job_id)
         try:
             # f = tf.fit_regs(data)
             f = tf.fit_2_stage(data)
             # time.sleep(5)
             # f=10.0
         except:
-            # self.logger.info("job %i failed"%self.current_job_id)
+            # self.logger.debug("job %i failed"%self.current_job_id)
             #print '\n\n\nboooooo'
             self.logger.warning("job %i failed %s" % (
                 self.current_job_id, traceback.format_exc()))
             f = None
-        self.logger.info("job %i returning" % self.current_job_id)
+        self.logger.debug("job %i returning" % self.current_job_id)
         return f
 
     def run(self):
         dbmaster = sqlb2.dbmaster
         session = dbmaster.get_session()
         session.add(self.worker)
-        self.logger.info('worker %i starting' % self.worker.id)
+        self.logger.debug('worker %i starting' % self.worker.id)
         self.worker.start_time = datetime.datetime.now()
         self.worker.running = True
 
@@ -112,7 +112,7 @@ class Worker(Process):
             session.add(self.worker)
             session.add(job)
 
-            self.logger.info('worker %i, started job %i' % (
+            self.logger.debug('worker %i, started job %i' % (
                 self.worker.id, job.id))
             job.start_time = datetime.datetime.now()
 
@@ -139,7 +139,7 @@ class Worker(Process):
             job.end_time = datetime.datetime.now()
             self.worker.job_end_time = job.end_time
             session.commit()
-            self.logger.info('worker %i, finished job %i' % (
+            self.logger.debug('worker %i, finished job %i' % (
                 self.worker.id, job.id))
             session.close()
 
@@ -148,7 +148,7 @@ class Worker(Process):
         self.worker.finished = True
         self.worker.running = False
         self.worker.end_time = datetime.datetime.now()
-        self.logger.info('worker %i finished' % self.worker.id)
+        self.logger.debug('worker %i finished' % self.worker.id)
         session.commit()
         session.close()
         return
@@ -170,7 +170,7 @@ class Threader(QC.QObject):
             self.start_time = time.time()
             self.run_times = []
 
-        self.logger.info("\nUPDATE")
+        self.logger.debug("\nUPDATE")
         newly_finished = []
         kill_list = []
         time_limit = 200
@@ -183,21 +183,21 @@ class Threader(QC.QObject):
                 self.run_times.append(w.run_time)
                 continue
             try:
-                self.logger.info("worker %i,%i, time %.3f, current %i" % (
+                self.logger.debug("worker %i,%i, time %.3f, current %i" % (
                     w.id, wn, w.job_run_time, w.running_job))
             except TypeError:
                 self.logger.error("worker %i,%i finished error" % (w.id, wn))
 
             if w.job_run_time > time_limit:
-                self.logger.info('kill %i' % wn)
+                self.logger.debug('kill %i' % wn)
                 kill_list.append(wn)
         # session.close()
         for wn in kill_list:
             w = self.workers[wn]
-            self.logger.info("killing %i" % wn)
+            self.logger.debug("killing %i" % wn)
             status = w.kill()
             if not status:
-                self.logger.info("nothing to kill")
+                self.logger.debug("nothing to kill")
                 continue
             # session = sqlb2.dbmaster.get_session()
             sql_w = session.query(sqlb2.Worker).filter(
@@ -213,11 +213,11 @@ class Threader(QC.QObject):
                 for job in undone_jobs:
                     job.worked_id = None
                 undone_job_numbers = [job.id for job in undone_jobs]
-                self.logger.info("reinsert %i" % len(undone_job_numbers))
+                self.logger.debug("reinsert %i" % len(undone_job_numbers))
                 # print "waiting old",len(self.waiting_jobs)
                 # print self.waiting_jobs
                 self.waiting_jobs = self.waiting_jobs.union(undone_job_numbers)
-                self.logger.info("after reinsert waiting  %i" % len(
+                self.logger.debug("after reinsert waiting  %i" % len(
                     self.waiting_jobs))
                 # print self.waiting_jobs
             session.commit()
@@ -253,9 +253,9 @@ class Threader(QC.QObject):
         # print "before new Remaining: %i"%(len(self.waiting_jobs))
         running = len(self.running_workers)
         empty_slots = self.slots - running
-        self.logger.info("running workers before start %i %s" % (
+        self.logger.debug("running workers before start %i %s" % (
             running, str(self.running_workers)))
-        self.logger.info("waiting jobs before start %i" % len(
+        self.logger.debug("waiting jobs before start %i" % len(
             self.waiting_jobs))
         started_now = 0
         if self.waiting_jobs:
@@ -278,10 +278,10 @@ class Threader(QC.QObject):
                 worker.start()
                 started_now += 1
 
-        self.logger.info(
+        self.logger.debug(
             "running workers after start %i %s" % (len(self.running_workers),
                                                    str(self.running_workers)))
-        self.logger.info("waiting jobs after start %i" % len(
+        self.logger.debug("waiting jobs after start %i" % len(
             self.waiting_jobs))
         # session = sqlb2.dbmaster.get_session()
         finished_jobs = session.query(sqlb2.Job).filter(
@@ -305,11 +305,11 @@ class Threader(QC.QObject):
             self.progress_update.emit(jobs_remaining, finished_jobs,
                                       timed_out_jobs, failed_jobs)
 
-        self.logger.info("Remaining: %i\t Finished:%i" % (
+        self.logger.debug("Remaining: %i\t Finished:%i" % (
             jobs_remaining, finished_jobs))
-        self.logger.info("Successful:%i\t Failed:%i" % (
+        self.logger.debug("Successful:%i\t Failed:%i" % (
             successful_jobs, failed_jobs))
-        self.logger.info("Timed out: %i\t Running:%i" % (
+        self.logger.debug("Timed out: %i\t Running:%i" % (
             timed_out_jobs, running_jobs))
         if finished_jobs == self.jobs_to_run:
             print "ALL DONE. Stopping timer"

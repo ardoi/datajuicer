@@ -191,9 +191,12 @@ class PlotWithAxesWidget(QG.QWidget):
             QToolButton
             {
                  border: none;
+                 background:palette(base);
             }
                 """
         action_toolbutton.setStyleSheet(style)
+        #action_toolbutton.setBackgroundRole(QG.QPalette.Base)
+        #action_toolbutton.setForegroundRole(QG.QPalette.Base)
         action_toolbutton.setPopupMode(QG.QToolButton.InstantPopup)
         action_toolbutton.setMaximumHeight(20)
         action_toolbutton.setMaximumWidth(40)

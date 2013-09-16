@@ -513,7 +513,7 @@ class PipeChain(QC.QObject):
 
     def set_source_data(self, source_data):
         self.source_data = source_data
-        print 'source data shape', source_data.shape
+        #print 'source data shape', source_data.shape
         if source_data.ndim == 3:
             pass
         elif source_data.ndim == 4:
