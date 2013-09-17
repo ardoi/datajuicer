@@ -113,11 +113,12 @@ class ClusterWidget(QG.QWidget):
                 color = colornames.next()
             else:
                 color = 'black'
-            style={'style':'circles', 'color':color, 'alpha':0.50}
+            style={'style':'circles', 'color':color, 'alpha':0.250}
             if cluster == -1:
-                style.update({'size':0.5, 'alpha':0.5})
+                style.update({'size':0.5, 'alpha':0.25})
             for i, kind in enumerate(self.plot_pairs.keys()):
                 for j, spp in enumerate(self.plot_pairs[kind]):
+                    print kind,spp
                     x = self.key[spp[0]]
                     y = self.key[spp[1]]
                     plotwidget = self.plotwidgets[spp]
@@ -182,6 +183,8 @@ class Clusterer(object):
         #S = 1 - (D / numpy.max(D))
         #print 'clustering', eps, min_samples
         #print data.shape, data[0]
+        print "clustering", data.shape, data.mean(axis=0), data.min(axis=0), data.max(axis=0)
+
         db = DBSCAN(eps=eps, min_samples=min_samples).fit(data)
         #core_samples = db.core_sample_indices_
         labels = db.labels_
@@ -296,9 +299,11 @@ class EventCategoryWidget(QG.QWidget):
         eps_spinbox = QG.QDoubleSpinBox(self)
         eps_spinbox.setMinimum(0.1)
         eps_spinbox.setMaximum(25.0)
+        eps_spinbox.setValue(4.0)
         eps_spinbox.setSingleStep(0.05)
         min_sample_spinbox.setMinimum(2)
         min_sample_spinbox.setMaximum(200)
+        min_sample_spinbox.setValue(20)
         min_sample_spinbox.setSingleStep(1)
         desc_edit = FocusLineEdit()
         desc_edit.set_default_text("optional")

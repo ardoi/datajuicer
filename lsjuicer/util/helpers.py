@@ -124,6 +124,13 @@ def timeIt(f):
         return res
     return tt
 
+def log(f):
+   def out(*args, **kwargs):
+       print 'starting',f
+       f(*args, **kwargs)
+       print 'ending',f
+       return
+   return out
 
 def list_2_str(list, prec=6):
     out = ''

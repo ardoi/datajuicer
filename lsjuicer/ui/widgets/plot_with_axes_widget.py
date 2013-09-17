@@ -1,5 +1,7 @@
+
 import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
+#import PyQt4.QtOpenGL as QGL
 #from scipy.interpolate import interp1d
 #import numpy as n
 
@@ -8,7 +10,7 @@ from lsjuicer.ui.views import ZoomView
 from lsjuicer.ui.widgets.axiswidget import VerticalAxisWidget, HorizontalAxisWidget
 from lsjuicer.ui.plot.plotteddata import PlottedData
 from lsjuicer.static.constants import Constants
-
+from lsjuicer.util.helpers import timeIt
 
 class PlotWithAxesWidget(QG.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
@@ -59,6 +61,7 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fV.fitInView(self.scene_rect, self.aspect_ratio)  # value)
         self.fV.determine_axes_span()
 
+    @timeIt
     def removeItem(self, item):
         print 'remove',item
         if not item:
@@ -76,6 +79,7 @@ class PlotWithAxesWidget(QG.QWidget):
             self.plot_datas[plot_name].visibility = state
             path.setVisible(state)
 
+    @timeIt
     def setupUI(self, sceneClass):
         plotLayout = QG.QVBoxLayout()
         plotLayout.setContentsMargins(0, 0, 0, 0)
@@ -85,9 +89,11 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fV = ZoomView()
         self.fV.setTransformationAnchor(QG.QGraphicsView.AnchorUnderMouse)
         self.fV.setFrameStyle(QG.QFrame.NoFrame)
+        #self.fV.setViewport(QGL.QGLWidget(QGL.QGLFormat(QGL.QGL.SampleBuffers)))
         # TODO try disable:
-        self.fV.setCacheMode(QG.QGraphicsView.CacheNone)
-        self.fV.setMouseTracking(True)
+        #self.fV.setCacheMode(QG.QGraphicsView.CacheNone)
+        #self.fV.setMouseTracking(True)
+        #self.fV.setViewportUpdateMode(QG.QGraphicsView.NoViewportUpdate)
         fLayout = QG.QGridLayout()
         plotLayout.addLayout(fLayout)
         self.setLayout(plotLayout)
@@ -244,6 +250,7 @@ class PlotWithAxesWidget(QG.QWidget):
         self.fscene.setLocation.connect(self.updateCoords)
         QG.QApplication.processEvents()
 
+    @timeIt
     def zoom_level_changed(self, h_zoom, v_zoom):
         #t= self.fV.transform()
         #print 'transform', t.m11(), t.m12(), t.m13(),t.m21(),t.m22(),t.m23(),t.m31(),t.m32(),t.m33()
@@ -254,6 +261,7 @@ class PlotWithAxesWidget(QG.QWidget):
         self.zoom_v_label.setText('%.1f' % v_zoom)
         self.scale_aspect(h_zoom, v_zoom)
 
+    @timeIt
     def ranges_changed(self):
         # call this so that haxis is initialized to the right left/right values
         self.h_scroll_changed()
@@ -337,6 +345,7 @@ class PlotWithAxesWidget(QG.QWidget):
         line.setZValue(1000.)
         return line
 
+    @timeIt
     def reframe(self):
         QG.QApplication.processEvents()
         print 'setting scene rect', self.scene_rect
@@ -346,6 +355,7 @@ class PlotWithAxesWidget(QG.QWidget):
         QG.QApplication.processEvents()
         self.ranges_changed()
 
+    @timeIt
     def updatePlots(self):
         if self.updating:
             return
@@ -422,6 +432,7 @@ class PlotWithAxesWidget(QG.QWidget):
         #Stupid hack to make make sure that vertical scrollbar does not emit weird numbers
         self.ranges_changed()
 
+    @timeIt
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
         print '\naddplot', name
         if name in self.plot_datas.keys():
@@ -435,17 +446,20 @@ class PlotWithAxesWidget(QG.QWidget):
             self.updatePlots()
         return pd
 
+    @timeIt
     def removePlotByName(self, name):
         for pd_name in self.plot_datas:
             if pd_name == name:
                 self.removePlotData(self.plot_datas[pd_name])
 
+    @timeIt
     def removePlotData(self, plotd):
         if hasattr(plotd, 'group'):
             self.removeItem(plotd.group)
         else:
             self.removeItem(plotd.gpath)
 
+    @timeIt
     def updatePlot(self, name, data, x_vals, only_grow=False, hold_update=False):
         print '\n\n\n\nupdate', name
         plotd = self.plot_datas[name]
@@ -457,6 +471,7 @@ class PlotWithAxesWidget(QG.QWidget):
         if not hold_update:
             self.updatePlots()
 
+    @timeIt
     def redraw(self, plotd):
         #print '\nredraw', plotd,  plotd.graphic_item
         self.removeItem(plotd.graphic_item)
@@ -487,6 +502,7 @@ class PlotWithAxesWidget(QG.QWidget):
         r = self.fscene.addRect(qrect)
         return r
 
+    @timeIt
     def makePath(self, plotd):
         QG.QApplication.processEvents()
         #plot_data = self.convert_data(plotd)
@@ -520,7 +536,7 @@ class PlotWithAxesWidget(QG.QWidget):
         circle_size = 10 * plotd.size
         p1 = self.fV.mapToScene(QC.QPoint(0, 0))
         p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
-        p = p2-p1
+        p = p2 - p1
         xsize = p.x()
         ysize = p.y()
 
@@ -528,13 +544,13 @@ class PlotWithAxesWidget(QG.QWidget):
             e = self.fscene.addEllipse(p.x()-xsize/2., p.y()-ysize/2.,
                                        xsize, ysize, plotd.pen, plotd.brush)
             #e.setFlag(QG.QGraphicsItem.ItemIgnoresTransformations)
-            e.setZValue(plotd.Z)
-            e.setToolTip("%f, %f" % (plotd.phys_xvalues[i], plotd.data[i]))
+            #e.setZValue(plotd.Z)
+            #e.setToolTip("%f, %f" % (plotd.phys_xvalues[i], plotd.data[i]))
             group.addToGroup(e)
         plotd.drawn = True
         self.fscene.addItem(group)
         plotd.boundingrect = group.boundingRect()
-        group.setZValue(plotd.Z)
+        #group.setZValue(plotd.Z)
         self.plot_index += 1
         if not plotd.visibility:
             group.setVisible(False)
@@ -542,6 +558,7 @@ class PlotWithAxesWidget(QG.QWidget):
         plotd.base_size = (xsize, ysize)
         return #group
 
+    @timeIt
     def scale_aspect(self, h_scale, v_scale):
         """Scale any circle plots so that they would look like
         circles under any scaling"""
@@ -554,7 +571,7 @@ class PlotWithAxesWidget(QG.QWidget):
         #        new_h_scale = h_scale/v_scale
         #    elif h_scale<v_scale:
         #        new_v_scale = v_scale/h_scale
-        if 1:
+        if 0:
             if len(self.plot_datas.keys()) > 0:
                 for plotd in self.plot_datas.values():
                     if plotd.drawn:
