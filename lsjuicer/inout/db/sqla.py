@@ -16,6 +16,7 @@ from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.static.constants import ImageStates
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.inout.readers.OMEXMLReader import LSMReader, OIBReader, VTITIFReader
+from lsjuicer.util.helpers import timeIt
 
 class ReaderFactory(object):
     readers = {('LSM','lsm'):LSMReader, ('OIB','oib'):OIBReader, ('OIF','oif'):OIBReader, ('TIF','tif'):VTITIFReader}
@@ -300,7 +301,7 @@ class FittedPixel(dbmaster.Base):
     id = Column(Integer, primary_key=True)
     result_id = Column(Integer, ForeignKey("pixelbypixelfitregion_results.id"))
     result = relationship("PixelByPixelRegionFitResult", backref=backref("pixels",
-                                        cascade='all, delete, delete-orphan'), order_by=id)
+                                        cascade='all, delete, delete-orphan', lazy=False), order_by=id)
     x = Column(Integer, nullable=False)
     y = Column(Integer, nullable=False)
     #event_count = Column(Integer, nullable=False)
@@ -594,6 +595,7 @@ class PixelFittedSyntheticImage(Image):
     __mapper_args__ = {
         'polymorphic_identity':'pixelfitted_synthetic_image'
     }
+    @timeIt
     def __init__(self, pixelfitresult):
         Image.__init__(self)
         reg = pixelfitresult.region
@@ -611,21 +613,34 @@ class PixelFittedSyntheticImage(Image):
             print 'ET',event_types
             event_type_keys = event_types.keys()
             event_type_keys.sort()
+
+            self.channel_events = {}
+            all_event_ids = []
+            [all_event_ids.extend(el) for el in self.event_types.values()]
+            self.channel_events[self.channels-1] = all_event_ids
+
             for et in event_type_keys:
+                event_ids= self.event_types[et]
                 events = len(event_types[et])
                 if events == 1:
                     #if only one event of type then one extra channel is enough
                     self.channels += 1
                     self._channel_names[self.channels-1] = et
+                    self.channel_events[self.channels-1] = event_types[et]
                 else:
                     #for more than one event we need one channel per event
                     #plus summary channel of all events of type
                     self.channels += 1
                     self._channel_names[self.channels-1] = et+" all"
-                    for i in range(events):
+                    all_ids_of_type = []
+                    self.channel_events[self.channels-1] = all_ids_of_type
+                    for i,event_id in enumerate(event_ids):
                         self.channels += 1
                         self._channel_names[self.channels-1] = "{} {}".format(et,i)
+                        self.channel_events[self.channels-1] = event_id
+                        all_ids_of_type.append(event_id)
         print self._channel_names
+        print self.channel_events
 
         self.image_frames = reg.frames
         analysis = reg.analysis
@@ -647,9 +662,12 @@ class PixelFittedSyntheticImage(Image):
         results['dy'] = pixelfitresult.fit_settings['padding']
         results['x0'] = reg.x0
         results['y0'] = reg.y0
+        print 'pixels', len(pixelfitresult.pixels)
         results['fits'] = pixelfitresult.pixels
+        print 'pixels', len(pixelfitresult.pixels)
         self.results = results
 
+    @timeIt
     def make_image_data(self):
         print 'Making image data'
         sd = tf.SyntheticData(self.results)
@@ -665,12 +683,11 @@ class PixelFittedSyntheticImage(Image):
             for et in event_type_keys:
                 #per category events
                 events = self.event_types[et]
+                #summed data for all items from one category
                 ch_data.append(sd.get_events(events))
                 if len(events) > 1:
-                    #summed data for all items from one category
                     for event_id in events:
                         ch_data.append(sd.get_events([event_id]))
-        #events = sd.get_events(True)
         shape = [1]
         shape.extend(new_data.shape)
         for el in ch_data:
@@ -678,6 +695,7 @@ class PixelFittedSyntheticImage(Image):
         out = n.vstack(ch_data)
         self.syn_image_data = out
 
+    @timeIt
     def image_data(self, a=None):
         if self.syn_image_data is None:
             self.make_image_data()

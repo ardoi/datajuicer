@@ -15,8 +15,10 @@ from lsjuicer.ui.widgets.smallwidgets import VisualizationOptionsWidget
 from lsjuicer.ui.widgets.smallwidgets import FramePlayer
 from lsjuicer.inout.db.sqla import SparkAnalysis, PixelByPixelAnalysis
 from lsjuicer.ui.tabs.transienttab import FluorescenceTab
-from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
+class ControlWidget(QG.QWidget):
+    def  __init__(self, parent = None):
+        super(ControlWidget, self).__init__(parent)
 
 class AnalysisImageTab(QG.QWidget):
     """Tab containing image to analyze"""
@@ -138,6 +140,7 @@ class AnalysisImageTab(QG.QWidget):
         self.control_layout.addWidget(vis_opt_groupbox)
         channel_selection_groupbox = QG.QGroupBox("Displayed image")
         vlayout = QG.QVBoxLayout()
+        channel_selection_groupbox.setLayout(vlayout)
         layout = QG.QHBoxLayout()
         layout.addWidget(QG.QLabel("Channel:"))
         layout.addWidget(self.channel_combobox)
@@ -170,7 +173,7 @@ class AnalysisImageTab(QG.QWidget):
         frame_player = FramePlayer(self.selection_slider.value,
                 self.selection_slider.setValue, self.selection_slider.maximum, self)
         vlayout.addWidget(frame_player)
-        self.control_layout.addLayout(vlayout)
+        self.control_layout.addWidget(channel_selection_groupbox)
         self.selection_slider.setMinimum(0)
         self.selection_slider.setMaximum(acquisitions-1)
         self.selection_slider.valueChanged.connect(self.change_frame)
@@ -185,7 +188,6 @@ class AnalysisImageTab(QG.QWidget):
 
         self.channel_combobox.setCurrentIndex(0)
 
-        #pipegroupbox.layout().setCurrentIndex(0)
         vis_layout.setCurrentIndex(0)
 
         self.channel_combobox.currentIndexChanged.connect(self.change_channel)
@@ -409,6 +411,7 @@ class AnalysisImageTab(QG.QWidget):
             linescan_image = idata.get_pseudo_linescan(selections_by_type_name)
             next_tab.showData(linescan_image)
         elif self.analysis_mode == "PixelByPixel":
+            from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
             idata = ImageDataMaker.from_imagedata(self.imagedata)
             idata.replace_channels(self.pipechain.get_result_data())
             next_tab = PixelByPixelTab(idata, selections_by_type_name, self.analysis, parent = self.aw)
@@ -438,10 +441,3 @@ class AnalysisImageTab(QG.QWidget):
     def show_gaps(self,gap_times):
         self.lsmPlot.addHLines(gap_times,Constants.GAPS,'yellow')
 
-class VisualizationOptionsWidgetOld(QG.QWidget):
-    new_pixmap_needed = QC.pyqtSignal()
-    def  __init__(self, pixmaker, parent = None):
-        super(VisualizationOptionsWidgetOld, self).__init__(parent)
-        blur_name_label.setToolTip("Blur the image by the amount specified.\
-                \nBlurring affects only how the image is displayed\
-                \nand does not affect the underlying data.")

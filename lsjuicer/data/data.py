@@ -80,7 +80,6 @@ class ImageDataMaker(object):
         imagedata.timestamps = existing.delta_time*n.arange(linescan_data.shape[3])
         imagedata.all_image_data = linescan_data
         #print imagedata.timestamps,imagedata.timestamps.shape
-        print linescan_data
         return imagedata
 
 
@@ -91,7 +90,6 @@ class ImageDataMaker(object):
         #FIXME
         if cut:
             l,r,b,t = cut
-            print 'cutting', l,r,b,t
             for c in existing.channels:
                 imagedata.all_image_data.update({c:existing.all_image_data[c][b:t, l:r]})
             imagedata.space_origin = existing.yvals[b]

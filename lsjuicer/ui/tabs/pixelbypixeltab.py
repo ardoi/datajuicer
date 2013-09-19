@@ -16,6 +16,8 @@ from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
 from lsjuicer.util.threader import FitDialog
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
+from lsjuicer.inout.db import sqla as sa
+from lsjuicer.data.data import ImageDataMaker
 
 class PixelByPixelTab(QG.QTabWidget):
     @property
@@ -177,6 +179,8 @@ class PixelByPixelTab(QG.QTabWidget):
     def __init__(self, imagedata, selections, analysis, parent = None):
         super(PixelByPixelTab, self).__init__(parent)
         self.imagedata = imagedata
+        self.parent = parent
+        print "PBPT", parent
         self.coords = None
         self.fit = False
         self.analysis  = analysis
@@ -300,19 +304,28 @@ class PixelByPixelTab(QG.QTabWidget):
         pb_do_clustering  = QG.QPushButton("Do clustering")
         pb_do_clustering.setCheckable(True)
         pb_do_clustering.clicked.connect(self.do_clustering)
-        #pb_make_new_stack = QG.QPushButton("New stack from fit")
-        #pb_make_new_stack.clicked.connect(self.make_new_stack)
+        pb_make_new_stack = QG.QPushButton("New stack from fit")
+        pb_make_new_stack.clicked.connect(self.make_new_stack)
         hlayout.addWidget(pb_do_clustering)
-        #hlayout.addWidget(pb_make_new_stack)
+        hlayout.addWidget(pb_make_new_stack)
         self.show_res()
         session.close()
 
-    #def make_new_stack(self):
-    #    new_data = tf.clean_plot_data(self.res)
-    #    bl = tf.clean_plot_data(self.res, only_bl = True)
-    #    #print new_data
-    #    #print bl
-    #    pass
+    def make_new_stack(self):
+        session = dbmaster.object_session(self.fit_result)
+        if not session:
+            session = dbmaster.get_session()
+            session.add(self.fit_result)
+        from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
+        synthetic_image = sa.PixelFittedSyntheticImage(self.fit_result)
+        next_tab = AnalysisImageTab(parent=self)
+        im_data = ImageDataMaker.from_db_image(synthetic_image)
+        next_tab.showData(im_data)
+        next_tab.setAW(self.parent)
+        print self.parent
+        next_icon = QG.QIcon(':/chart_curve.png')
+        self.parent.add_tab(next_tab, next_icon, "Fitted data")
+        session.close()
 
     def param_combo_changed(self, param):
         self.param = str(param)

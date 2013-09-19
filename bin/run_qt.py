@@ -28,6 +28,7 @@ def java_check(parent):
 
 
 def dependencies_for_myprogram():
+    #for creating package blobs
     from scipy.sparse.csgraph import _validation
     id(_validation)
 

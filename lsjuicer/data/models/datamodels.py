@@ -392,9 +392,9 @@ class RandomDataModel(QC.QAbstractTableModel):
             fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
                     join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\
                     join(sa.MicroscopeImage).filter(sa.MicroscopeImage.id == im.id).all()
-            for result in fit_results:
-                syn_im = sa.PixelFittedSyntheticImage(result)
-                self.dirdatas.append(syn_im)
+            #for result in fit_results:
+            #    syn_im = sa.PixelFittedSyntheticImage(result)
+            #    self.dirdatas.append(syn_im)
             self.emit(QC.SIGNAL('filesRead(int)'), i)
 
         ##self.files.sort(key=lambda f:self.dirdatas[self.dirname][f].datetime)
