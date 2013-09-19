@@ -727,9 +727,10 @@ def test_string(s):
     else:
         return True
 
+class ActionPanel(QG.Widget):
+    pass
 
-class PipeChainWidget(QG.QWidget):
-    pipes_changed = QC.pyqtSignal()
+class PipeChainPanel(ActionPanel):
     def __init__(self, pipechain, parent = None):
         super(PipeChainWidget, self).__init__(parent)
         self.pipechain = pipechain
@@ -778,7 +779,6 @@ class PipeChainWidget(QG.QWidget):
 
     def update_model(self):
         self.pipemodel.pipes_updated()
-        self.pipes_changed.emit()
 
     def show_pipe_settings(self, index):
         pipe_number = index.row()

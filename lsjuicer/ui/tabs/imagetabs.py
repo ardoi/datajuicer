@@ -8,7 +8,7 @@ from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, Selectio
 from lsjuicer.static.constants import Constants
 from lsjuicer.static import selection_types
 from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
-from lsjuicer.data.pipes.tools import PipeChain, PipeChainWidget
+from lsjuicer.data.pipes.tools import PipeChain, PipeChainWidget, ActionPanel
 from lsjuicer.data.data import ImageDataMaker
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 from lsjuicer.ui.widgets.smallwidgets import VisualizationOptionsWidget
@@ -16,9 +16,71 @@ from lsjuicer.ui.widgets.smallwidgets import FramePlayer
 from lsjuicer.inout.db.sqla import SparkAnalysis, PixelByPixelAnalysis
 from lsjuicer.ui.tabs.transienttab import FluorescenceTab
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
+
+class VisualizationPanel(ActionPanel):
+    pass
+class PipePanel(ActionPanel):
+    def __init__(self, pipechain, parent = None):
+        super(PipePanel, self).__init__(parent)
+        pipechainwidget = PipeChainWidget(pc)
+class FramePanel(ActionPanel):
+    pass
+class AnalysisPanel(ActionPanel):
+    pass
+
+class ClickTree(QG.QWidget):
+    def __init__(self, parent = None):
+        super(ClickTree, self).__init__(parent)
+        layout  = QG.QVBoxLayout()
+        self.setLayout(layout)
+        view = QG.QTreeView(self)
+        model = QG.QStandardItemModel()
+        #model.setHorizontalHeaderItem(0, QG.QStandardItem("Name"))
+        #model.setHorizontalHeaderItem(1, QG.QStandardItem("Description"))
+        model.setHorizontalHeaderLabels(["Name", "Info"])
+        root = model.invisibleRootItem()
+        for i in range(1,4):
+            type_item = QG.QStandardItem("Type {}".format(i))
+            root.appendRow(type_item)
+            for j in range(i*3):
+                panel_item = QG.QStandardItem("Panel {}".format(j))
+                panel_item.setCheckable(True)
+                desc_item = QG.QStandardItem(QG.QIcon(QG.QPixmap(":/information.png")),"Info")
+                type_item.appendRow([panel_item, desc_item] )
+        view.setWordWrap(True)
+        view.setIndentation(10)
+        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
+        view.setModel(model)
+        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
+        view.expanded.connect(lambda: view.resizeColumnToContents(0))
+        view.collapsed.connect(lambda: view.resizeColumnToContents(0))
+        view.clicked.connect(self.clicked)
+        layout.addWidget(view)
+
+    def clicked(self, modelindex):
+        print modelindex, modelindex.row(), modelindex.column()
+        if modelindex.column() == 1:
+            QG.QMessageBox.information(self, "info", "this is type {} panel {}".format(modelindex.row(), modelindex.column()))
+
 class ControlWidget(QG.QWidget):
     def  __init__(self, parent = None):
         super(ControlWidget, self).__init__(parent)
+        layout = QG.QHBoxLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        self.setLayout(layout)
+        self.groupboxes = {}
+
+        chooser = ClickTree()
+        self.add_grouping(chooser, "Panels")
+
+    def add_grouping(self, widget, name):
+        groupbox = QG.QGroupBox(name)
+        layout = QG.QVBoxLayout()
+        groupbox.setLayout(layout)
+        layout.addWidget(widget)
+        self.groupboxes[name]=groupbox
+        self.layout().addWidget(groupbox)
 
 class AnalysisImageTab(QG.QWidget):
     """Tab containing image to analyze"""
@@ -33,16 +95,10 @@ class AnalysisImageTab(QG.QWidget):
         self.lsmPlot =self.makePlotArea()
         self.lsmPlot.updateLocation.connect(self.updateCoords)
         layout.addWidget(self.lsmPlot)
-        self.controlWidget = QG.QWidget()
-        self.control_layout = QG.QHBoxLayout()
-        self.control_layout.setContentsMargins(0, 0, 0, 0)
-        self.controlWidget.setLayout(self.control_layout)
+        self.controlWidget = ControlWidget()
         layout.addWidget(self.controlWidget)
         layout.setStretchFactor(self.lsmPlot, 5)
         layout.setStretchFactor(self.controlWidget, 1)
-
-    def clear_overlays(self):
-        pass
 
     def setAW(self,widget):
         self.aw = widget
@@ -98,14 +154,12 @@ class AnalysisImageTab(QG.QWidget):
         self.pixmaker = None
         self.analysis_mode = None
         pipegroupbox = QG.QGroupBox("Processing")
-        #pipegroupbox.setLayout(QG.QStackedLayout())
         pipegroupbox.setLayout(QG.QVBoxLayout())
         pipegroupbox.setSizePolicy(QG.QSizePolicy.Maximum,QG.QSizePolicy.Minimum)
         layout = pipegroupbox.layout()
 
         vis_opt_groupbox = QG.QGroupBox("Visualization options")
         vis_opt_groupbox.setLayout(QG.QStackedLayout())
-        #vis_opt_groupbox.setLayout(QG.QVBoxLayout())
         vis_opt_groupbox.setSizePolicy(QG.QSizePolicy.Maximum,QG.QSizePolicy.Minimum)
         vis_layout = vis_opt_groupbox.layout()
 
@@ -118,7 +172,6 @@ class AnalysisImageTab(QG.QWidget):
         pc.pipe_state_changed.connect(self.force_new_pixmap)
         self.pipechain = pc
 
-        pipechainwidget = PipeChainWidget(pc)
 
         layout.addWidget(pipechainwidget)
 
