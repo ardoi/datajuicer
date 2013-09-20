@@ -611,7 +611,10 @@ class PixmapPlotWidget(PlotWithAxesWidget):
         if 1:
             #x_out = self.scene2data_xfunc(sx)
             x_out = sx
-            y_out = self.ymax - sy  # the value from scene is also data value
+            if self.ymax:
+                y_out = self.ymax - sy  # the value from scene is also data value
+            else:
+                y_out = sy
             #if self.scene2data_yvals is None:
             #    y_out = - sy  # the value from scene is also data value
             #else:

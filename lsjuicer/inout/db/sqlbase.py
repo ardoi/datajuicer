@@ -12,7 +12,7 @@ class DBMaster(object):
     def __init__(self):
         print "starting DBMaster"
         self.Base = declarative_base()
-        self.engine = create_engine('sqlite:///tables.db', echo=True)
+        self.engine = create_engine('sqlite:///tables.db', echo=False)
         self.Session = sessionmaker(bind=self.engine)
         self.tables_created = False
 

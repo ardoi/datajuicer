@@ -15,7 +15,6 @@ from lsjuicer.util import helpers
 from lsjuicer.static import selection_types
 from lsjuicer.ui.items.selection import BoundaryManager, SelectionDataModel
 from lsjuicer.static.constants import TransientBoundarySelectionTypeNames as TBSTN
-
 class Pipe(QC.QObject):
     pipe_toggled = QC.pyqtSignal()
     new_data_out = QC.pyqtSignal()
@@ -727,95 +726,6 @@ def test_string(s):
     else:
         return True
 
-class ActionPanel(QG.Widget):
-    pass
-
-class PipeChainPanel(ActionPanel):
-    def __init__(self, pipechain, parent = None):
-        super(PipeChainWidget, self).__init__(parent)
-        self.pipechain = pipechain
-        self.settings_widgets={}
-
-        layout = QG.QHBoxLayout()
-        self.setLayout(layout)
-        self.types = {'SelfRatio':SelfRatioPipe,
-                'Shear':ShearPipe, "Blur":BlurPipe,
-                'Image math':ImageMathPipe}
-        self.typecombo = QG.QComboBox()
-        for t in self.types:
-            #print t
-            self.typecombo.addItem(t)
-        add_layout = QG.QVBoxLayout()
-        add_layout.addWidget(self.typecombo)
-        add_pb = QG.QPushButton('Add')
-        add_layout.addWidget(add_pb)
-        add_pb.clicked.connect(self.add_pipe)
-
-        pipelist = QG.QListView()
-        self.pipemodel = PipeModel()
-        pipelist.setModel(self.pipemodel)
-
-        self.setting_stack = QG.QStackedWidget()
-
-        self.pipechain.pipe_state_changed.connect(self.update_model)
-
-        layout.addLayout(add_layout)
-        layout.addWidget(pipelist)
-        layout.addWidget(self.setting_stack)
-
-        pipelist.clicked.connect(self.show_pipe_settings)
-        #self.pipelistingarea = QG.QScrollArea()
-        #self.pipelistingarea = QG.QWidget()
-        #self.pipelistwidget = QG.QWidget()
-        #self.pipelistwidget.setMinimumSize(100,200)
-        #layout.addWidget(self.pipelistingarea)
-        #layout.addWidget(self.pipelistwidget)
-        #plw_layout = QG.QVBoxLayout()
-        #self.pipelistwidget.setLayout(plw_layout)
-        #self.pipelistingarea.setWidget(self.pipelistwidget)
-        #:plw_layout.addWidget(QG.QLabel('W'))
-        #self.make_widgetlist()
-        self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
-
-    def update_model(self):
-        self.pipemodel.pipes_updated()
-
-    def show_pipe_settings(self, index):
-        pipe_number = index.row()
-        #print 'show', pipe_number
-        pipe = self.pipechain.imagepipes[pipe_number]
-        if pipe in self.settings_widgets:
-            sw, pos = self.settings_widgets[pipe]
-            #print 'activate', sw,pos
-        else:
-            sw = PipeWidget(pipe)
-            pos = self.setting_stack.addWidget(sw)
-            self.settings_widgets[pipe] = (sw, pos)
-            #print 'new', sw,pos
-        self.setting_stack.setCurrentIndex(pos)
-
-    def add_pipe(self):
-        pipetypename = str(self.typecombo.currentText())
-        pipetype = self.types[pipetypename]
-        pipe = pipetype(pipetypename)
-        self.pipechain.add_pipe(pipe)
-        self.pipemodel.pipedata = self.pipechain.imagepipes
-        #layout = self.pipelistwidget.layout()
-        #label = QG.QLabel('ASDFS')
-        #layout.addWidget(label)
-        #print label.size()
-        #self.pipelistwidget.setMinimumSize(100,100+self.c*label.height())
-        #self.pipelistwidget.setMinimumSize(100,200+self.c*20)
-        #self.pipelistingarea.setWidget(self.pipelistwidget)
-        #pipewidget = PipeWidget(pipe)
-        #layout.addWidget(pipewidget)
-        #self.c+=1
-
-    #def make_widgetlist(self):
-    #    layout = self.pipelistwidget.layout()
-    #    for imagepipe in self.pipechain.imagepipes:
-    #        pipewidget = PipeWidget(imagepipe)
-    #        layout.addWidget(pipewidget)
 
 class PipeModel(QC.QAbstractListModel):
     def __init__(self, parent = None):
@@ -858,3 +768,7 @@ class PipeModel(QC.QAbstractListModel):
         self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
         self.emit(QC.SIGNAL('modelReset()'))
         self.emit(QC.SIGNAL('layoutChanged()'))
+
+pipe_classes = {'SelfRatio':SelfRatioPipe,
+                'Shear':ShearPipe, "Blur":BlurPipe,
+                'Image math':ImageMathPipe}

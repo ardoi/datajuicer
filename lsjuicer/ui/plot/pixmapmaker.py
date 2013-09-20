@@ -128,8 +128,10 @@ class PixmapMaker(object):
         im = QG.QImage(im_data, x_points,
                        y_points, QG.QImage.Format_ARGB32)
         self._pixmap = QG.QPixmap.fromImage(im)
+        print 'set settnings', self.settings
         sa.dbmaster.set_config_setting(
             "visualization_options_reference", self.settings)
+        print 'done setting'
 
     def makeImage(self, channel=0, frame=0, force=False, image_settings={}):
         # print "make image",image_settings, self.last_pixmap_settings,force
