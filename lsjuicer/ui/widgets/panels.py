@@ -56,7 +56,7 @@ class PipeChainPanel(ActionPanel):
         layout.addWidget(self.setting_stack)
 
         pipelist.clicked.connect(self.show_pipe_settings)
-        self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        #self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
 
     def update_model(self):
         self.pipemodel.pipes_updated()
