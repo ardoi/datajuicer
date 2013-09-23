@@ -829,8 +829,9 @@ def make_raw(res):
 
 class SyntheticData(object):
     def __init__(self, results):
-        self.results = results
-        self.times = n.arange(results['frames'])
+        if results:
+            self.results = results
+            self.times = n.arange(results['frames'])
         self.func = None
         self.filter = None
 

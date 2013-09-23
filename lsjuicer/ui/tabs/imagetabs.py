@@ -232,8 +232,6 @@ class AnalysisImageTab(QG.QWidget):
         self.frame_widget.channel_changed.connect(self.vis_widget.channel_change)
         #make sure other widgets are drawn before making pixmap
         QC.QTimer.singleShot(0,lambda: self.make_new_pixmap())
-        if self.analysis:
-            self.analysis_type_set()
 
     def change_channel(self, channel):
         self.force_new_pixmap()

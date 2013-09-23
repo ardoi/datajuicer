@@ -23,6 +23,9 @@ class ActionPanel(QG.QWidget):
         self.parentwidget = parent
         self.setup_ui()
 
+    def provide_range(self):
+        return None
+
 
 class PipeChainPanel(ActionPanel):
     __doc__ = """Panel for editing pipes for the image"""
@@ -204,6 +207,12 @@ class FramePanel(ActionPanel):
             color='transparent'
         self.range_label.setStyleSheet(" QLabel{ border: 3px solid %s;}"%color)
 
+    def provide_range(self):
+        selection = {}
+        selection[ISTN.TIMERANGE] = {'start':self.time_range_start, 'end':self.time_range_end}
+        return selection
+
+
 class AnalysisPanel(ActionPanel):
     __doc__ = """Choose analysis mode"""
     __shortname__ = "Analysis"
@@ -231,6 +240,8 @@ class AnalysisPanel(ActionPanel):
         plotFluorescencePB.clicked.connect(self.on_next_PB_clicked)
         self.plotFluorescencePB = plotFluorescencePB
         analysistype_layout.addWidget(plotFluorescencePB)
+        if self.analysis:
+            self.analysis_type_set()
 
     def analysis_type_set(self):
         layout = self.layout()
@@ -325,7 +336,8 @@ class AnalysisPanel(ActionPanel):
 
     def on_next_PB_clicked(self):
         selections_by_type = self.roi_manager.selections_by_type
-        selections_by_type[ISTN.TIMERANGE] = {'start':self.time_range_start, 'end':self.time_range_end}
+        #FIXME find better way to do this
+        selections_by_type.update(self.parentwidget.frame_widget.provide_range())
         self.make_next_tab(selections_by_type)
 
     def make_next_tab(self, selections_by_type_name):
@@ -335,7 +347,7 @@ class AnalysisPanel(ActionPanel):
         #        self.removeTab(self.count() - 1)
         #        del(w)
         if self.analysis_mode == "Transients":
-            next_tab =FluorescenceTab(selections_by_type_name, self.imagedata, self.pipechain, self.aw)
+            next_tab =FluorescenceTab(selections_by_type_name, self.imagedata, self.pipechain, self.parentwidget.aw)
             #next_tab.setName(self.data.name)
             #self.connect(self.fltab,QC.SIGNAL('positionTXT(QString)'),
             #        self.emitStatusTXT)
@@ -350,8 +362,8 @@ class AnalysisPanel(ActionPanel):
             #next_tab = SparkRegionsTab(selections_by_type_name, idata, self.analysis, self)
         elif self.analysis_mode == "PseudoLineScan":
             from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
-            next_tab = AnalysisImageTab(parent=self.aw)
-            next_tab.setAW(self.aw)
+            next_tab = AnalysisImageTab(parent=self.parentwidget.aw)
+            next_tab.setAW(self.parentwidget.aw)
             if self.pipechain.active:
                 print "pipe active. making new image"
                 idata = ImageDataMaker.from_imagedata(self.imagedata)
@@ -365,7 +377,7 @@ class AnalysisPanel(ActionPanel):
             from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
             idata = ImageDataMaker.from_imagedata(self.imagedata)
             idata.replace_channels(self.pipechain.get_result_data())
-            next_tab = PixelByPixelTab(idata, selections_by_type_name, self.analysis, parent = self.aw)
+            next_tab = PixelByPixelTab(idata, selections_by_type_name, self.analysis, parent = self.parentwidget.aw)
 
         if self.analysis_mode == "TimeAverage":
             new_data = self.imagedata.get_time_average_linescan(selections_by_type_name)
@@ -376,9 +388,9 @@ class AnalysisPanel(ActionPanel):
                 pc.set_source_data(new_data.all_image_data[channel])
                 pcs[channel] = pc
             selections_by_type = defaultdict(list)
-            next_tab = FluorescenceTab(selections_by_type, new_data, pcs, self.aw)
+            next_tab = FluorescenceTab(selections_by_type, new_data, pcs, self.parentwidget.aw)
         #self.setCurrentIndex(1)
         #if self.analysis_mode != "PseudoLineScan":
         if 1:
             next_icon = QG.QIcon(':/chart_curve.png')
-        self.aw.add_tab(next_tab, next_icon, self.analysis_mode)
+        self.parentwidget.aw.add_tab(next_tab, next_icon, self.analysis_mode)

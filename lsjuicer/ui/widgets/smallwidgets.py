@@ -74,7 +74,7 @@ class FramePlayer(QG.QWidget):
 
     def increase_frame(self):
         max_real_fps = 25.0
-        min_frame_dt = 1./max_real_fps
+        #min_frame_dt = 1./max_real_fps
         if self.frame_get_func() == self.frame_max_func():
             self.stop_play()
             self.play_pb.setChecked(False)
