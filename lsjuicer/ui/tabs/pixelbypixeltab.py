@@ -318,7 +318,7 @@ class PixelByPixelTab(QG.QTabWidget):
             session.add(self.fit_result)
         from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
         synthetic_image = sa.PixelFittedSyntheticImage(self.fit_result)
-        next_tab = AnalysisImageTab(parent=self)
+        next_tab = AnalysisImageTab(parent=self,analysis=self.analysis)
         im_data = ImageDataMaker.from_db_image(synthetic_image)
         next_tab.showData(im_data)
         next_tab.setAW(self.parent)

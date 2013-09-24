@@ -1,4 +1,4 @@
-
+from collections import defaultdict
 from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
 
@@ -8,7 +8,7 @@ from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 
-from lsjuicer.ui.widgets.panels  import PipeChainPanel, VisualizationPanel, FramePanel, AnalysisPanel
+from lsjuicer.ui.widgets.panels  import PipeChainPanel, VisualizationPanel, FramePanel, AnalysisPanel, EventPanel
 from lsjuicer.ui.widgets.panels  import ActionPanel
 
 class Panels(object):
@@ -36,6 +36,73 @@ class Panels(object):
         else:
             return None
 
+class Events(object):
+    def __init__(self):
+        self.types = []
+        self.event_dict = defaultdict(list)
+        self.status_dict = defaultdict(list)
+
+    def add_event(self, event):
+        event_type = event.category.category_type.name
+        self.event_dict[event_type].append(event)
+        self.status_dict[event_type].append(False)
+
+    def change(self, event_type, row, status):
+        self.status_dict[event_type][row]=status
+        print self.status_dict
+
+class EventClickTree(QG.QWidget):
+    visibility_toggled = QC.pyqtSignal(str, int)
+
+    def __init__(self, parent = None):
+        super(EventClickTree, self).__init__(parent)
+        layout  = QG.QVBoxLayout()
+        self.setLayout(layout)
+        view = QG.QTreeView(self)
+        model = QG.QStandardItemModel()
+        self.model = model
+        self.items_by_name = {}
+        model.setHorizontalHeaderLabels(["Event"])
+        view.setIndentation(10)
+        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
+        view.setModel(model)
+        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
+        view.expanded.connect(lambda: view.resizeColumnToContents(0))
+        view.collapsed.connect(lambda: view.resizeColumnToContents(0))
+        view.clicked.connect(self.clicked)
+        layout.addWidget(view)
+
+    def set_events(self, events):
+        self.events = events
+        root = self.model.invisibleRootItem()
+        for typename, event_list in events.event_dict.iteritems():
+            type_item = QG.QStandardItem(typename)
+            root.appendRow(type_item)
+            for i,ei in enumerate(event_list):
+                event_item = QG.QStandardItem(str(i))
+                event_item.setCheckable(True)
+                type_item.appendRow([event_item] )
+
+    def toggle(self, name, state):
+        print 'toggle',name
+        name = str(name)
+
+        print [type(el) for el in self.items_by_name], type(name)
+        if name in self.items_by_name:
+            item = self.items_by_name[name]
+            print name, item
+            item.setCheckState(QC.Qt.Checked)
+
+    def clicked(self, modelindex):
+        print '\nccc'
+        row = modelindex.row()
+        parent = modelindex.parent()
+        event_type = str(parent.data().toString())
+        state = modelindex.data(10).toBool()
+        print row,event_type,state
+        if event_type:
+            self.events.change(event_type, row, state)
 
 class ClickTree(QG.QWidget):
     visibility_toggled = QC.pyqtSignal(str, int)
@@ -159,6 +226,7 @@ class AnalysisImageTab(QG.QWidget):
         panels.add_panel("Default", VisualizationPanel)
         panels.add_panel("Default", FramePanel)
         panels.add_panel("Default", AnalysisPanel)
+        panels.add_panel("Analysis", EventPanel)
         self.control_widget = ControlWidget(panels)
         layout.addWidget(self.control_widget)
         layout.setStretchFactor(self.image_plot, 5)
@@ -224,6 +292,8 @@ class AnalysisImageTab(QG.QWidget):
         self.frame_widget = self.control_widget.init_panel(FramePanel,
                 parent = self)
         self.analysis_widget = self.control_widget.init_panel(AnalysisPanel,
+                parent = self)
+        self.event_widget = self.control_widget.init_panel(EventPanel,
                 parent = self)
 
         self.vis_widget.settings_changed.connect(self.make_new_pixmap)

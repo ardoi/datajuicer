@@ -142,9 +142,9 @@ class PixmapMaker(object):
         # print self.settings
 
 
-def nearest_average(data, x, y):
+def nearest_average(data, x, y, maxmargin = 5):
     margin = 1
-    while margin<5:
+    while margin<maxmargin:
         x0 = max(0, x - margin)
         x1 = min(data.shape[1], x + margin + 1)
         y0 = max(0, y - margin)
@@ -153,6 +153,7 @@ def nearest_average(data, x, y):
         nans = n.isnan(d)
         nonnan = d[n.invert(nans)]
         if nonnan.size:
+            print margin
             return nonnan.flatten().mean()
         else:
             margin += 1

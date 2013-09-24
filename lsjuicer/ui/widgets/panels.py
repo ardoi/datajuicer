@@ -1,6 +1,8 @@
 from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
 
+import numpy as n
+
 from collections import defaultdict
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.data.data import ImageDataMaker
@@ -11,6 +13,8 @@ from lsjuicer.inout.db.sqla import SparkAnalysis, PixelByPixelAnalysis
 from lsjuicer.static import selection_types
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.ui.tabs.transienttab import FluorescenceTab
+from lsjuicer.ui.widgets.fileinfowidget import MyFormLikeLayout
+
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
 
@@ -26,6 +30,55 @@ class ActionPanel(QG.QWidget):
     def provide_range(self):
         return None
 
+class EventPanel(ActionPanel):
+    __doc__ = """Event display panel"""
+    __shortname__ = "Events"
+
+    def setup_ui(self):
+        layout = QG.QVBoxLayout()
+        combo_layout = MyFormLikeLayout()
+        layout.addLayout(combo_layout)
+        self.setLayout(layout)
+        self.events = None
+        region_select = QG.QComboBox()
+        for i,reg in enumerate(self.analysis.fitregions):
+            region_select.addItem("{}".format(i))
+        region_select.currentIndexChanged.connect(self.region_changed)
+        combo_layout.add_row("Region:", region_select)
+        result_select = QG.QComboBox()
+        combo_layout.add_row("Result:", result_select)
+        self.result_select = result_select
+        result_select.currentIndexChanged.connect(self.result_changed)
+        from lsjuicer.ui.tabs.imagetabs import EventClickTree
+        clicktree = EventClickTree(self)
+        self.clicktree = clicktree
+        layout.addWidget(clicktree)
+        region_select.setCurrentIndex(0)
+        self.region_changed(0)
+        set_data_pb = QG.QPushButton("Set data")
+        set_data_pb.clicked.connect(self.set_data)
+        layout.addWidget(set_data_pb)
+
+    def set_data(self):
+        new = n.zeros((self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points),dtype='float')
+
+    def region_changed(self, reg_no):
+        print "\nREgion changed"
+        self.region = self.analysis.fitregions[reg_no]
+        self.result_select.clear()
+        print reg_no, self.region
+        for i,res in enumerate(self.region.results):
+            self.result_select.addItem(str(i))
+
+    def result_changed(self, res_no):
+        print "\nResult changed"
+        self.result = self.region.results[res_no]
+        print res_no, self.result
+        from lsjuicer.ui.tabs.imagetabs import Events
+        self.events = Events()
+        for ev in self.result.events:
+            self.events.add_event(ev)
+        self.clicktree.set_events(self.events)
 
 class PipeChainPanel(ActionPanel):
     __doc__ = """Panel for editing pipes for the image"""
