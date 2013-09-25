@@ -14,6 +14,8 @@ from lsjuicer.static import selection_types
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.ui.tabs.transienttab import FluorescenceTab
 from lsjuicer.ui.widgets.fileinfowidget import MyFormLikeLayout
+from lsjuicer.data.analysis.transient_find import SyntheticData
+from lsjuicer.util.helpers import timeIt
 
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
@@ -56,11 +58,32 @@ class EventPanel(ActionPanel):
         region_select.setCurrentIndex(0)
         self.region_changed(0)
         set_data_pb = QG.QPushButton("Set data")
-        set_data_pb.clicked.connect(self.set_data)
+        set_data_pb.clicked.connect(lambda :self.set_data())
         layout.addWidget(set_data_pb)
 
+    @timeIt
     def set_data(self):
         new = n.zeros((self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points),dtype='float')
+        results = {}
+        results['width'] = self.imagedata.x_points
+        results['height'] = self.imagedata.y_points
+        results['frames'] = self.imagedata.frames
+        results['fits']= self.result.pixels
+        sdata = SyntheticData(results)
+        events_to_show = []
+        for event_type in self.events.event_dict:
+            for i, event in enumerate(self.events.event_dict[event_type]):
+                status = self.events.status_dict[event_type][i]
+                if status:
+                    events_to_show.append(event.id)
+        new += sdata.get_events(events_to_show)
+        print events_to_show
+        #print new.shape
+        #mask = new < 1e-3
+        #new[mask]=n.nan
+        self.imagedata.replace_channel(new, 2)
+
+
 
     def region_changed(self, reg_no):
         print "\nREgion changed"

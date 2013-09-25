@@ -178,7 +178,8 @@ class ImageData(object):
     def replace_channels(self, new_image):
         self.all_image_data = new_image.copy()
     def replace_channel(self, new_image, channel=0):
-        self.all_image_data={channel:new_image.copy()}
+        #self.all_image_data={channel:new_image.copy()}
+        self.all_image_data[channel]=new_image
 
 class ImageDataLineScan(ImageData):
     def __init__(self, mimage):

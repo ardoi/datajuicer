@@ -835,14 +835,14 @@ class SyntheticData(object):
         self.func = None
         self.filter = None
 
-    def zeros(self):
+    def _zeros(self):
         out = n.zeros((self.results['frames'], self.results['height'],
             self.results['width']),dtype='float')
         return out
 
 
-    def make_res(self):
-        out = self.zeros()
+    def _make_res(self):
+        out = self._zeros()
         for res in self.results['fits']:
             x = res.x
             y = res.y
@@ -877,20 +877,20 @@ class SyntheticData(object):
 
     def get_fit(self):
         self.func = self.func_fit
-        return self.make_res()
+        return self._make_res()
 
     def get_events(self, filter):
         self.func = self.func_fit
         self.filter = filter
-        return self.make_res()
+        return self._make_res()
 
     def get_baseline(self):
         self.func = self.func_baseline
-        return self.make_res()
+        return self._make_res()
 
     def get_all(self):
         self.func = self.func_all
-        return self.make_res()
+        return self._make_res()
 
 
 def get_job(joblist, coords):

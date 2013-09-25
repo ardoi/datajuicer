@@ -663,9 +663,7 @@ class PixelFittedSyntheticImage(Image):
         results['dy'] = pixelfitresult.fit_settings['padding']
         results['x0'] = reg.x0
         results['y0'] = reg.y0
-        print 'pixels', len(pixelfitresult.pixels)
         results['fits'] = pixelfitresult.pixels
-        print 'pixels', len(pixelfitresult.pixels)
         self.results = results
 
     @timeIt
