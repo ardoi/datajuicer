@@ -319,7 +319,7 @@ class PixelEvent(dbmaster.Base):
                             cascade='all, delete, delete-orphan', lazy=False), order_by=id)
 
     event_id = Column(Integer, ForeignKey("events.id"))
-    event = relationship("Event", backref=backref("pixel_events", cascade='all, delete, delete-orphan'), order_by=id)
+    event = relationship("Event", backref=backref("pixel_events" ), order_by=id)
     parameters = Column(PickleType)
 
 

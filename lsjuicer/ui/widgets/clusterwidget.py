@@ -12,6 +12,7 @@ import lsjuicer.inout.db.sqla as sa
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout, FocusLineEdit
+from lsjuicer.util.helpers import timeIt
 
 def normify(a):
     #you can use preprocessing.scale instead
@@ -64,7 +65,7 @@ class ClusterWidget(QG.QWidget):
             action_pb.clicked.connect(self.emit_ready)
         elif self.category_class == sa.EventCategoryLocationType:
             action_pb = QG.QPushButton("Save clusters")
-            action_pb.clicked.connect(self.save_clusters)
+            action_pb.clicked.connect(lambda :self.save_clusters())
         self.action_pb = action_pb
         self.category_widget = EventCategoryWidget(self.category_class)
         setting_layout.addWidget(self.category_widget)
@@ -76,10 +77,12 @@ class ClusterWidget(QG.QWidget):
 
 
     def do(self):
+        self.action_pb.setEnabled(False)
         eps = self.category_widget.eps
         min_samples = self.category_widget.samples
         self.do_cluster(eps, min_samples)
         self.do_plots()
+        self.action_pb.setEnabled(True)
 
     def do_cluster(self, eps, min_samples):
         print 'do_cluster', eps, min_samples
@@ -132,6 +135,7 @@ class ClusterWidget(QG.QWidget):
         print 'ready', self.clusters[0.0][0]
         self.clusters_ready.emit(self.clusters)
 
+    @timeIt
     def save_clusters(self):
         #print 'save', self.clusters
         #print self.clusters
@@ -140,25 +144,50 @@ class ClusterWidget(QG.QWidget):
         QG.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
         sess = dbmaster.get_session()
 
-        def get_pixelevent_by_id(event_id):
-            event_id = int(event_id)
-            result = sess.query(sa.PixelEvent).filter(sa.PixelEvent.id == event_id).one()
+        def get_pixelevent_by_ids(event_ids):
+            result = []
+            event_ids = event_ids.astype('int').tolist()
+            i = 0
+            limit = 999
+            #it's necessary to break the queries apart due to sqlite limitations
+            while 1:
+                imin = limit*i
+                imax = min(len(event_ids)-1, limit*(i+1))
+                ids = event_ids[imin:imax]
+                iresult = sess.query(sa.PixelEvent).filter(sa.PixelEvent.id.in_(ids)).all()
+                result.extend(iresult)
+                i += 1
+                if imax == len(event_ids) - 1:
+                    break
             return result
 
         category = self.category_widget.category
         stats = []
+        new_events = []
+        result = None
         for event_no in self.clusters:
             if event_no == -1:
                 continue
             event = sa.Event()
+            new_events.append(event)
             event.category = category
             stats.append(self.clusters[event_no].shape[0])
-            for pixel_event_line in self.clusters[event_no]:
-                pe_id = pixel_event_line[-1]
-                pixel_event = get_pixelevent_by_id(pe_id)
+            event_ids = self.clusters[event_no][:,-1]
+            pixelevents = get_pixelevent_by_ids(event_ids)
+            for pixel_event in pixelevents:
                 result = pixel_event.pixel.result
                 event.result = result
                 pixel_event.event = event
+        sess.commit()
+        new_event_ids = [event.id for event in new_events]
+        old_events = sess.query(sa.Event).filter(~sa.Event.id.in_(new_event_ids)).\
+                join(sa.EventCategory).\
+                filter(sa.EventCategory.category_type == category.category_type).all()
+        print 'old events', len(old_events), category.category_type.name, new_event_ids
+        all_events = sess.query(sa.Event).all()
+        print all_events
+        for old_event in old_events:
+            sess.delete(old_event)
         save_string = "<strong>Saved events:</strong><br><br>"+"<br>".join(["{}: {} pixels".format(i+1, el) for i,el in enumerate(stats)])
         print save_string
         sess.commit()
@@ -214,6 +243,11 @@ class ClusterDialog(QG.QDialog):
         #FIXME bad bad
         pixels=an.fitregions[0].results[0].pixels
         el=tf.do_event_list(pixels)
+        result = an.fitregions[0].results[0]
+        old_events = session.query(sa.Event).filter(sa.Event.result == result).all()
+        for event in old_events:
+            session.delete(event)
+        session.commit()
 
         #TODO these should not be hardcoded
         shape_params = ['A','tau2','d2','d']
