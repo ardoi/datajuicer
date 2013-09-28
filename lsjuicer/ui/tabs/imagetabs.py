@@ -218,11 +218,6 @@ class AnalysisImageTab(QG.QWidget):
         self.image_shown = False
         self.analysis = analysis
         self.sess = sa.dbmaster.get_session()
-        if self.analysis:
-            asess =sa.dbmaster.object_session(self.analysis)
-            print asess
-            if not asess:
-                self.sess.add(self.analysis)
         layout = QG.QVBoxLayout()
         self.setLayout(layout)
         self.image_plot =self.makePlotArea()
@@ -242,7 +237,7 @@ class AnalysisImageTab(QG.QWidget):
 
     def __del__(self):
         self.sess.commit()
-        self.sess.close()
+        #self.sess.close()
 
     def setAW(self,widget):
         self.aw = widget

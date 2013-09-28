@@ -307,9 +307,6 @@ class RandomDataModel(QC.QAbstractTableModel):
 
     def __del__(self):
         print 'del'
-        if self.session:
-            print 'close session'
-            self.session.close()
 
     def destroyed(self, obj):
         print 'destroy', obj
@@ -372,8 +369,6 @@ class RandomDataModel(QC.QAbstractTableModel):
 
     def updateData(self):
         print '\n\n\n\ndata update'
-        if self.session:
-            sa.dbmaster.end_session(self.session)
         self.dirdatas = []
         self.emit(QC.SIGNAL('progressVisible(bool)'),True)
         files = []

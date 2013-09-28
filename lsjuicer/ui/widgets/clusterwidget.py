@@ -190,7 +190,6 @@ class ClusterWidget(QG.QWidget):
         self.action_pb.setEnabled(False)
         QG.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
         sess = dbmaster.get_session()
-        print 'result session', sa.dbmaster.object_session(self.result)
         sess.add(self.result)
 
         def get_pixelevent_by_ids(event_ids):
@@ -242,7 +241,6 @@ class ClusterWidget(QG.QWidget):
         self.do_dilate()
         sess.commit()
         print [len(el.pixel_events) for el in new_events]
-        sess.close()
         self.action_pb.setEnabled(True)
         QG.QApplication.restoreOverrideCursor()
         QG.QMessageBox.information(self, "", save_string)
@@ -290,7 +288,7 @@ class ClusterDialog(QG.QDialog):
 
     def stats(self):
         an = self.analysis
-        session = dbmaster.object_to_session(an)
+        session = dbmaster.get_session()
         #FIXME bad bad
         pixels=an.fitregions[0].results[0].pixels
         el=tf.do_event_list(pixels)
@@ -321,7 +319,6 @@ class ClusterDialog(QG.QDialog):
         #ea_shape0 = tf.do_event_array(el,shape_params)
         #ea_shape = ea_shape0
         #ea_loc = tf.do_event_array(el,['m2','x','y'])
-        session.close()
         tabs = QG.QTabWidget(self)
         self.layout().addWidget(tabs)
         self.tabs = tabs
@@ -502,7 +499,6 @@ class EventCategoryWidget(QG.QWidget):
                 self.activate()
                 self.settings_combo.setCurrentIndex(self.settings_combo.count() - 1)
         self.toggle_edit(True)
-        sess.close()
 
     def toggle_edit(self, state):
         self.min_sample_spinbox.setEnabled(state)
@@ -517,7 +513,6 @@ class EventCategoryWidget(QG.QWidget):
         cat_type = sess.query(sa.EventCategoryType).\
                 filter(sa.EventCategoryType.name == str(name)).\
                 filter(sa.EventCategoryType.category_type == temp.category_type).one()
-        sess.close()
         del temp
         return cat_type
 
@@ -529,7 +524,6 @@ class EventCategoryWidget(QG.QWidget):
                 filter(sa.EventCategoryType.category_type == temp.category_type).\
                 filter(sa.EventCategoryType.name == str(name)).all()
         del temp
-        sess.close()
 
     def update_settings(self, name):
         """Update categorytype"""
@@ -549,7 +543,6 @@ class EventCategoryWidget(QG.QWidget):
             for s in self.settings:
                 self.settings_combo.addItem(str(s))
             self.category = self.settings[0]
-        #sess.close()
 
     def update_spinboxes(self, index):
         """Update category settings"""

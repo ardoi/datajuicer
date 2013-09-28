@@ -270,11 +270,12 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
     fit_settings = Column(PickleType)
 
     def get_fitted_pixel(self, x, y):
-        session = dbmaster.object_session(self)
-        new_session = False
-        if not session:
-            session = dbmaster.get_session()
-            new_session = True
+        session = dbmaster.get_session()
+        #session = dbmaster.object_session(self)
+        #new_session = False
+        #if not session:
+        #    session = dbmaster.get_session()
+        #    new_session = True
         try:
             pixel = session.query(FittedPixel).options(joinedload(FittedPixel.pixel_events)).\
                     filter(FittedPixel.result==self).\
@@ -283,9 +284,9 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
             ret = pixel
         except NoResultFound:
             ret = None
-        if new_session:
-            session.expunge(ret)
-            session.close()
+        #if new_session:
+        #    session.expunge(ret)
+        #    session.close()
         return ret
 
     def event_types(self):

@@ -100,7 +100,7 @@ class PixelByPixelTab(QG.QTabWidget):
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
         self.analysis.date = datetime.datetime.now()
-        session = dbmaster.object_session(self.analysis)
+        session = dbmaster.get_session()
         #print self.analysis, session
         region = PixelByPixelFitRegion()
         region.analysis = self.analysis
@@ -138,7 +138,6 @@ class PixelByPixelTab(QG.QTabWidget):
         session2.close()
         #print self.analysis, session
         session.commit()
-        session.close()
         print 'saving done'
 
     @property
@@ -255,10 +254,7 @@ class PixelByPixelTab(QG.QTabWidget):
 
     def get_res(self):
         results = {}
-        session = dbmaster.object_session(self.fit_result)
-        if not session:
-            session = dbmaster.get_session()
-            session.add(self.fit_result)
+        session = dbmaster.get_session()
         fitted_pixels = self.fit_result.pixels
         #print "get res", self.fit_result.region.width, self.fit_result.region.height
         results['width'] = self.fit_result.region.width - 2*self.fit_result.fit_settings['padding']
@@ -309,13 +305,9 @@ class PixelByPixelTab(QG.QTabWidget):
         hlayout.addWidget(pb_do_clustering)
         hlayout.addWidget(pb_make_new_stack)
         self.show_res()
-        session.close()
 
     def make_new_stack(self):
-        session = dbmaster.object_session(self.fit_result)
-        if not session:
-            session = dbmaster.get_session()
-            session.add(self.fit_result)
+        session = dbmaster.get_session()
         from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
         synthetic_image = sa.PixelFittedSyntheticImage(self.fit_result)
         next_tab = AnalysisImageTab(parent=self,analysis=self.analysis)
@@ -325,7 +317,6 @@ class PixelByPixelTab(QG.QTabWidget):
         print self.parent
         next_icon = QG.QIcon(':/chart_curve.png')
         self.parent.add_tab(next_tab, next_icon, "Fitted data")
-        session.close()
 
     def param_combo_changed(self, param):
         self.param = str(param)

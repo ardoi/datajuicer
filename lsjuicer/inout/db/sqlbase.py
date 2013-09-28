@@ -15,6 +15,7 @@ class DBMaster(object):
         self.engine = create_engine('sqlite:///tables.db', echo=False)
         self.Session = sessionmaker(bind=self.engine)
         self.tables_created = False
+        self.session = None
 
     def make_tables(self):
         print "making tables"
@@ -36,21 +37,36 @@ class DBMaster(object):
             self.tables_created = True
 
     def get_session(self):
-        self.check_tables()
-        session = self.Session()
-        # print 'created session', session
-        return session
+        if self.session:
+            return self.session
+        else:
+            self.check_tables()
+            self.session = self.Session()
+            # print 'created session', session
+            return self.session
 
-    def end_session(self, session):
+    def commit_session(self):
         # print "ending session", session
         try:
-            session.commit()
-            session.close()
+            self.session.commit()
             return True
         except IntegrityError as e:
             print e
             print 'rolling back'
-            session.rollback()
+            self.session.rollback()
+            return False
+
+    def end_session(self):
+        # print "ending session", session
+        try:
+            self.session.commit()
+            self.session.close()
+            self.session = None
+            return True
+        except IntegrityError as e:
+            print e
+            print 'rolling back'
+            self.session.rollback()
             return False
 
     def object_session(self, obj):
@@ -97,7 +113,7 @@ class DBMaster(object):
             setting.name = name
             setting.value = value
             session.add(setting)
-        self.end_session(session)
+        self.commit_session(session)
 
 
 dbmaster = DBMaster()

@@ -97,7 +97,7 @@ class AddSQLPropertyWidget(QG.QWidget):
                 new_item.description = description
             session.add(new_item)
             self.status_label.setVisible(True)
-            if dbmaster.end_session(session):
+            if dbmaster.commit_session(session):
                 self.status_label.setText('<strong style="color:green;">OK:</strong> %s added'%name)
             else:
                 self.status_label.setText('<strong style="color:red;"> Error:</strong> \
@@ -155,7 +155,7 @@ class DBComboAddBox(QG.QWidget):
             self.combo.addItem("None")
         for item in items:
             self.combo.addItem(item.name)
-        dbmaster.end_session(session)
+        dbmaster.commit_session(session)
 
     def set_value(self, value):
         if value:
@@ -243,7 +243,7 @@ class ResultDataModel(QC.QAbstractTableModel):
             #if self.session:
             #    dbmaster.end_session(self.session)
             #self.session = dbmaster.get_session()
-            self.session = dbmaster.object_session(self.microscope_image)
+            self.session = dbmaster.get_session()
             results = self.session.query(ExperimentalInfo).\
                     join(MicroscopeImage).filter(MicroscopeImage.id == self.microscope_image.id).all()
             print 'in rdm', results
@@ -453,7 +453,7 @@ class AnalysesInfoWidget(QG.QGroupBox):
         ind = self.analyses_table.selectedIndexes()
         if ind:
             analysis = self.analyses_model.get_selected(ind)
-            session = dbmaster.object_session(analysis)
+            session = dbmaster.get_session()
             print "analysis to delete", analysis
             regions = analysis.searchregions
             spark_count = 0
@@ -589,7 +589,7 @@ class ExpInfoWidget(QG.QGroupBox):
     def save_exp_info(self):
         print '\nsave'
         if self.exp_info:
-            session = dbmaster.object_session(self.exp_info)
+            session = dbmaster.get_session()
             for combo in self.combos:
                 prop_name = combo.db_class.__name__.lower()
                 val = combo.get_value()
