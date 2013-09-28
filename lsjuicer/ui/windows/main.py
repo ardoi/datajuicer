@@ -403,7 +403,7 @@ class MainUI(QG.QMainWindow):
         self.connect(self.tasker.confButton, QC.SIGNAL('toggled(bool)'), lambda:self.mainStack.setCurrentIndex(2))
         self.connect(self.tasker.filesButton, QC.SIGNAL('toggled(bool)'), lambda:self.mainStack.setCurrentIndex(0))
         self.mainStack.addWidget(self.filePickerTab)
-        self.mainStack.addWidget(AnalysisWidget(self))
+        self.mainStack.addWidget(AnalysisWidget(parent=self))
         self.connect(self.actionSaveData,QC.SIGNAL('triggered()'),self.on_actionSaveData_triggered)
         self.connect(self.actionHelp,QC.SIGNAL('triggered()'),self.on_actionHelp_triggered)
         self.connect(self.actionLog,QC.SIGNAL('triggered()'),self.on_actionLog_triggered)

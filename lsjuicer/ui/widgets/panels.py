@@ -337,7 +337,7 @@ class AnalysisPanel(ActionPanel):
                 self.analysis_mode = "PixelByPixel"
         else:
             self.analysis_mode = self.analysistype_combo.currentText()
-        print "set analysis mode", self.analysis_mode, self.analysis
+        #print "set analysis mode", self.analysis_,mode, self.analysis
         self.analysis_mode_changed(self.analysis_mode)
 
     def analysis_mode_changed(self, analysis_mode):

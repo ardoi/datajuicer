@@ -11,6 +11,8 @@ from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 from lsjuicer.ui.widgets.panels  import PipeChainPanel, VisualizationPanel, FramePanel, AnalysisPanel, EventPanel
 from lsjuicer.ui.widgets.panels  import ActionPanel
 
+import lsjuicer.inout.db.sqla as sa
+
 class Panels(object):
     def __init__(self):
         self.panel_dict = {}
@@ -215,6 +217,12 @@ class AnalysisImageTab(QG.QWidget):
         super(AnalysisImageTab, self).__init__(parent)
         self.image_shown = False
         self.analysis = analysis
+        self.sess = sa.dbmaster.get_session()
+        if self.analysis:
+            asess =sa.dbmaster.object_session(self.analysis)
+            print asess
+            if not asess:
+                self.sess.add(self.analysis)
         layout = QG.QVBoxLayout()
         self.setLayout(layout)
         self.image_plot =self.makePlotArea()
@@ -231,6 +239,10 @@ class AnalysisImageTab(QG.QWidget):
         layout.addWidget(self.control_widget)
         layout.setStretchFactor(self.image_plot, 5)
         layout.setStretchFactor(self.control_widget, 1)
+
+    def __del__(self):
+        self.sess.commit()
+        self.sess.close()
 
     def setAW(self,widget):
         self.aw = widget

@@ -153,7 +153,6 @@ def nearest_average(data, x, y, maxmargin = 5):
         nans = n.isnan(d)
         nonnan = d[n.invert(nans)]
         if nonnan.size:
-            print margin
             return nonnan.flatten().mean()
         else:
             margin += 1

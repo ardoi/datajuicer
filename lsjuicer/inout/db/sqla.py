@@ -227,7 +227,8 @@ class PixelByPixelFitRegion(dbmaster.Base):
     id = Column(Integer, primary_key=True)
 
     analysis_id = Column(Integer, ForeignKey('pixelbypixel_analyses.id'))
-    analysis = relationship("PixelByPixelAnalysis", backref=backref('fitregions', cascade='all, delete, delete-orphan', order_by=id))
+    analysis = relationship("PixelByPixelAnalysis", backref=backref('fitregions',
+        cascade='all, delete, delete-orphan', order_by=id))
 
     #Region coordinates
     # x0,y0 .........
@@ -264,7 +265,8 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
     __tablename__  = "pixelbypixelfitregion_results"
     id = Column(Integer, primary_key=True)
     region_id = Column(Integer, ForeignKey("pixelbypixelfit_regions.id"))
-    region = relationship("PixelByPixelFitRegion", backref=backref("results", cascade='all, delete, delete-orphan'), order_by=id)
+    region = relationship("PixelByPixelFitRegion",
+            backref=backref("results", cascade='all, delete, delete-orphan'), order_by=id)
     fit_settings = Column(PickleType)
 
     def get_fitted_pixel(self, x, y):
@@ -294,6 +296,9 @@ class PixelByPixelRegionFitResult(dbmaster.Base):
             for event in self.events:
                 out[event.category.category_type.name].append(event.id)
             return out
+    def active_dimensions(self):
+        return {'width':self.region.width - 2*self.fit_settings['padding'], 'height':self.region.height -
+                2*self.fit_settings['padding']}
 
 
 class FittedPixel(dbmaster.Base):
@@ -316,7 +321,7 @@ class PixelEvent(dbmaster.Base):
     id = Column(Integer, primary_key=True)
     pixel_id = Column(Integer, ForeignKey("fitted_pixels.id"))
     pixel = relationship("FittedPixel", backref=backref("pixel_events",
-                            cascade='all, delete, delete-orphan', lazy=False), order_by=id)
+                            cascade='all, delete, delete-orphan', lazy=False), order_by=id, lazy=False)
 
     event_id = Column(Integer, ForeignKey("events.id"))
     event = relationship("Event", backref=backref("pixel_events" ), order_by=id)

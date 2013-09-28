@@ -1,8 +1,10 @@
 from itertools import cycle
 
-import numpy
+import numpy as n
 
 from sklearn.cluster import DBSCAN
+import scipy.ndimage as nd
+import scipy.stats as ss
 
 from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
@@ -13,6 +15,7 @@ import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.widgets.fileinfowidget import DBComboAddBox, MyFormLikeLayout, FocusLineEdit
 from lsjuicer.util.helpers import timeIt
+from lsjuicer.ui.plot.pixmapmaker import nearest_average as nav
 
 def normify(a):
     #you can use preprocessing.scale instead
@@ -27,7 +30,7 @@ class ClusterWidget(QG.QWidget):
 
     clusters_ready = QC.pyqtSignal(dict)
 
-    def __init__(self, data, parameter_names, plot_pairs, key, category_class, normalize = False,
+    def __init__(self, data, parameter_names, plot_pairs, key, category_class, result,  normalize = False,
                  parent = None):
         """
         Arguments
@@ -36,6 +39,7 @@ class ClusterWidget(QG.QWidget):
         parameter_names : the names of the parameters clustering is to be performed for
         plot_pairs : pairs parameter names plots are desired for
         key : dictionary mapping parameter name to its index in data
+        result: fitresult
         normalize : whether to normalize data or not
 
         """
@@ -44,8 +48,10 @@ class ClusterWidget(QG.QWidget):
         self.category_class = category_class
         indices = [key[el] for el in parameter_names]
         self.cluster_data = data[:, indices]
+        self.result = result
+        self.events = []
         if normalize:
-            self.cluster_data = numpy.apply_along_axis(normify, 0, self.cluster_data)
+            self.cluster_data = n.apply_along_axis(normify, 0, self.cluster_data)
         widget_layout = QG.QVBoxLayout()
         self.plot_layout = QG.QGridLayout()
         self.plot_layout.setContentsMargins(0,0,0,0)
@@ -66,6 +72,9 @@ class ClusterWidget(QG.QWidget):
         elif self.category_class == sa.EventCategoryLocationType:
             action_pb = QG.QPushButton("Save clusters")
             action_pb.clicked.connect(lambda :self.save_clusters())
+            dilate_pb = QG.QPushButton("Fill gaps")
+            dilate_pb.clicked.connect(self.do_dilate)
+            setting_layout.addWidget(dilate_pb)
         self.action_pb = action_pb
         self.category_widget = EventCategoryWidget(self.category_class)
         setting_layout.addWidget(self.category_widget)
@@ -75,6 +84,45 @@ class ClusterWidget(QG.QWidget):
         widget_layout.addLayout(setting_layout)
         QC.QTimer.singleShot(50, lambda:self.do())
 
+    def do_dilate(self):
+        dims = self.result.active_dimensions()
+        image_width = dims['width']
+        image_height = dims['height']
+        max_mu_diff = 20
+        pixels = self.result.pixels
+
+        def nanify(m):
+            qq=n.where(m>0, m,n.nan)
+            return qq
+
+        for event in self.events:
+            #print event
+            im = n.zeros((image_height, image_width),dtype='bool')
+            times = n.zeros((image_height, image_width),dtype='float')
+            for pe in event.pixel_events:
+                #print '\t',pe
+                im[pe.pixel.y, pe.pixel.x] = True
+                times[pe.pixel.y, pe.pixel.x] = pe.parameters['m2']
+            dilation_im=nd.binary_dilation(im, iterations=4)
+            filled_im = nd.binary_fill_holes(dilation_im)
+
+            new_pes = []
+            nan_times= nanify(times)
+            tmax = ss.scoreatpercentile(times[times>0], 99.)
+            tmin = ss.scoreatpercentile(times[times>0], 1.)
+            print event, im.sum(),filled_im.sum(), tmax, tmin
+            for p in pixels:
+                for pe in p.pixel_events:
+                    if filled_im[p.y, p.x] and not im[p.y,p.x] and not pe.event:
+                        if pe.parameters['m2']>tmin and pe.parameters['m2']<tmax:
+                            new_pes.append(pe)
+                            continue
+                        else:
+                            ne_av = nav(nan_times, p.x, p.y, maxmargin=5)
+                            if abs(pe.parameters['m2'] - ne_av) < max_mu_diff:
+                                new_pes.append(pe)
+            for pe in new_pes:
+                pe.event = event
 
     def do(self):
         self.action_pb.setEnabled(False)
@@ -121,7 +169,6 @@ class ClusterWidget(QG.QWidget):
                 style.update({'size':0.5, 'alpha':0.25})
             for i, kind in enumerate(self.plot_pairs.keys()):
                 for j, spp in enumerate(self.plot_pairs[kind]):
-                    print kind,spp
                     x = self.key[spp[0]]
                     y = self.key[spp[1]]
                     plotwidget = self.plotwidgets[spp]
@@ -143,6 +190,8 @@ class ClusterWidget(QG.QWidget):
         self.action_pb.setEnabled(False)
         QG.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
         sess = dbmaster.get_session()
+        print 'result session', sa.dbmaster.object_session(self.result)
+        sess.add(self.result)
 
         def get_pixelevent_by_ids(event_ids):
             result = []
@@ -164,7 +213,6 @@ class ClusterWidget(QG.QWidget):
         category = self.category_widget.category
         stats = []
         new_events = []
-        result = None
         for event_no in self.clusters:
             if event_no == -1:
                 continue
@@ -175,8 +223,7 @@ class ClusterWidget(QG.QWidget):
             event_ids = self.clusters[event_no][:,-1]
             pixelevents = get_pixelevent_by_ids(event_ids)
             for pixel_event in pixelevents:
-                result = pixel_event.pixel.result
-                event.result = result
+                event.result = self.result
                 pixel_event.event = event
         sess.commit()
         new_event_ids = [event.id for event in new_events]
@@ -184,13 +231,17 @@ class ClusterWidget(QG.QWidget):
                 join(sa.EventCategory).\
                 filter(sa.EventCategory.category_type == category.category_type).all()
         print 'old events', len(old_events), category.category_type.name, new_event_ids
-        all_events = sess.query(sa.Event).all()
-        print all_events
         for old_event in old_events:
             sess.delete(old_event)
-        save_string = "<strong>Saved events:</strong><br><br>"+"<br>".join(["{}: {} pixels".format(i+1, el) for i,el in enumerate(stats)])
+        save_string = "<strong>Saved events:</strong><br><br>"+"<br>".join(
+            ["{}: {} pixels".format(i+1, el) for i,el in enumerate(stats)])
         print save_string
+        print [len(el.pixel_events) for el in new_events]
         sess.commit()
+        self.events = new_events
+        self.do_dilate()
+        sess.commit()
+        print [len(el.pixel_events) for el in new_events]
         sess.close()
         self.action_pb.setEnabled(True)
         QG.QApplication.restoreOverrideCursor()
@@ -202,14 +253,14 @@ class Clusterer(object):
     def cluster_elements(labels, data):
         groups = {}
         for k in set(labels):
-            members = numpy.argwhere(labels == k).flatten()
+            members = n.argwhere(labels == k).flatten()
             groups[k] = data[members]
         return groups
 
     @staticmethod
     def cluster(data, eps, min_samples):
         #D = metrics.euclidean_distances(data)
-        #S = 1 - (D / numpy.max(D))
+        #S = 1 - (D / n.max(D))
         #print 'clustering', eps, min_samples
         #print data.shape, data[0]
         print "clustering", data.shape, data.mean(axis=0), data.min(axis=0), data.max(axis=0)
@@ -244,6 +295,7 @@ class ClusterDialog(QG.QDialog):
         pixels=an.fitregions[0].results[0].pixels
         el=tf.do_event_list(pixels)
         result = an.fitregions[0].results[0]
+        self.result = result
         old_events = session.query(sa.Event).filter(sa.Event.result == result).all()
         for event in old_events:
             session.delete(event)
@@ -278,9 +330,8 @@ class ClusterDialog(QG.QDialog):
         loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
         self.loc_plot_pairs = loc_plot_pairs
         plot_pairs = {'shape':shape_plot_pairs, 'location':loc_plot_pairs}
-        #shape_cluster_tab = ClusterWidget(ea_shape, plot_pairs, ics, sa.EventCategoryShapeType,
-        #        parent= tabs, reference_data = event_array)
-        shape_cluster_tab = ClusterWidget(event_array, shape_params, plot_pairs, ics, sa.EventCategoryShapeType,
+        shape_cluster_tab = ClusterWidget(event_array, shape_params,
+                                          plot_pairs, ics, sa.EventCategoryShapeType, result,
                                           normalize = True, parent= tabs)
         shape_cluster_tab.clusters_ready.connect(self.add_loc_clusters)
         tabs.addTab(shape_cluster_tab, 'Clusters by shape')
@@ -302,7 +353,7 @@ class ClusterDialog(QG.QDialog):
                 #loc_ics = dict(zip(self.loc_params, range(len(self.loc_params))))
                 plot_pairs={'location':self.loc_plot_pairs}
                 tab = ClusterWidget(elements, self.loc_params, plot_pairs, self.ics,
-                                    sa.EventCategoryLocationType, parent=self.tabs)
+                                    sa.EventCategoryLocationType, self.result, parent=self.tabs)
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
             self.tabs.setCurrentIndex(index)
 
