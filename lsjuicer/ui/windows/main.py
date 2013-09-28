@@ -32,11 +32,14 @@ class MainUI(QG.QMainWindow):
         #versionCheck.checkVersion()
 
     def closeEvent(self, event):
-        #print "close"
+        print "close"
         #self.rmodel.__del__()
         #print self.rmodel
         #print self.children()
         self.rmodel.deleteLater()
+        from lsjuicer.inout.db.sqlbase import dbmaster
+        dbmaster.end_session()
+
         QG.QMainWindow.closeEvent(self, event)
 
     def change_filetype(self, ftype):

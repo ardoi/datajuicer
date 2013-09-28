@@ -57,7 +57,7 @@ class DBMaster(object):
             return False
 
     def end_session(self):
-        # print "ending session", session
+        print "ending session", self.session
         try:
             self.session.commit()
             self.session.close()
@@ -95,7 +95,7 @@ class DBMaster(object):
     def get_config_setting_value(self, name):
         session = self.get_session()
         setting = self.get_config_setting(name, session)
-        session.close()
+        #session.close()
         # print 'getting value',name
         if setting:
             # print 'value is',setting.value
@@ -113,7 +113,7 @@ class DBMaster(object):
             setting.name = name
             setting.value = value
             session.add(setting)
-        self.commit_session(session)
+        self.commit_session()
 
 
 dbmaster = DBMaster()

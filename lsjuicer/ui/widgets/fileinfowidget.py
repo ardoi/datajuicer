@@ -97,7 +97,7 @@ class AddSQLPropertyWidget(QG.QWidget):
                 new_item.description = description
             session.add(new_item)
             self.status_label.setVisible(True)
-            if dbmaster.commit_session(session):
+            if dbmaster.commit_session():
                 self.status_label.setText('<strong style="color:green;">OK:</strong> %s added'%name)
             else:
                 self.status_label.setText('<strong style="color:red;"> Error:</strong> \
@@ -155,7 +155,7 @@ class DBComboAddBox(QG.QWidget):
             self.combo.addItem("None")
         for item in items:
             self.combo.addItem(item.name)
-        dbmaster.commit_session(session)
+        dbmaster.commit_session()
 
     def set_value(self, value):
         if value:
