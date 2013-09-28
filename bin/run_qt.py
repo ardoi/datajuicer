@@ -78,6 +78,7 @@ if __name__ == "__main__":
     # check for folder existance and create if necessary
     if not os.path.isdir(logfolder):
         os.makedirs(logfolder)
+    #loglevel = logging.INFO
     loglevel = logging.INFO
     logfilename = "juicer_" + start_time_and_date + ".log"
     logfilefullname = os.path.join(logfolder, logfilename)

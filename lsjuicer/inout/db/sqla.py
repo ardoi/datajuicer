@@ -760,6 +760,7 @@ class MicroscopeImage(Image):
         self.file_name = file_name
         #what if there are two identical files with different names?
         self.file_hash = file_hash
+        self.ome_file = None
         self.check_for_ome()
         self.exp_info = ExperimentalInfo()
 

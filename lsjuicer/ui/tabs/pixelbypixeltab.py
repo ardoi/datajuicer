@@ -1,4 +1,5 @@
 import datetime
+import traceback
 #from collections import defaultdict
 
 import numpy
@@ -117,24 +118,26 @@ class PixelByPixelTab(QG.QTabWidget):
         session2 = sqlb2.dbmaster.get_session()
         job_res = session2.query(sqlb2.Job).all()
         for job in job_res:
-            fitted_pixel = FittedPixel()
-            fitted_pixel.result = fit_result
-            #session.add(fitted_pixel)
-            res = job.result
-            params = job.params
-            xy = params['coords']
-            fitted_pixel.x = xy[0]
-            fitted_pixel.y = xy[1]
-            if res:
-                fitted_pixel.baseline = res['baseline']
-                #fitted_pixel.event_count = len(res['transients'])
-                for c,transient in res['transients'].iteritems():
-                    pixel_event = PixelEvent()
-                    pixel_event.pixel = fitted_pixel
-                    pixel_event.parameters = transient
+            try:
+                fitted_pixel = FittedPixel()
+                fitted_pixel.result = fit_result
+                #session.add(fitted_pixel)
+                res = job.result
+                params = job.params
+                xy = params['coords']
+                fitted_pixel.x = xy[0]
+                fitted_pixel.y = xy[1]
+                if res:
+                    fitted_pixel.baseline = res['baseline']
+                    #fitted_pixel.event_count = len(res['transients'])
+                    for c,transient in res['transients'].iteritems():
+                        pixel_event = PixelEvent()
+                        pixel_event.pixel = fitted_pixel
+                        pixel_event.parameters = transient
+            except:
+                traceback.print_exc()
+                continue
                 #fitted_pixel.event_parameters = res['transients']
-            else:
-                fitted_pixel.event_count = 0
         session2.close()
         #print self.analysis, session
         session.commit()

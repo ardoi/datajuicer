@@ -112,13 +112,13 @@ class Region(object):
         #print oo.solutions
         #print '\n',self
         logger = get_logger(__name__)
-        logger.info("\nregion:%s"%self)
+        logger.debug("\nregion:%s"%self)
         oo = self.fit_curve()
         if not oo:
             self.bad = True
             return
         aicc_curve = oo.aicc()
-        logger.info("AICc curve1 %f"%aicc_curve)
+        logger.debug("AICc curve1 %f"%aicc_curve)
 
         new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
         if new_right < self.right:
@@ -130,7 +130,7 @@ class Region(object):
                 return
             aicc_curve = oo.aicc()
            # print "AICc curve2",aicc_curve
-            logger.info("AICc curve %f"%aicc_curve)
+            logger.debug("AICc curve %f"%aicc_curve)
 
         #aicc_curve = oo.aicc()
         #eprint "AICc curve",aicc_curve
@@ -143,7 +143,7 @@ class Region(object):
         oo2.optimize(max_fev = 1000)
         aicc_line = oo2.aicc()
         #print "AICc line",aicc_line
-        logger.info("AICc line %f"%aicc_line)
+        logger.debug("AICc line %f"%aicc_line)
         self.aic_line = aicc_line
         self.aic_curve = aicc_curve
         if aicc_curve < 1.00 * aicc_line:
@@ -153,7 +153,7 @@ class Region(object):
 
         else:
             self.bad = True
-        logger.info("bad: %s"%str(self.bad))
+        logger.debug("bad: %s"%str(self.bad))
 
     def __repr__(self):
         return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>"%(self.left, self.right,
@@ -162,8 +162,8 @@ class Region(object):
 def clean_min_max(minima, maxima, smooth_data):
     """Clean up the minima, maxima lists. First only the highest maxima between minima are taken. Then, then only the lowest minimum between maxima is used"""
     logger=get_logger(__name__)
-    logger.info("minima:%s, maxima:%s"%(str(minima),str(maxima)))
-    logger.info('start: %s'%min_max_string(minima,maxima))
+    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
+    logger.debug('start: %s'%min_max_string(minima,maxima))
     #new_min = []
     #new_max = []
     #take only the biggest max in between minima
@@ -183,8 +183,8 @@ def clean_min_max(minima, maxima, smooth_data):
     for ma in ma_remove:
         maxima.remove(ma)
     #print min_max_string(minima,maxima)
-    logger.info('mid: %s'%min_max_string(minima,maxima))
-    logger.info("minima:%s, maxima:%s"%(str(minima),str(maxima)))
+    logger.debug('mid: %s'%min_max_string(minima,maxima))
+    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
 
     #only keep two minima between any two maxima
     mi_remove = []
@@ -227,8 +227,8 @@ def clean_min_max(minima, maxima, smooth_data):
     for mi in mi_remove:
         #print mi
         minima.remove(mi)
-    logger.info('end: %s'%min_max_string(minima,maxima))
-    logger.info("minima:%s, maxima:%s"%(str(minima),str(maxima)))
+    logger.debug('end: %s'%min_max_string(minima,maxima))
+    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
     #print min_max_string(minima,maxima)
     #print minima,maxima
 
@@ -329,7 +329,7 @@ def find_transient_boundaries(data, baseline = None, plot=False):
         ax=p.gca()
     while count < max_count:
         #print '\n new search',count
-        logger.info('\nsearch number {}'.format(count))
+        logger.debug('\nsearch number {}'.format(count))
         regions = []
         if not maxima:
             #nothing found in pixel
@@ -353,9 +353,10 @@ def find_transient_boundaries(data, baseline = None, plot=False):
                         reg = Region( max(margin, mi1), min(len(f) - 1 - margin, mi2), lma, f, fu, time_data)
                         regions.append(reg)
                     except AssertionError,e:
-                        print e.message
-                        print traceback.print_exc()
-                        print 'skip',mi1,mi2
+                        pass
+                        #print e.message
+                        #print traceback.print_exc()
+                        #print 'skip',mi1,mi2
                 else:
                     pass
         #the case when no minima are found but maximum exists (for no noise data)
@@ -401,7 +402,7 @@ def fit_regs(f, plot=False , baseline = None):
         #p.plot(fu,'-',color='magenta')
         p.xlim(0, len(f))
         ax=p.gca()
-    print regs
+    #print regs
     for i,r in enumerate(regs):
         le = r.left
         ri = r.right
@@ -651,7 +652,7 @@ def fit_regs(f, plot=False , baseline = None):
         min_f_over_f0_max = 0.1
         if f_over_f0_max<min_f_over_f0_max:
             r.bad = True
-            print r, 'too small', f_over_f0_max
+            #print r, 'too small', f_over_f0_max
             continue
         final['transients'][added_index] = oo.solutions
         final['peak_fits'][added_index] = r.fit_res[0]
@@ -676,7 +677,7 @@ def fit_regs(f, plot=False , baseline = None):
     very_good_regions = []
     for region in good_regions:
         if region.bad:
-            print 'found bad'
+            #print 'found bad'
             continue
         else:
             very_good_regions.append(region)
@@ -815,7 +816,7 @@ def make_raw(res):
     import sqlb2
     sess = sqlb2.dbmaster.get_session()
     jobs = sess.query(sqlb2.Job).all()
-    print len(jobs)
+    #print len(jobs)
     shape = (res['frames'],res['height'],res['width'])
     out = n.zeros(shape)
     for j in jobs:

@@ -300,8 +300,10 @@ class AnalysisImageTab(QG.QWidget):
                 parent = self)
         self.analysis_widget = self.control_widget.init_panel(AnalysisPanel,
                 parent = self)
-        self.event_widget = self.control_widget.init_panel(EventPanel,
-                parent = self)
+        if self.analysis and isinstance(self.analysis, sa.PixelByPixelAnalysis):
+            if self.analysis.fitregions:
+                self.event_widget = self.control_widget.init_panel(EventPanel,
+                        parent = self)
 
         self.vis_widget.settings_changed.connect(self.make_new_pixmap)
         self.frame_widget.frame_changed.connect(self.change_frame)
