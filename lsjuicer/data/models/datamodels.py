@@ -473,7 +473,7 @@ class RandomDataModel(QC.QAbstractTableModel):
             return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
 
     def recheck_images(self):
-        d = self.dirdatas
+        #d = self.dirdatas
         for f in self.dirdatas:
             print 'check'
             print f

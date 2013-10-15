@@ -5,7 +5,7 @@ import numpy as n
 
 from collections import defaultdict
 from lsjuicer.data.pipes.tools import PipeChain
-from lsjuicer.data.data import ImageDataMaker
+from lsjuicer.data.imagedata import ImageDataMaker
 from lsjuicer.data.pipes.tools import pipe_classes, PipeModel, PipeWidget
 from lsjuicer.ui.widgets.smallwidgets import VisualizationOptionsWidget
 from lsjuicer.ui.widgets.smallwidgets import FramePlayer

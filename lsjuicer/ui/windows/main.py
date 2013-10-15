@@ -12,7 +12,7 @@ from lsjuicer.ui.widgets.smallwidgets import Tasker
 from lsjuicer.data.models.datamodels import MyFileSystemModel, RandomDataModel, MyProxyModel, MyFileIconProvider
 from lsjuicer.ui.views.dataviews import CopyTableView
 
-from lsjuicer.data.data import ImageDataMaker
+from lsjuicer.data.imagedata import ImageDataMaker
 
 from lsjuicer.ui.widgets.fileinfowidget import ExpInfoWidget, ReferencePlot, AnalysesInfoWidget
 

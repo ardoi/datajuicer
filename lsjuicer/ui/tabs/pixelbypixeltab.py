@@ -16,7 +16,7 @@ from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
-from lsjuicer.data.data import ImageDataMaker
+from lsjuicer.data.imagedata import ImageDataMaker
 
 class PixelByPixelTab(QG.QTabWidget):
     @property

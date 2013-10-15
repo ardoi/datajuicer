@@ -31,6 +31,8 @@ class OMEXMLReader(AbstractReader):
 
     @property
     def image_width(self):
+        print 'active',self.active_type
+        print self.image_attrs
         return self.image_attrs[self.active_type]["image_width"]
     @image_width.setter
     def image_width(self, val ):
@@ -115,14 +117,14 @@ class OMEXMLReader(AbstractReader):
         microscope before a linescan). Linescan image is used for the general image attributes as those are the ones
         relevant to analysis.
         """
-        print "Image attrib"
+        print "\nImage attrib"
         self.active_type = None
         self.image_attrs = {"Pixels": {}, "Reference": {}}
         images = {"Pixels": None, "Reference": None}
         image_elements = self.et.findall(self.fulltags["Image"])
         #print self.image_elements, self.fulltags["Image"]
         for im_n, image_element in enumerate(image_elements):
-            #print 'im',im_n,image_element
+            print 'im',im_n,image_element
             pixels = image_element.findall(self.fulltags["Pixels"])
             #channel_dict = {}
             tiffdata_dict = {}
@@ -140,7 +142,7 @@ class OMEXMLReader(AbstractReader):
                     else:
                         tiffdata_dict[bin_n] = tiffdata
                 image_stuff["PixelAttributes"] = pixel.attrib
-                if pixel.attrib["SizeX"] == pixel.attrib["SizeY"] and pixel.attrib['SizeT']==1:
+                if pixel.attrib["SizeX"] == pixel.attrib["SizeY"] and int(pixel.attrib['SizeT'])==1:
                     #assume that a square image is the reference image
                     #FIXME
                     image_type = "Reference"
@@ -149,7 +151,6 @@ class OMEXMLReader(AbstractReader):
                 break #because there should only be one Pixel element in an Image tag
             images[image_type] = image_stuff
             self.active_type = image_type
-            #print 'set image type', image_type
             pix_attr = images[image_type]["PixelAttributes"]
             self.image_width = int(pix_attr['SizeY'])
             self.image_height = int(pix_attr['SizeX'])
@@ -201,8 +202,8 @@ class OMEXMLReader(AbstractReader):
     def _get_image_data(self, image_type):
         #print "reading data for type %s"%self.active_type
         tiffdata_elements = self.images[image_type]["BinDatas"]
-        #data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
-        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_width, self.image_height),
+        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
+        #data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_width, self.image_height),
                 dtype=self.data_type)
         #print data_array.shape
         self.images[image_type]["ImageData"] = data_array
@@ -250,8 +251,8 @@ class OMEXMLReader(AbstractReader):
             #print "Image dimensions", image_data.shape
             #print "channel: %i of %i , frame: %i of %i"%(channel+1, self.channels,frame+1, self.frames)
             #self.images[image_type]["ImageData"][channel][frame] = image_data.transpose()
-            #data_array[channel][frame] = image_data.transpose()
-            data_array[channel][frame] = image_data
+            data_array[channel][frame] = image_data.transpose()
+            #data_array[channel][frame] = image_data
         print "\n\n%s\nRead %i channels\n%i frames in each channel\n%ix%i pixels in each frame\n%i MB for entire array\n" % \
                 ("="*10,self.channels, self.frames, self.image_width, self.image_height, data_array.nbytes/1024**2)
 

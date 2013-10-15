@@ -783,6 +783,7 @@ class MicroscopeImage(Image):
     def image_data(self, image_type):
         if self.ome_file:
             self.ome_file.read_image(image_type)
+            print 'imaget',image_type, self.ome_file.images[image_type]
             return self.ome_file.images[image_type]#["ImageData"]
         else:
             return None
@@ -790,6 +791,7 @@ class MicroscopeImage(Image):
     def populate_attributes(self):
         of = self.ome_file
         of.read_meta()
+        of.active_type = "Pixels"
         self.delta_space = of.image_step_y
         #print "populate",of.interval
         self.delta_time = of.interval
