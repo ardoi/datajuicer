@@ -216,6 +216,7 @@ class ClusterWidget(QG.QWidget):
             if event_no == -1:
                 continue
             event = sa.Event()
+            sess.add(event)
             new_events.append(event)
             event.category = category
             stats.append(self.clusters[event_no].shape[0])
@@ -228,7 +229,8 @@ class ClusterWidget(QG.QWidget):
         new_event_ids = [event.id for event in new_events]
         old_events = sess.query(sa.Event).filter(~sa.Event.id.in_(new_event_ids)).\
                 join(sa.EventCategory).\
-                filter(sa.EventCategory.category_type == category.category_type).all()
+                filter(sa.EventCategory.category_type == category.category_type).\
+                filter(sa.Event.result == self.result).all()
         print 'old events', len(old_events), category.category_type.name, new_event_ids
         for old_event in old_events:
             sess.delete(old_event)

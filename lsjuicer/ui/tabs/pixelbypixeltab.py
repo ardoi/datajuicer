@@ -7,14 +7,12 @@ import numpy
 from PyQt4 import QtGui as QG
 from PyQt4 import QtCore as QC
 
-from lsjuicer.inout.db import sqlb2
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
 from lsjuicer.inout.db.sqla import PixelEvent
 from lsjuicer.ui.widgets.clusterwidget import ClusterDialog
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
 from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
-from lsjuicer.util.threader import FitDialog
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
@@ -60,6 +58,7 @@ class PixelByPixelTab(QG.QTabWidget):
         return "A"
 
     def makefits(self):
+        from lsjuicer.util.threader import FitDialog
         #t0 = time.time()
         #out = []
         params = []
@@ -97,6 +96,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.plot_widget.set_data(data)
 
     def threader_finished(self):
+        from lsjuicer.inout.db import sqlb2
         print "threader done. saving results"
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
@@ -257,7 +257,7 @@ class PixelByPixelTab(QG.QTabWidget):
 
     def get_res(self):
         results = {}
-        session = dbmaster.get_session()
+        #session = dbmaster.get_session()
         fitted_pixels = self.fit_result.pixels
         #print "get res", self.fit_result.region.width, self.fit_result.region.height
         results['width'] = self.fit_result.region.width - 2*self.fit_result.fit_settings['padding']
@@ -310,7 +310,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.show_res()
 
     def make_new_stack(self):
-        session = dbmaster.get_session()
+        #session = dbmaster.get_session()
         from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
         synthetic_image = sa.PixelFittedSyntheticImage(self.fit_result)
         next_tab = AnalysisImageTab(parent=self,analysis=self.analysis)

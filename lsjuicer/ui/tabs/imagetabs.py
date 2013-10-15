@@ -82,7 +82,7 @@ class EventClickTree(QG.QWidget):
             type_item = QG.QStandardItem(typename)
             root.appendRow(type_item)
             for i,ei in enumerate(event_list):
-                event_item = QG.QStandardItem(str(i))
+                event_item = QG.QStandardItem("{} id={}".format(i, ei.id))
                 event_item.setCheckable(True)
                 type_item.appendRow([event_item] )
 

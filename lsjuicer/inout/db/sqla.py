@@ -716,8 +716,6 @@ class MicroscopeImage(Image):
     """Representation of image recorded by the microscope"""
     __tablename__ = "microscope_images"
     id = Column(Integer, ForeignKey('images.id'), primary_key=True)
-    #ome_dir = os.path.join(os.getenv('HOME'), '.JuicerTemp')
-    id = Column(Integer, ForeignKey('images.id'), primary_key=True)
     _file_hash = Column(String(200), nullable=False)#, unique=True)
     _file_name = Column(String(500), nullable=False)
 
