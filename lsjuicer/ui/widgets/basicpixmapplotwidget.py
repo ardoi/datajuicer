@@ -18,7 +18,7 @@ class BasicPixmapPlotWidget(QG.QWidget):
         pixmaker = PixmapMaker(pc)
         self.pixmaker = pixmaker
 
-        self.plot_widget = PixmapPlotWidget(parent=self)
+        self.plot_widget = PixmapPlotWidget(parent=self,antialias=False)
         self.scene = self.plot_widget.fscene
         layout = QG.QVBoxLayout()
         self.setLayout(layout)

@@ -262,26 +262,12 @@ def find_transient_boundaries(data, baseline = None, plot=False):
     smooth_d1 = nd.uniform_filter(d1f,25)
     d2f = n.diff(smooth_d1)
     fu = smooth_data
-    #import pylab as p
-    #p.figure(10)
-    #p.plot(f,'o')
-    #p.plot(fu,lw=3,color='green')
-    #p.plot(smooth_data,lw=3,color='red')
-    #p.figure(11)
-    #d= nd.uniform_filter(nd.uniform_filter(data, 5),30)
-    #p.plot(d,color='red')
-    #d= nd.uniform_filter(nd.uniform_filter(data, 30),25)
-    #p.plot(d,color='blue')
+
 
     #start looking from the start of d1f for zero crossings where d2f is < 0
     maxima = []
     minima = []
-    #if real_mean:
-    #    criterium = real_mean + real_std
-    #else:
-    #    mean_f = n.mean(f)
-    #    criterium = mean_f
-    #print "using crit=",criterium
+
     margin = 2 #margin to leave from left/right sides
     for i in range(1,d1f.shape[0]-1):
         #this_f = smooth_data[i-1]
@@ -399,113 +385,32 @@ def fit_regs(f, plot=False , baseline = None):
         p.plot(f,marker='o',ls='None',ms=4,mec='None',alpha=.5)
         if baseline is not None:
             p.plot(baseline)
-        #p.plot(fu,'-',color='magenta')
         p.xlim(0, len(f))
         ax=p.gca()
-    #print regs
     for i,r in enumerate(regs):
         le = r.left
         ri = r.right
-        #r['bad']=False
         fit_res = []#defaultdict(dict)
-        #print '\n',i
-        #print 'le',le
-        #print 'ri',ri
-        #print 'max',r['max'],f[r['max']],fu[r['max']]
 
         transient_f = f[le:ri]
         transient_t = time[le:ri]
         if plot:
             ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="blue",alpha=0.1))
-        #:oo = fitfun.Optimizer(n.arange(len(transient_f)), transient_f)
-        #oo = fitfun.Optimizer(transient_t, transient_f)
-
-        ##make first fit with non-convolved function
-        #f0r = fu[ri-5:min(len(f), ri+5)].mean()
-        #f0l = fu[max(0,le-5):le+5].mean()
-        #oo.set_function(fitfun.ff50)
-        ##oo.set_function(fitfun.fit_func_4)
-        #b_init = (f0r+f0l)/2.
-        ##oo.set_parameter_range('B',f0*.9,f0*1.1,f0)
-        #oo.set_parameter_range('B',b_init*0.75,b_init*1.25,b_init)
-        #if fu[r.maximum]-b_init <500:
-        #    #print r['max'], fu[r['max']], b_init
-        #    #ignore very small events
-        #    #print 'bad 0'
-        #    r.bad = True
-        #    continue
-        #oo.set_parameter_range('tau2',2,100.,30.)
-        ##mu_est = (r['max']-le)/2. + le
-        #mu_est = r.maximum
-        #oo.set_parameter_range('m2', le+1, ri-1, mu_est)
-        ##oo.set_parameter_range('mu',le,ri,mu_est)
-        ##print r['max'], mu_est,le
-        #d_est = (r.maximum-le)/2.+1.
-        ##print le,r['max'],ri
-        #try:
-        #    oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
-        #except AssertionError:
-        #    r.bad = True
-        #    continue
-        #oo.set_parameter_range('A',500, 1.5*(transient_f.max()-b_init), fu[r.maximum]-b_init)
-        ##oo.set_parameter_range('s',1.0,10.1,1.05)
-        ##oo.set_parameter_range('s',1.0,10.1,1.05)
-        ##oo.set_parameter_range('d2',0,.1,0.01)
-        ##if f0r > f0:
-        ##    oo.set_parameter_range('B',f0*.9,f0r*1.1,f0)
-        ##else:
-        ##    oo.set_parameter_range('B',f0r*.9,f0*1.1,f0)
-        ###print -max(100,abs(f0r-f0l)),max(100,abs(f0r-f0l))
-        ##oo.set_parameter_range('C',-max(100, 2*abs(f0l-f0)),max(100,2*abs(f0l-f0)),f0l-f0)
-        #c_init = f0l - b_init
-        #c_init_delta = max(abs(c_init*0.5), 25)
-        #oo.set_parameter_range('C',c_init-c_init_delta, c_init +
-        #        c_init_delta, c_init)
-        ##oo.set_parameter_range('C',c_init-c_init_delta,500, c_init)
-        #oo.show_parameters()
-        #oo.optimize()
         oo = r.fit_res[-1]
-        #print oo.solutions
         if not oo.solutions:
-            #print 'bad 1'
             r.bad=True
             continue
-        #print "\nAIC curve",oo.aic()
-        #print "AICc curve",oo.aicc()
-        #oo2 = fitfun.Optimizer(transient_t, transient_f)
-        #oo2.set_function(fitfun.linear)
-        #oo2.set_parameter_range('a',-500, 500, 0)
-        #oo2.set_parameter_range('b',-1e5,1e5,transient_f.mean())
-        #oo2.optimize()
-        #print "AIC line",oo2.aic()
-        #print "AICc line",oo2.aicc()
-        #print oo.solutions
-        #oo2.show_parameters()
         fit_res.append(oo)
         if plot:
             p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
-            #p.plot(transient_t, oo2.function(transient_t, **oo2.solutions),lw=2,color='yellow')
-        #if oo.solutions:
-        #    oo.solutions = oo.jiggle_rec(oo.solutions)
         if plot:
             p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='magenta')
-            #continue
         #make second fit with convolved function using first fit paramaters as initial conditions
-        #print 'fit2'
         sol = oo.solutions
-        #oo.show_parameters()
-        #print sol
-        #if oo.closeness_to_limit():
-        #    print 'have to delete'
-        #    r['bad']=True
-        #    continue
-        #if sol['mu']+le > ri
-        #oo = fitfun.Optimizer(n.arange(len(transient_f)), transient_f)
         oo = fitfun.Optimizer(transient_t, transient_f)
         oo.set_function(fitfun.ff5)
         delta = 0.25
         val = sol['tau2']
-        #oo.set_parameter_range('tau2',val*.5,val*2, val*.9)
 
         oo.set_parameter_range('tau2',2, 100, max(2, val*.9))
         val = sol['m2']
@@ -525,7 +430,8 @@ def fit_regs(f, plot=False , baseline = None):
 
         oo.set_parameter_range('d2',.1,100,2)
         #oo.set_parameter_range('s',.5,3.,2.1)
-        oo.set_parameter_range('s',1.0,1.1,1.05)
+        #oo.set_parameter_range('s',1.0,1.1,1.05)
+        oo.set_parameter_range('s',.1,.11,.105)
         val = sol['A']
         oo.set_parameter_range('A',val*0.5,val*2, val)
         val = sol['B']
@@ -688,6 +594,8 @@ def fit_regs(f, plot=False , baseline = None):
             res = oo.function(time, **sol)
             baseline_f -= res
         baseline_fit_params = n.polyfit(time, baseline_f, 4)
+        if n.isnan(baseline_fit_params).any():
+            baseline_fit_params = n.zeros_like(baseline_fit_params)
         pf_fun = n.poly1d(baseline_fit_params)
         final['baseline'] = baseline_fit_params
 
@@ -698,11 +606,6 @@ def fit_regs(f, plot=False , baseline = None):
         smooth_data = nd.uniform_filter(nd.uniform_filter(f, 15),20)
         p.plot(smooth_data,color='magenta')
         p.plot([0,len(f)],[f.mean(),f.mean()])
-        #p.plot([0,len(f)],[f0,f0],color='black')
-        #p.plot([0,len(f)],[f0+f0std,f0+f0std],color='yellow')
-        #p.plot([0,len(f)],[f0+2*f0std,f0+2*f0std],color='orange')
-        #p.plot([0,len(f)],[f0+3*f0std,f0+3*f0std],color='red')
-        #p.plot([0,len(f)],[f0+6*f0std,f0+6*f0std],color='red',lw=2)
 
 def fit_2_stage(data, plot=False):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
@@ -830,9 +733,15 @@ def make_raw(res):
 
 class SyntheticData(object):
     def __init__(self, results):
+        print 'starting sd', results
         if results:
             self.results = results
-            self.times = n.arange(results['frames'])
+            if results['frames']==1:
+                self.times = n.arange(results['width'])
+                self.linescan = True
+            else:
+                self.times = n.arange(results['frames'])
+                self.linescan = False
         self.func = None
         self.filter = None
 
@@ -847,7 +756,10 @@ class SyntheticData(object):
         for res in self.results['fits']:
             x = res.x
             y = res.y
-            out[:,y,x] = self.func(res)
+            if not self.linescan:
+                out[:,y,x] = self.func(res)
+            else:
+                out[0,y,:] = self.func(res)
         self.filter = None
         self.func = None
         return out
@@ -949,8 +861,22 @@ def fitted_pixel_ff0(pixel, event = 0):
     return f_vals/baseline + 1
 
 def fitted_pixel_max(pixel, event = 0):
-    vals = fitted_pixel_ff0(pixel, event)
-    f_max = vals.max()
+    param = pixel.pixel_events[event].parameters
+    maxval = param['A']*(1-n.exp(-2.0))
+    baseline_f = n.poly1d(pixel.baseline)
+    baseline = baseline_f(param['m2'])
+    #vals = fitted_pixel_ff0(pixel, event)
+    if n.isnan(maxval):
+        print 'max is nan'
+        print param
+    elif n.isnan(baseline):
+        print 'base is nan'
+        print param
+        print pixel.baseline, pixel.id
+    elif n.isinf(baseline):
+        print 'base is inf'
+        print param
+    f_max = maxval/baseline + 1 #F/F0 not dF/F0
     return f_max
 
 def do_event_list(pixs):

@@ -574,6 +574,9 @@ def ff6(arg, tau2, d, d2, m2, s, A):
 
     a3e=(4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
     a4 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
+    a4mask=a4==0.0
+    #a1e[a4mask]=0.0
+    #a3e[a4mask]=0.0
     a5e = t/tau2
     #a5 = n.power(E,t/tau2)
     a1a3 = n.power(E,a1e+a3e)
@@ -585,21 +588,17 @@ def ff6(arg, tau2, d, d2, m2, s, A):
     a1a2a5 = a1a21a5*a22 +  n.power(E,(2.*t)/d+a1e+a5e)*a23
     res = a1a2a5 +  a1a3*(-A + A *E2)*a4
     res = res / 2.
+    resmask = n.logical_or(n.isnan(res),n.isinf(res))
+    res[resmask]=0.0
 
     if n.any(n.isnan(res)):
         print 'nan'
-        print a1a21a5
-        print '22',a22,a22.max(),a22.min()
+        print a1a21a5, n.isnan(a1a21a5).sum()
+        print a1a3, n.isnan(a1a3).sum(),n.isinf(a1a3).sum()
+        print a4, n.isnan(a4).sum()
 
-        print a21e
-        print d,m,s2
-        print d*(d+m),n.power(d,2)
-    #    #print t
-    #    #print res
-    #    #print 'sum',a1e+a3e
-    #    #print 'exp',n.power(E,a1e+a3e)
-    #    #print 'exp2',a1a3
-    #    print "1f",a1a2
+        print a1e
+        print a3e
 
 
         print 'call', tau2, d, d2, m2, s, A,res

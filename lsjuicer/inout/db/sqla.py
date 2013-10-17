@@ -605,7 +605,12 @@ class PixelFittedSyntheticImage(Image):
     def __init__(self, pixelfitresult):
         Image.__init__(self)
         reg = pixelfitresult.region
-        self.image_width = reg.width - 2*pixelfitresult.fit_settings['padding']
+        if reg.width == 1:
+            self.image_width = reg.frames
+            self.image_frames = 1
+        else:
+            self.image_width = reg.width - 2*pixelfitresult.fit_settings['padding']
+            self.image_frames = reg.frames
         self.image_height = reg.height - 2*pixelfitresult.fit_settings['padding']
         self.channels = 2
         self.syn_image_data = None
@@ -614,42 +619,7 @@ class PixelFittedSyntheticImage(Image):
             #channel with all events
             self.channels += 1
             self._channel_names.update({2:"events"})
-            #self._channel_names[self.channels-1] = "all events"
-            #event_types = pixelfitresult.event_types()
-            #self.event_types = event_types
-            #print 'ET',event_types
-            #event_type_keys = event_types.keys()
-            #event_type_keys.sort()
 
-            #self.channel_events = {}
-            #all_event_ids = []
-            #[all_event_ids.extend(el) for el in self.event_types.values()]
-            #self.channel_events[self.channels-1] = all_event_ids
-
-            #for et in event_type_keys:
-            #    event_ids= self.event_types[et]
-            #    events = len(event_types[et])
-            #    if events == 1:
-            #        #if only one event of type then one extra channel is enough
-            #        self.channels += 1
-            #        self._channel_names[self.channels-1] = et
-            #        self.channel_events[self.channels-1] = event_types[et]
-            #    else:
-            #        #for more than one event we need one channel per event
-            #        #plus summary channel of all events of type
-            #        self.channels += 1
-            #        self._channel_names[self.channels-1] = et+" all"
-            #        all_ids_of_type = []
-            #        self.channel_events[self.channels-1] = all_ids_of_type
-            #        for i,event_id in enumerate(event_ids):
-            #            self.channels += 1
-            #            self._channel_names[self.channels-1] = "{} {}".format(et,i)
-            #            self.channel_events[self.channels-1] = event_id
-            #            all_ids_of_type.append(event_id)
-        #print self._channel_names
-        #print self.channel_events
-
-        self.image_frames = reg.frames
         analysis = reg.analysis
         self.record_date = analysis.date
         mimage = analysis.imagefile

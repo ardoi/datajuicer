@@ -50,7 +50,12 @@ class Events(object):
         self.status_dict[event_type].append(False)
 
     def change(self, event_type, row, status):
-        self.status_dict[event_type][row]=status
+        print event_type, row, status, len(self.status_dict[event_type])
+        if row:
+            self.status_dict[event_type][row]=status
+        else:
+            for k in range(len(self.status_dict[event_type])):
+                self.status_dict[event_type][k] = status
         print self.status_dict
 
 class EventClickTree(QG.QWidget):
@@ -63,7 +68,7 @@ class EventClickTree(QG.QWidget):
         view = QG.QTreeView(self)
         model = QG.QStandardItemModel()
         self.model = model
-        self.items_by_name = {}
+        self.items_by_name = defaultdict(list)
         model.setHorizontalHeaderLabels(["Event"])
         view.setIndentation(10)
         view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
@@ -80,21 +85,28 @@ class EventClickTree(QG.QWidget):
         root = self.model.invisibleRootItem()
         for typename, event_list in events.event_dict.iteritems():
             type_item = QG.QStandardItem(typename)
+            type_item.setCheckable(True)
             root.appendRow(type_item)
             for i,ei in enumerate(event_list):
-                event_item = QG.QStandardItem("{} id={}".format(i, ei.id))
+                event_item = QG.QStandardItem("{} id:{} s:{} loc:{},{}".\
+                            format(i, ei.id, len(ei.pixel_events),
+                                   int(ei.pixel_events[0].parameters['m2']),
+                                   ei.pixel_events[0].pixel.y))
+                self.items_by_name[typename].append(event_item)
                 event_item.setCheckable(True)
                 type_item.appendRow([event_item] )
 
     def toggle(self, name, state):
         print 'toggle',name
         name = str(name)
-
-        print [type(el) for el in self.items_by_name], type(name)
+        if state:
+            sstate = QC.Qt.Checked
+        else:
+            sstate = QC.Qt.Unchecked
         if name in self.items_by_name:
-            item = self.items_by_name[name]
-            print name, item
-            item.setCheckState(QC.Qt.Checked)
+            items = self.items_by_name[name]
+            for item in items:
+                item.setCheckState(sstate)
 
     def clicked(self, modelindex):
         print '\nccc'
@@ -102,7 +114,15 @@ class EventClickTree(QG.QWidget):
         parent = modelindex.parent()
         event_type = str(parent.data().toString())
         state = modelindex.data(10).toBool()
-        print row,event_type,state
+        print row,event_type,state, str(modelindex.data().toString())
+        if not event_type:
+            #Toggle all events if the eventype has been toggled
+            itemname = str(modelindex.data().toString())
+            print itemname, self.items_by_name.keys()
+            if itemname in self.items_by_name:
+                self.events.change(itemname, None, state)
+                self.toggle(itemname, state)
+
         if event_type:
             self.events.change(event_type, row, state)
 
@@ -145,12 +165,14 @@ class ClickTree(QG.QWidget):
     def toggle(self, name, state):
         print 'toggle',name
         name = str(name)
-
-        print [type(el) for el in self.items_by_name], type(name)
+        #print [type(el) for el in self.items_by_name], type(name)
+        if state:
+            sstate = QC.Qt.Checked
+        else:
+            sstate = QC.Qt.Unchecked
         if name in self.items_by_name:
             item = self.items_by_name[name]
-            print name, item
-            item.setCheckState(QC.Qt.Checked)
+            item.setCheckState(sstate)
 
     def clicked(self, modelindex):
         print '\nccc'

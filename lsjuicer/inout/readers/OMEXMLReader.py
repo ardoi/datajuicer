@@ -224,9 +224,9 @@ class OMEXMLReader(AbstractReader):
                 else:
                     pass
                     #print 'Not compressed'
-                data_length = int(bin_attrib['Length'])
+                #data_length = int(bin_attrib['Length'])
                 dtype = self.data_type
-                dtype_size = numpy.dtype(dtype).itemsize
+                #dtype_size = numpy.dtype(dtype).itemsize
                 #print 'Total data %s' % data_length
                 #decode base64 data
                 stringio_in = StringIO.StringIO(tiffdata_element.text)

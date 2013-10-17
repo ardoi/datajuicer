@@ -15,7 +15,7 @@ from lsjuicer.util.helpers import timeIt
 class PlotWithAxesWidget(QG.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
 
-    def __init__(self,  parent=None, sceneClass=None, antialias=True, xlabel = None, ylabel = None):
+    def __init__(self,  parent=None, sceneClass=None, antialias=False, xlabel = None, ylabel = None):
         super(PlotWithAxesWidget, self).__init__(parent)
         # self.plot_sp = 250.
         self.plot_datas = {}

@@ -16,6 +16,7 @@ from lsjuicer.ui.tabs.transienttab import FluorescenceTab
 from lsjuicer.ui.widgets.fileinfowidget import MyFormLikeLayout
 from lsjuicer.data.analysis.transient_find import SyntheticData
 from lsjuicer.util.helpers import timeIt
+from lsjuicer.data.imagedata import ImageDataLineScan
 
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
@@ -63,12 +64,19 @@ class EventPanel(ActionPanel):
 
     @timeIt
     def set_data(self):
-        new = n.zeros((self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points),dtype='float')
         results = {}
-        results['width'] = self.imagedata.x_points
+        if self.region.width == 1:
+            results['width'] = self.region.frames
+            results['frames'] = 1
+            new_shape = (1, self.imagedata.y_points, self.region.frames)
+        else:
+            results['width'] = self.imagedata.x_points
+            results['frames'] = self.imagedata.frames
+            new_shape = (self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points)
+        new = n.zeros(new_shape,dtype='float')
         results['height'] = self.imagedata.y_points
-        results['frames'] = self.imagedata.frames
         results['fits']= self.result.pixels
+        print 'set data',new.shape, results
         sdata = SyntheticData(results)
         events_to_show = []
         for event_type in self.events.event_dict:
@@ -391,8 +399,14 @@ class AnalysisPanel(ActionPanel):
                 builder = self.roi_manager.builder
                 for region in self.analysis.fitregions:
                     print region
-                    topleft = QC.QPointF(region.x0, region.y0)
-                    bottomright = QC.QPointF(region.x1, region.y1)
+                    if isinstance(self.imagedata, ImageDataLineScan):
+                        x0 = region.start_frame
+                        x1 = region.end_frame
+                    else:
+                        x0 = region.x0
+                        x1 = region.x1
+                    topleft = QC.QPointF(x0, region.y0)
+                    bottomright = QC.QPointF(x1, region.y1)
                     builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
                 #self.time_range_start = 100
                 #self.selection_slider.setValue(500)
