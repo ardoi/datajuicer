@@ -3,7 +3,7 @@ import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
 #import PyQt4.QtOpenGL as QGL
 #from scipy.interpolate import interp1d
-#import numpy as n
+import numpy as n
 
 from lsjuicer.ui.scenes import PlotDisplay
 from lsjuicer.ui.views import ZoomView
@@ -55,11 +55,12 @@ class PlotWithAxesWidget(QG.QWidget):
     def center_graphicsitem(self, item):
         self.fV.centerOn(item)
 
+    @timeIt
     def fitView(self, value=None):
         if value is not None:
             self.aspect_ratio = value
         self.fV.fitInView(self.scene_rect, self.aspect_ratio)  # value)
-        self.fV.determine_axes_span()
+        #self.fV.determine_axes_span()
 
     @timeIt
     def removeItem(self, item):
@@ -86,14 +87,13 @@ class PlotWithAxesWidget(QG.QWidget):
         plotLayout.setSpacing(0)
         self.setLayout(plotLayout)
         self.my_init()
-        self.fV = ZoomView()
-        self.fV.setTransformationAnchor(QG.QGraphicsView.AnchorUnderMouse)
-        self.fV.setFrameStyle(QG.QFrame.NoFrame)
+        self.fV = ZoomView(self)
+        #self.fV = QG.QGraphicsView()
         #self.fV.setViewport(QGL.QGLWidget(QGL.QGLFormat(QGL.QGL.SampleBuffers)))
         # TODO try disable:
         #self.fV.setCacheMode(QG.QGraphicsView.CacheNone)
         #self.fV.setMouseTracking(True)
-        #self.fV.setViewportUpdateMode(QG.QGraphicsView.NoViewportUpdate)
+        self.fV.setRenderHint(QG.QPainter.Antialiasing)
         fLayout = QG.QGridLayout()
         plotLayout.addLayout(fLayout)
         self.setLayout(plotLayout)
@@ -347,13 +347,13 @@ class PlotWithAxesWidget(QG.QWidget):
 
     @timeIt
     def reframe(self):
-        QG.QApplication.processEvents()
+        #QG.QApplication.processEvents()
         print 'setting scene rect', self.scene_rect
         #self.fscene.addRect(self.scene_rect)
         self.fscene.setSceneRect(self.scene_rect)
         #self.fV.setViewportMargins(-2, -2, -2, -2)
-        QG.QApplication.processEvents()
         self.ranges_changed()
+        #QG.QApplication.processEvents()
 
     @timeIt
     def updatePlots(self):
@@ -508,24 +508,26 @@ class PlotWithAxesWidget(QG.QWidget):
         #plot_data = self.convert_data(plotd)
         plot_data = [self.data2scene((x, dy)) for x, dy in
                       zip(plotd.phys_xvalues, plotd.data)]
-        start = plot_data[0]
-        path = QG.QPainterPath(start)
-        for p in plot_data[1:]:
-            path.lineTo(p)
-        plotd.boundingrect = path.boundingRect()
-        gpath = self.fscene.addPath(path, plotd.pen)
-
-        gpath.setZValue(plotd.Z)
+        fitem = FunctionItem()
+        fitem.set_pen(plotd.pen)
+        fitem.set_points(plot_data)
+        fitem.setFlags(QG.QGraphicsItem.ItemUsesExtendedStyleOption)
+        self.fscene.addItem(fitem)
+        fitem.setZValue(plotd.Z)
+        #start = plot_data[0]
+        #path = QG.QPainterPath(start)
+        #for p in plot_data[1:]:
+        #    path.lineTo(p)
+        plotd.boundingrect = fitem.boundingRect()
+        #gpath = self.fscene.addPath(path, plotd.pen)
+        #gpath.setZValue(plotd.Z)
 
         plotd.drawn = True
         self.plot_index += 1
         if not plotd.visibility:
-            gpath.setVisible(False)
-        plotd.graphic_item = gpath
-        # print 'makepath',
-        # print 'path br', path.boundingRect()
-        # print 'gitem br',gpath.boundingRect()
-        #print 'gitem', gpath, gpath.scene()
+            fitem.setVisible(False)
+        plotd.graphic_item = fitem
+        QG.QApplication.processEvents()
         return
 
     def makeCircles(self, plotd):
@@ -557,6 +559,10 @@ class PlotWithAxesWidget(QG.QWidget):
         plotd.graphic_item = group
         plotd.base_size = (xsize, ysize)
         return #group
+
+
+
+
 
     @timeIt
     def scale_aspect(self, h_scale, v_scale):
@@ -597,7 +603,64 @@ class PlotWithAxesWidget(QG.QWidget):
                             #new_x = old_x - xsize/2.
                             #new_y = old_y - ysize/2.
                             #c.setRect(new_x, new_y, new_width, new_height)
+
                             #c.setRect(new_x, new_y, xsize, ysize)
+
+class FunctionItem(QG.QGraphicsItem):
+    def set_pen(self, pen):
+        self.pen=pen
+        #self.pen.setWidth(1)
+        self.pen.setCosmetic(True)
+
+    def set_brush(self, brush):
+        self.brush=brush
+
+    def set_data(self, xdata, ydata):
+        self.xdata = xdata
+        self.xmin = min(xdata)
+        self.xmax = max(xdata)
+        self.ydata = ydata
+        self.b_rect = QC.QRectF(min(xdata),min(ydata),max(xdata)-min(xdata), max(ydata)-min(ydata))
+
+    def set_points(self, points):
+        xdata = [p.x() for p in points]
+        ydata = [p.y() for p in points]
+        self.set_data(xdata, ydata)
+
+    def paint(self, painter, option, widget):
+        """First, the area displayed in the GraphicsView is determined. Based on that limits are set to avoid drawing
+        outside of the visible area.  Further optimization is provided by skip_factor which sets the gap left between
+        datapoints used in plotting. This gap ensures that no more than 1 point is plotted in 1 screen pixel"""
+        """Two options for determining update area:
+            First the clumsy one: viewport is mapped to the scene and borders taken from there
+            Second, option.exposedRect gives the newly exposed area after each view change"""
+        #viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).x()))
+        #viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).x()))
+        exp_rect = option.exposedRect
+        viewed_left = exp_rect.left()
+        viewed_right = viewed_left + max(10, exp_rect.width())
+        h_space = widget.width()
+        skip_factor = max(1, int( (viewed_right-viewed_left) / h_space))
+        if hasattr(self,'pen'):
+            painter.setPen(self.pen)
+            self.pen.setWidth(0)
+            #self.pen.setCosmetic(False)
+            print self.pen.width(),self.pen.isCosmetic()
+        #if hasattr(self,'brush'):
+            #painter.setBrush(self.brush)
+        plot_indices = n.arange(viewed_left,viewed_right,skip_factor,dtype=int)
+        print 'skip',skip_factor, plot_indices.size, h_space
+        for i in plot_indices:
+            if i == 0:
+                continue
+            painter.drawLine(self.xdata[i-skip_factor], self.ydata[i-skip_factor], self.xdata[i], self.ydata[i])
+
+    def boundingRect(self):
+        return self.b_rect
+
+
+
+
 
 class PixmapPlotWidget(PlotWithAxesWidget):
     def scene2data(self, spoint):

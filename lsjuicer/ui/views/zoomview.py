@@ -1,5 +1,6 @@
 import PyQt4.QtCore as QC
 import PyQt4.QtGui as QG
+from lsjuicer.util.helpers import timeIt
 
 
 class ZoomView(QG.QGraphicsView):
@@ -23,6 +24,10 @@ class ZoomView(QG.QGraphicsView):
         self.zooming_ver = False
         #lock horizontal and vertical zoom
         self.locked = locked
+        self.setTransformationAnchor(QG.QGraphicsView.AnchorUnderMouse)
+        #self.setOptimizationFlag(QG.QGraphicsView.DontAdjustForAntialiasing)
+        self.setViewportUpdateMode(QG.QGraphicsView.FullViewportUpdate)
+        self.setFrameStyle(QG.QFrame.NoFrame)
 
     def alert_horizontal_zoom_change(self):
         left, right = self.visible_horizontal_range()
@@ -78,7 +83,7 @@ class ZoomView(QG.QGraphicsView):
         self.alert_vertical_zoom_change()
         self.setDragMode(QG.QGraphicsView.NoDrag)
 
-
+    @timeIt
     def wheelEvent(self,event):
         """Overridden to catch mouse scroll events and apply appropriate zoom transform"""
         #if not hasattr(self, 'originalZoom'):
@@ -179,7 +184,7 @@ class ZoomView(QG.QGraphicsView):
             self.full_view = False
         v_axis_height = min(widget_height, scene_rect.height())
         self.v_axis_param.emit(v_axis_start_loc, v_axis_height)
-
+    @timeIt
     def scale_view(self, hor_scale_factor, ver_scale_factor ):
         self.scale( hor_scale_factor, ver_scale_factor)
         self.determine_axes_span()
@@ -216,3 +221,7 @@ class ZoomView(QG.QGraphicsView):
    # def resizeEvent(self, event):
    #     QG.QGraphicsView.resizeEvent(self,event)
    #     self.fitInView(self.scene().itemsBoundingRect())
+    @timeIt
+    def paintEvent(self,*args):
+        QG.QGraphicsView.paintEvent(self, *args)
+
