@@ -634,26 +634,30 @@ class FunctionItem(QG.QGraphicsItem):
         """Two options for determining update area:
             First the clumsy one: viewport is mapped to the scene and borders taken from there
             Second, option.exposedRect gives the newly exposed area after each view change"""
-        #viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).x()))
-        #viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).x()))
+        viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).y()))
+        viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).y()))
+        print 'lod',option.levelOfDetail, viewed_left, viewed_right
         exp_rect = option.exposedRect
         viewed_left = exp_rect.left()
         viewed_right = viewed_left + max(10, exp_rect.width())
-        h_space = widget.width()
-        skip_factor = max(1, int( (viewed_right-viewed_left) / h_space))
+        h_space = float(widget.width())/2.
+        skip_factor = max(1, (viewed_right-viewed_left+1) / h_space)
         if hasattr(self,'pen'):
             painter.setPen(self.pen)
             self.pen.setWidth(0)
             #self.pen.setCosmetic(False)
-            print self.pen.width(),self.pen.isCosmetic()
         #if hasattr(self,'brush'):
             #painter.setBrush(self.brush)
-        plot_indices = n.arange(viewed_left,viewed_right,skip_factor,dtype=int)
-        print 'skip',skip_factor, plot_indices.size, h_space
-        for i in plot_indices:
+        #plot_indices = n.arange(viewed_left,viewed_right,skip_factor).astype(int)
+        plot_indices = n.linspace(viewed_left, viewed_right, h_space - 1).astype(int)
+        #print plot_indices
+        #print 'skip',skip_factor, plot_indices.size, h_space
+        for i in range(plot_indices.size):
             if i == 0:
                 continue
-            painter.drawLine(self.xdata[i-skip_factor], self.ydata[i-skip_factor], self.xdata[i], self.ydata[i])
+            in1 = plot_indices[i]
+            in0 = plot_indices[i-1]
+            painter.drawLine(self.xdata[in0], self.ydata[in0], self.xdata[in1], self.ydata[in1])
 
     def boundingRect(self):
         return self.b_rect
