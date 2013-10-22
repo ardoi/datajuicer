@@ -10,11 +10,11 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
         self.events = []
 
     def set_events(self, res):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
+        self.modelAboutToBeReset.emit()
         self.events = res.pixel_events
         self.rows = res.event_count
-        self.emit(QC.SIGNAL('modelReset()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.modelReset.emit()
+        self.layoutChanged.emit()
 
     def rowCount(self, parent):
         return self.rows

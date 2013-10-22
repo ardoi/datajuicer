@@ -198,12 +198,13 @@ class TransientDataModel(QC.QAbstractTableModel):
         #else:
         #    return QC.Qt.ItemIsEnabled
 
-class MyProxyModel(QG.QSortFilterProxyModel):
+class MyProxyModel(QC.QSortFilterProxyModel):
     """
     Extended QSortFilterProxyModel to allow only unique indices to set to be plotted
     """
     #def __init__(self,parent = None):
     #    super(MyProxyModel, self).__init__(parent)
+    doPlot = QC.pyqtSignal(object)
     def setView(self, view):
         self.view=view
 
@@ -242,6 +243,8 @@ class MyFileSystemModel(QW.QFileSystemModel):
     target : :class:`RandomDataModel`
         Model with image file data
     """
+    inspect_visible = QC.pyqtSignal(bool)
+    inspect_needed = QC.pyqtSignal(int)
     def __init__(self,parent = None):
         super(MyFileSystemModel, self).__init__(parent)
         self.icon_provider = MyFileIconProvider()
@@ -252,9 +255,9 @@ class MyFileSystemModel(QW.QFileSystemModel):
         print 'ftype', ftype
         if ftype=="oib":
             self.ftype="oib,oif"
-            self.setNameFilters(QC.QStringList([QC.QString("*.oib"),QC.QString("*.oif")]))
+            self.setNameFilters([str("*.oib"),str("*.oif")])
         else:
-            self.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
+            self.setNameFilters([str("*.%s"%ftype)])
 
     def setTarget(self, target):
         self.target = target
@@ -276,7 +279,7 @@ class MyFileSystemModel(QW.QFileSystemModel):
             print 'FILES',dd,len(filelist),os.path.join(str(dd),str(suffix)), filelist
         if filelist:
             self.inspect_visible.emit(True)
-            self.inspect_needed.emit(len(filelist)
+            self.inspect_needed.emit(len(filelist))
         else:
             self.inspect_visible.emit(False)
         return dd
@@ -293,6 +296,13 @@ class RandomDataModel(QC.QAbstractTableModel):
     """DataModel to display data from image file in a directory"""
     conversion_finished = QC.pyqtSignal()
     switchToFileSelection = QC.pyqtSignal(str)
+    filesRead = QC.pyqtSignal(int)
+    totalFiles = QC.pyqtSignal(int)
+    progressVisible = QC.pyqtSignal(bool)
+    conversion_needed = QC.pyqtSignal(int)
+    convert_pb_visible = QC.pyqtSignal(bool)
+    convert_progress_visible = QC.pyqtSignal(bool)
+    plotFile = QC.pyqtSignal(object)
     def __init__(self, parent=None):
         super(RandomDataModel, self).__init__(parent)
         print 'parent', parent
@@ -304,7 +314,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.ftype = sa.dbmaster.get_config_setting_value('filetype')
         #formats = ["*.lsm","*.ome"]
         self.omexml_maker = OMEXMLMaker()
-        self.omexml_maker.conversion_update.connect(self.conversion_update)
+        #self.omexml_maker.conversion_update.connect(self.conversion_update)
 #        self.connect(self.omexml_maker,QC.SIGNAL('conversion_finished()'),self.conversion_finished)
         self.omexml_maker.conversion_finished.connect(self.ome_conversion_finished)
 

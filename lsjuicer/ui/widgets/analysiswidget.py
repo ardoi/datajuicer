@@ -11,6 +11,7 @@ from lsjuicer.ui.tabs.resulttab import ResultTab
 
 class AnalysisWidget(QW.QTabWidget):
     """Widget containing all analysis related stuff (fluorescence view, selection view)"""
+    setStatusText = QC.pyqtSignal(str)
     @property
     def analysis_type(self):
         mode = self.imageTab.analysis_mode
@@ -31,7 +32,7 @@ class AnalysisWidget(QW.QTabWidget):
             alignment: right;
         }
         """)
-        self.imageTab.positionTXT['QString'].connect(self.emitStatusTXT)
+        self.imageTab.positionTXT[str].connect(self.emitStatusTXT)
 
     def emitStatusTXT(self, txt):
         self.setStatusText.emit(txt)
@@ -65,7 +66,7 @@ class AnalysisWidget(QW.QTabWidget):
 #        self.resultTab = FluorescenceTab(self.DS1,self)
         self.addTab(self.resultTab,'Results')
         #self.setCurrentIndex(2)
-        self.resultTab.positionTXT['QString'].connect(self.emitStatusTXT)
+        self.resultTab.positionTXT[str].connect(self.emitStatusTXT)
         #self.setCurrentIndex(2)
 
     def addResPlot(self,*args,**kwargs):

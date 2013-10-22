@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from PyQt5 import QtCore as QC
 
 from PyQt5 import QtGui as QG
 

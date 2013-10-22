@@ -60,8 +60,8 @@ class ROIManager(QC.QObject):
         self.activeBuilder = None
         self.dataModel.watchBuilder(self.roiBuilder)
         self.dataModel.watchBuilder(self.bgRoiBuilder)
-        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.ROI)
-        self.bgRoiBuilder.ROIDone.connect(lambda:self.setActive(Constants.BGROI)
+        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.ROI))
+        self.bgRoiBuilder.ROIDone.connect(lambda:self.setActive(Constants.BGROI))
 
     def roisSelected(self):
         return any([b.roiSelected() for b in self.builders.values()])
@@ -124,7 +124,7 @@ class GroupManager(ROIManager):
         self.activeBuilder = None
         self.builders = {Constants.GROUP:self.roiBuilder}
         self.dataModel.watchBuilder(self.roiBuilder)
-        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.GROUP)
+        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.GROUP))
 
     def setActive(self, rtype,state):
         print 'setactive'

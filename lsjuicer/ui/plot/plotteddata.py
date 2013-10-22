@@ -2,7 +2,7 @@ import numpy as n
 
 from PyQt5 import QtGui as QG
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore as QC
 
 
 

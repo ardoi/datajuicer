@@ -6,8 +6,9 @@ import sys
 import logging
 from subprocess import Popen, PIPE
 
-from PyQt4 import QtGui
-from PyQt4 import QtCore
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore as QC
 
 from lsjuicer.util import config
 from lsjuicer.ui.windows.main import MainUI
@@ -33,14 +34,14 @@ def dependencies_for_myprogram():
     id(_validation)
 
 if __name__ == "__main__":
-    app = QtGui.QApplication(sys.argv)
+    app = QtWidgets.QApplication(sys.argv)
     # app.setStyle(QtGui.QStyleFactory.create('GTK+'))
     # app.setStyle(QtGui.QStyleFactory.create('Plastique'))
     # app.setStyle(QtGui.QStyleFactory.create('Cleanlooks'))
-    app.setStyle(QtGui.QStyleFactory.create('Macintosh (aqua)'))
+    app.setStyle(QtWidgets.QStyleFactory.create('Macintosh (aqua)'))
     #make sure icons are shown in menus
-    app.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, on = False)
-    print 'Available styles: %s' % (str(QtGui.QStyleFactory.keys().join(' : ')))
+    app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
+    print 'Available styles: %s' % (str(" : ".join(QtWidgets.QStyleFactory.keys())))
     logo = QtGui.QPixmap(":/juicerlogo.png")
     # splash = QtGui.QSplashScreen(logo)
     # splash.show()

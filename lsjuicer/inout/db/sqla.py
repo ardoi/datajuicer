@@ -4,7 +4,7 @@ from collections import defaultdict
 
 import numpy as n
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore as QC
 
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, PickleType

@@ -430,7 +430,8 @@ class TransientTab(QW.QTabWidget):
         self.smooth_widget.setObjectName('Smooth widget')
         self.state_matrix.update({self.smooth_widget:d})
         smooth_widget_layout.addWidget(self.slider_smoothing)
-        self.slider_smoothing.valueChanged[int].connect(\lambda x: self.label_smoothing_value.setText("Smoothing: %i"%x))
+        self.slider_smoothing.valueChanged[int].connect(
+            lambda x: self.label_smoothing_value.setText("Smoothing: %i"%x))
         self.slider_smoothing.sliderReleased.connect(self.set_smooth)
         #
         ####
@@ -462,7 +463,8 @@ class TransientTab(QW.QTabWidget):
         self.slider_detection.setObjectName('Detection slider')
         detection_layout.addWidget(self.detection_widget)
         self.state_matrix.update({self.detection_widget:d})
-        self.slider_detection.valueChanged[int].connect(\lambda x: self.label_detection_value.setText("Detection: %i"%x))
+        self.slider_detection.valueChanged[int].connect(
+            lambda x: self.label_detection_value.setText("Detection: %i"%x))
         self.slider_detection.sliderReleased.connect(self.find_transients)
         #
         ####
@@ -1105,7 +1107,7 @@ class TransientTab(QW.QTabWidget):
 
     def updateCoords(self, xv, yv, xs, ys):
         #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys)
+        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
 
 
 class FluorescenceTab(TransientTab):

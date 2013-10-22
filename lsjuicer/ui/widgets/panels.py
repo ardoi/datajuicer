@@ -318,7 +318,7 @@ class AnalysisPanel(ActionPanel):
         analysistype_use_pb = QW.QPushButton("Use")
         analysistype_layout.addWidget(analysistype_use_pb)
         analysistype_use_pb.clicked.connect(self.analysis_type_set)
-        self.analysistype_combo.currentIndexChanged[QC.QString].connect(
+        self.analysistype_combo.currentIndexChanged[str].connect(
                 self.analysis_combo_changed)
 
         plotIcon=QG.QIcon(":/chart_curve_go.png")

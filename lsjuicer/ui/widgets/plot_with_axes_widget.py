@@ -639,7 +639,7 @@ class FunctionItem(QW.QGraphicsItem):
             Second, option.exposedRect gives the newly exposed area after each view change"""
         viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).y()))
         viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).y()))
-        print 'lod',option.levelOfDetail, viewed_left, viewed_right
+        #print 'lod',option.levelOfDetail, viewed_left, viewed_right
         exp_rect = option.exposedRect
         viewed_left = exp_rect.left()
         viewed_right = viewed_left + max(10, exp_rect.width())

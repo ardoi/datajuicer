@@ -1,4 +1,4 @@
-from PyQt5 import QtCore
+from PyQt5 import QtCore as QC
 
 import numpy as n
 

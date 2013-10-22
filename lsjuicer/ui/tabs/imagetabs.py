@@ -74,8 +74,8 @@ class EventClickTree(QW.QWidget):
         self.items_by_name = defaultdict(list)
         model.setHorizontalHeaderLabels(["Event"])
         view.setIndentation(10)
-        view.header().setResizeMode(0, QW.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QW.QHeaderView.ResizeToContents)
+        #view.header().setSectionResizeMode(0, QW.QHeaderView.ResizeToContents)
+        #view.header().setSectionResizeMode(1, QW.QHeaderView.ResizeToContents)
         view.setModel(model)
         view.setEditTriggers(QW.QAbstractItemView.NoEditTriggers)
         view.expanded.connect(lambda: view.resizeColumnToContents(0))
@@ -156,8 +156,8 @@ class ClickTree(QW.QWidget):
                 self.items_by_name[pi.__shortname__] = panel_item
         #view.setWordWrap(True)
         view.setIndentation(10)
-        view.header().setResizeMode(0, QW.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QW.QHeaderView.ResizeToContents)
+        #view.header().setSectionResizeMode(0, QW.QHeaderView.ResizeToContents)
+        #view.header().setSectionResizeMode(1, QW.QHeaderView.ResizeToContents)
         view.setModel(model)
         view.setEditTriggers(QW.QAbstractItemView.NoEditTriggers)
         view.expanded.connect(lambda: view.resizeColumnToContents(0))
@@ -238,6 +238,7 @@ class ControlWidget(QW.QWidget):
 
 class AnalysisImageTab(QW.QWidget):
     """Tab containing image to analyze"""
+    positionTXT = QC.pyqtSignal(str)
     def  __init__(self, analysis = None, parent = None):
         super(AnalysisImageTab, self).__init__(parent)
         self.image_shown = False
@@ -346,7 +347,7 @@ class AnalysisImageTab(QW.QWidget):
 
 
     def updateCoords(self,x,y,xx,yy):
-        self.positionTXT.emit('x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x, y, xx, yy)
+        self.positionTXT.emit('x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x, y, xx, yy))
 
     def makePlotArea(self):
         return PixmapPlotWidget(sceneClass=LSMDisplay, parent=self)

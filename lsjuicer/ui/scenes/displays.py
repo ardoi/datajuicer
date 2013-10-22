@@ -23,7 +23,7 @@ class PlotDisplay(QW.QGraphicsScene):
 
     def mousePressEvent(self, event):
         if self.selection_builder:
-            item = self.itemAt(event.scenePos())
+            item = self.itemAt(event.scenePos(), None)
             # make sure there is no selection item at the current mouse
             # position
             if not isinstance(item, QW.QGraphicsRectItem):

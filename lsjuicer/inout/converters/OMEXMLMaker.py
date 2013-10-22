@@ -4,7 +4,7 @@ import sys
 from subprocess import Popen, PIPE
 import logging
 
-from PyQt5 import QtCore
+from PyQt5 import QtCore as QC
 
 
 
@@ -87,6 +87,9 @@ def bfconvert_filename_from_runner(runner):
 
 class OMEXMLMaker(QC.QObject):
     conversion_finished = QC.pyqtSignal()
+    set_file_being_inspected_label = QC.pyqtSignal(str)
+    filesConverted = QC.pyqtSignal(int)
+
     def __init__(self, parent = None, signals = True):
         super(OMEXMLMaker, self).__init__(parent)
         if hasattr(sys, 'frozen'):
@@ -132,11 +135,9 @@ class OMEXMLMaker(QC.QObject):
                     for runner in self.herder.running_list:
                         running_names.append(bfconvert_filename_from_runner(runner))
                     running_string = ", ".join(running_names)
-                    self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                            QC.QString(running_string))
+                    self.set_file_being_inspected_label.emit(running_string)
                 else:
-                    self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                            QC.QString('Done'))
+                    self.set_file_being_inspected_label.emit("Done")
 
                 #res = self.shellrunners[f].get()
                 res = self.shellrunners[f].result()
@@ -154,13 +155,13 @@ class OMEXMLMaker(QC.QObject):
                     self.logger.info(res[2])
                     self.toconvert[f].check_for_ome()
                 self.done += 1
-                self.emit(QC.SIGNAL('filesConverted(int)'),self.done)
+                self.filesConverted.emit(self.done)
 #        if self.done == len(self.shellrunners):
         if not self.herder.check_status():
             if self.signals:
                 self.timer.stop()
             self.wrap_up_conversion()
-        self.emit(QC.SIGNAL('conversion_update()'))
+        self.conversion_update.emit()
 
     def convert_all(self):
         self.time0 = time.time()
@@ -185,7 +186,7 @@ class OMEXMLMaker(QC.QObject):
  #               convert(run_cmd)
                 #if len(self.shellrunners) == 0:
                 #    self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),\
-                #            QC.QString(os.path.basename(f)))
+                #            str(os.path.basename(f)))
                 runner = ShellRunner(run_cmd)
                 self.shellrunners[f] = runner
                 self.herder.add_runner(runner)
@@ -198,12 +199,11 @@ class OMEXMLMaker(QC.QObject):
             filename = ""
         print 'signals',self.signals
         if self.signals:
-            self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                    QC.QString(os.path.basename(filename)))
+            self.set_file_being_inspected_label(str(os.path.basename(filename)))
             self.timer = QC.QTimer()
-            self.connect(self.timer, QC.SIGNAL('timeout()'),self.check_progress)
+            self.time.timeout.connect(self.check_progress)
             self.timer.start(1000)
-            self.emit(QC.SIGNAL('filesConverted(int)'),self.done)
+            self.filesConverted.emit(self.done)
         else:
             while self.toconvert:
                 time.sleep(5)

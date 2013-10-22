@@ -199,7 +199,7 @@ class MainUI(QW.QMainWindow):
         self.fview.setModel(self.fmodel)
         self.fview.setSelectionMode(QW.QAbstractItemView.SingleSelection)
         self.fview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
-        self.fview.header().setResizeMode(0, QW.QHeaderView.ResizeToContents)
+        self.fview.header().setSectionResizeMode(0, QW.QHeaderView.ResizeToContents)
         fselectLayout = QW.QHBoxLayout()
         fselectLayout.addWidget(self.fview)
 
@@ -213,7 +213,7 @@ class MainUI(QW.QMainWindow):
         #filetype_combo.addItem('CSV')
         filetype_combo.addItem('TIF')
         filetype_combo.addItem('OIB')
-        filetype_combo.currentIndexChanged['QString'].connect(self.change_filetype)
+        filetype_combo.currentIndexChanged[str].connect(self.change_filetype)
         self.filetype_combo = filetype_combo
         frame = QW.QFrame(self)
         frame.setFrameStyle(QW.QFrame.HLine)
@@ -227,7 +227,7 @@ class MainUI(QW.QMainWindow):
         inspect_layout.addStretch()
         if 1:
             self.inspect_progressbar = QW.QProgressBar()
-            self.inspect_progressbar.setFormat(QC.QString("%p% - %v out of %m files done"))
+            self.inspect_progressbar.setFormat("%p% - %v out of %m files done")
             self.inspect_progressbar.setVisible(False)
             inspect_layout.addWidget(self.inspect_progressbar)
 
@@ -250,7 +250,7 @@ class MainUI(QW.QMainWindow):
         convert_progress_layout.setContentsMargins(0,0,0,0)
         convert_progress_widget.setLayout(convert_progress_layout)
         self.convert_progressbar = QW.QProgressBar()
-        self.convert_progressbar.setFormat(QC.QString("%p% - %v out of %m files done"))
+        self.convert_progressbar.setFormat("%p% - %v out of %m files done")
         self.convert_progressbar.setMinimum(0)
         busy_bar = QW.QProgressBar()
         busy_bar.setMinimum(0)
@@ -298,14 +298,14 @@ class MainUI(QW.QMainWindow):
         #    rootdir = "C:"
         rootdir = os.getenv('HOME')
         self.fmodel.setRootPath(rootdir)
-        #fmodel.setNameFilters(QC.QStringList([QC.QString("*.lsm"),QC.QString("*.ome")]))
-        #self.fmodel.setNameFilters(QC.QStringList([QC.QString("*.lsm")]))
+        #fmodel.setNameFilters(strList([str("*.lsm"),str("*.ome")]))
+        #self.fmodel.setNameFilters(strList([str("*.lsm")]))
         #ftype = Config.get_property('filetype')
         ftype ="tif"
         print 'ftype is %s'%ftype
         self.change_filetype(ftype)
-        #self.fmodel.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
-#        fmodel.setNameFilters(QC.QString("*.lsm *.ome"))
+        #self.fmodel.setNameFilters(strList([str("*.%s"%ftype)]))
+#        fmodel.setNameFilters(str("*.lsm *.ome"))
         self.fmodel.setNameFilterDisables(False)
         self.fview.setRootIndex(self.fmodel.index(rootdir))
         #fmodel.setFilter(QC.QDir.Dirs | QC.QDir.NoDotAndDotDot | QC.QDir.AllDirs)
@@ -333,7 +333,7 @@ class MainUI(QW.QMainWindow):
         rmodel.conversion_needed[int].connect(self.set_conversion_needed)
         self.convert_pb.clicked[()].connect(rmodel.convert)
 
-        rmodel.omexml_maker.set_file_being_inspected_label['QString'].connect(\self.set_file_being_inspected_label)
+        rmodel.omexml_maker.set_file_being_inspected_label[str].connect(self.set_file_being_inspected_label)
         rmodel.omexml_maker.filesConverted[int].connect(self.converted)
         rmodel.convert_progress_visible[bool].connect(convert_progress_widget.setVisible)
         rmodel.convert_pb_visible[bool].connect(self.convert_pb.setVisible)
@@ -341,14 +341,14 @@ class MainUI(QW.QMainWindow):
 
         self.fmodel.setTarget(rmodel)
 
-        self.tview = CopyTableView()
+        #self.tview = CopyTableView()
+        self.tview = QW.QTableView()
         self.tview.setAlternatingRowColors(True)
         self.tview.setSelectionMode(QW.QAbstractItemView.SingleSelection)
         self.tview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
         self.tview.setModel(self.proxymodel)
         self.tview.horizontalHeader().setSectionResizeMode(QW.QHeaderView.ResizeToContents)
         self.tview.horizontalHeader().setSectionResizeMode(15, QW.QHeaderView.Stretch)
-        #self.tview.horizontalHeader().setSectionResizeMode(0, QG.QHeaderView.ResizeToContents)
         #self.connect(rmodel,QC.SIGNAL('fitColumns()'),self.tview.resizeRowsToContents)
         file_table_and_reference_layout = QW.QHBoxLayout()
         file_pick_layout.addLayout(file_table_and_reference_layout)
@@ -393,15 +393,15 @@ class MainUI(QW.QMainWindow):
         self.inspect_pb.clicked.connect(self.do_inspect)
         self.analyses_widget.new_analysis.connect(self.start_new_analysis)
         self.analyses_widget.load_analysis.connect(self.start_plot_with_analysis)
-        self.tview.doubleClicked[QModelIndex].connect(self.start_new_analysis)
-        self.tview.clicked[QModelIndex].connect(self.start_show_reference)
+        self.tview.doubleClicked[QC.QModelIndex].connect(self.start_new_analysis)
+        self.tview.clicked[QC.QModelIndex].connect(self.start_show_reference)
         #self.connect(self.tview, QC.SIGNAL('clicked(QModelIndex)'), self.enable_display_pb)
         #self.tview.items_selected.connect(self.plot_pb.setVisible)
         #self.connect(self.tview,QC.SIGNAL('pressed(QModelIndex)'), self.enable_display_pb)
         #self.connect(self.tview,QC.SIGNAL('selectionChanged(QModelIndex, QModelIndex)'), self.tview_selection_changed)
         #self.tview.itemSelectionChanged.connect(self.tview_selection_changed)
-        self.proxymodel.doPlot[PyQt_PyObject].connect(rmodel.plot)
-        rmodel.plotFile[PyQt_PyObject].connect(self.open_file)
+        self.proxymodel.doPlot[object].connect(rmodel.plot)
+        rmodel.plotFile[object].connect(self.open_file)
         self.rmodel = rmodel
         self.tasker.analysisButton.toggled[bool].connect(lambda:self.mainStack.setCurrentIndex(1))
         self.tasker.confButton.toggled[bool].connect(lambda:self.mainStack.setCurrentIndex(2))
@@ -516,7 +516,7 @@ class MainUI(QW.QMainWindow):
             aw.deleteLater()
             del aw
         analysisWidget = AnalysisWidget(analysis, self)
-        analysisWidget.setStatusText['QString'].connect(self.showMessageplz)
+        analysisWidget.setStatusText[str].connect(self.showMessageplz)
         self.mainStack.insertWidget(1, analysisWidget)
         self.proxymodel.preparePlot()
 

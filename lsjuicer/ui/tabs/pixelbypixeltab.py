@@ -292,7 +292,7 @@ class PixelByPixelTab(QW.QTabWidget):
         for key in parameters:
             param_combo.addItem(key)
         param_combo.addItem('Events')
-        param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)
+        param_combo.currentIndexChanged[str].connect(self.param_combo_changed)
 
         n_combo = QW.QComboBox()
         for i in range(max_n):

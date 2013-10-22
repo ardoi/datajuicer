@@ -373,7 +373,7 @@ class EventCategoryWidget(QW.QWidget):
         layout.addWidget(gbox)
         combo = DBComboAddBox(category_class, show_None = False)
         self.combo=combo
-        combo.combo.currentIndexChanged[QC.QString].connect(self.update_settings)
+        combo.combo.currentIndexChanged[str].connect(self.update_settings)
         settings_layout.add_row("Type", combo)
         settings_combo = QW.QComboBox()
         settings_combo.currentIndexChanged.connect(self.update_spinboxes)

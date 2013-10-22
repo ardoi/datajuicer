@@ -520,4 +520,4 @@ class ResultTab(QW.QTabWidget):
         print t
     def updateCoords(self, xv, yv, xs, ys):
         #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys)
+        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
