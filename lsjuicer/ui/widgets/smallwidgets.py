@@ -1,7 +1,10 @@
 import time
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore, QtWidgets
+
 
 import numpy as n
 
@@ -10,18 +13,18 @@ from lsjuicer.resources import cm
 import lsjuicer.inout.db.sqla as sa
 
 
-class FramePlayer(QG.QWidget):
+class FramePlayer(QW.QWidget):
     def __init__(self, frame_get_func, frame_set_func, frame_max_func, parent = None):
         super(FramePlayer, self).__init__(parent)
         self.frame_get_func = frame_get_func
         self.frame_set_func = frame_set_func
         self.frame_max_func = frame_max_func
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         self.setLayout(layout)
-        play_pb = QG.QPushButton("Play")
+        play_pb = QW.QPushButton("Play")
         play_pb.setCheckable(True)
         self.play_pb = play_pb
-        stop_pb = QG.QPushButton("Stop")
+        stop_pb = QW.QPushButton("Stop")
         stop_pb.setEnabled(False)
         self.stop_pb = stop_pb
         layout.addWidget(play_pb)
@@ -29,10 +32,10 @@ class FramePlayer(QG.QWidget):
         play_pb.clicked.connect(self.play_frames)
         stop_pb.clicked.connect(self.stop_play)
 
-        hlayout = QG.QHBoxLayout()
-        hlayout.addWidget(QG.QLabel("FPS"))
-        fps_selector = QG.QComboBox(self)
-        fps_selector.setInputMethodHints(QC.Qt.ImhDigitsOnly)
+        hlayout = QW.QHBoxLayout()
+        hlayout.addWidget(QW.QLabel("FPS"))
+        fps_selector = QW.QComboBox(self)
+        fps_selector.setInputMethodHints(QtCore.Qt.ImhDigitsOnly)
         fps_selector.setEditable(True)
         self.fps_selector=fps_selector
         fpss = [5, 10, 25, 50, 100, 150]
@@ -59,7 +62,7 @@ class FramePlayer(QG.QWidget):
         if self.frame_get_func() == self.frame_max_func():
             self.frame_set_func(0)
         self.last_frame_time = None
-        self.timer = QC.QTimer(self)
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.increase_frame)
         self.timer.start(1./self.fps*1000) #in msec
         self.stop_pb.setEnabled(True)
@@ -95,19 +98,19 @@ class FramePlayer(QG.QWidget):
         self.play_pb.setEnabled(True)
         self.play_pb.setChecked(False)
 
-class Tasker(QG.QWidget):
+class Tasker(QW.QWidget):
     def __init__(self, parent = None):
         super(Tasker, self).__init__(parent)
-        self.setLayout( QG.QHBoxLayout())
-        self.filesButton = QG.QPushButton('Files')
+        self.setLayout( QW.QHBoxLayout())
+        self.filesButton = QW.QPushButton('Files')
         self.filesButton.setCheckable(True)
         self.filesButton.setChecked(True)
-        self.analysisButton = QG.QPushButton('Analysis')
+        self.analysisButton = QW.QPushButton('Analysis')
         self.analysisButton.setCheckable(True)
         self.analysisButton.setEnabled(False)
-        self.confButton = QG.QPushButton('Configuration')
+        self.confButton = QW.QPushButton('Configuration')
         self.confButton.setCheckable(True)
-        bg = QG.QButtonGroup(self)
+        bg = QW.QButtonGroup(self)
         bg.addButton(self.filesButton)
         bg.addButton(self.analysisButton)
         bg.addButton(self.confButton)
@@ -116,31 +119,31 @@ class Tasker(QG.QWidget):
         self.layout().addWidget(self.analysisButton)
         self.layout().addWidget(self.confButton)
 
-class SparkResultWidget(QG.QFrame):
+class SparkResultWidget(QW.QFrame):
     def __init__(self, parent = None):
         super(SparkResultWidget, self).__init__(parent)
-        self.setFrameShape(QG.QFrame.StyledPanel)
-        stats_layout = QG.QGridLayout()
-        stats_layout.addWidget(QG.QLabel('<b>Amplitude:</b>'),1,0,QC.Qt.AlignRight)
-        #stats_layout.addWidget(QG.QLabel('<b>dF/F0:</b>'),1,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>FWHM:</b>'),3,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>FDHM:</b>'),4,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>Decay rate:</b>'),5,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>Rise time:</b>'),6,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>Time @ max:</b>'),7,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>Location @ max:</b>'),8,0,QC.Qt.AlignRight)
-        stats_layout.addWidget(QG.QLabel('<b>Baseline:</b>'),9,0,QC.Qt.AlignRight)
+        self.setFrameShape(QW.QFrame.StyledPanel)
+        stats_layout = QW.QGridLayout()
+        stats_layout.addWidget(QW.QLabel('<b>Amplitude:</b>'),1,0,QtCore.Qt.AlignRight)
+        #stats_layout.addWidget(QG.QLabel('<b>dF/F0:</b>'),1,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>FWHM:</b>'),3,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>FDHM:</b>'),4,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Decay rate:</b>'),5,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Rise time:</b>'),6,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Time @ max:</b>'),7,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Location @ max:</b>'),8,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Baseline:</b>'),9,0,QtCore.Qt.AlignRight)
         stats_layout.setSpacing(0)
         self.setLayout(stats_layout)
-        self.amp_label = QG.QLabel('0')
-        self.risetime_label = QG.QLabel('0')
-        self.FWHM_label = QG.QLabel('0')
-        self.FDHM_label = QG.QLabel('0')
-        self.decay_label = QG.QLabel('0')
-        self.time_at_max_label = QG.QLabel('0')
-        self.location_at_max_label = QG.QLabel('0')
-        self.baseline_label = QG.QLabel('0')
-        self.spark_name_label = QG.QLabel('')
+        self.amp_label = QW.QLabel('0')
+        self.risetime_label = QW.QLabel('0')
+        self.FWHM_label = QW.QLabel('0')
+        self.FDHM_label = QW.QLabel('0')
+        self.decay_label = QW.QLabel('0')
+        self.time_at_max_label = QW.QLabel('0')
+        self.location_at_max_label = QW.QLabel('0')
+        self.baseline_label = QW.QLabel('0')
+        self.spark_name_label = QW.QLabel('')
         self.spark_name_label.setStyleSheet("""
         QLabel{
         background-color:black;
@@ -148,7 +151,7 @@ class SparkResultWidget(QG.QFrame):
         font-weight:bold;
         }
         """)
-        self.spark_name_label.setAlignment(QC.Qt.AlignCenter)
+        self.spark_name_label.setAlignment(QtCore.Qt.AlignCenter)
         stats_layout.addWidget(self.spark_name_label,0,0,1,2)
         stats_layout.addWidget(self.amp_label, 1,1)
         #stats_layout.addWidget(self.dFF0_label, 1,1)
@@ -162,7 +165,7 @@ class SparkResultWidget(QG.QFrame):
         self.setStyleSheet("""SparkResultWidget { background-color: white; }""")
         self.setVisible(False)
 
-class VisualizationOptionsWidget(QG.QWidget):
+class VisualizationOptionsWidget(QW.QWidget):
 
     settings_changed = QC.pyqtSignal(dict)
     close = QC.pyqtSignal()
@@ -172,12 +175,12 @@ class VisualizationOptionsWidget(QG.QWidget):
         vis_key = 'visualization_options_reference'
 
         vis_conf = dbmaster.get_config_setting_value(vis_key)
-        main_layout = QG.QVBoxLayout()
-        layout = QG.QFormLayout()
+        main_layout = QW.QVBoxLayout()
+        layout = QW.QFormLayout()
         self.setLayout(main_layout)
         self.channel = channel
         main_layout.addLayout(layout)
-        self.blur_spinbox = QG.QDoubleSpinBox(self)
+        self.blur_spinbox = QW.QDoubleSpinBox(self)
         self.blur_spinbox.setMaximum(5)
         self.blur_spinbox.setSingleStep(.05)
         self.blur_spinbox.setMinimum(0)
@@ -185,9 +188,9 @@ class VisualizationOptionsWidget(QG.QWidget):
         self.blur_spinbox.valueChanged.connect(
                 self.visualization_controls_moved)
         self.blur_spinbox.setKeyboardTracking(False)
-        layout.addRow(QG.QLabel('<html>Blur kernel &sigma; [&mu;m]</html>:'),self.blur_spinbox)
+        layout.addRow(QW.QLabel('<html>Blur kernel &sigma; [&mu;m]</html>:'),self.blur_spinbox)
 
-        self.saturation_spinbox = QG.QDoubleSpinBox(self)
+        self.saturation_spinbox = QW.QDoubleSpinBox(self)
         self.saturation_spinbox.setMaximum(99)
         self.saturation_spinbox.setSingleStep(.1)
         self.saturation_spinbox.setMinimum(0)
@@ -197,11 +200,11 @@ class VisualizationOptionsWidget(QG.QWidget):
         self.saturation_spinbox.setKeyboardTracking(False)
         layout.addRow('Saturation:',self.saturation_spinbox)
 
-        self.colormap_combobox = QG.QComboBox(self)
+        self.colormap_combobox = QW.QComboBox(self)
 
         self.colormaps = [name for name in cm.datad if not name.endswith("_r")]
         self.colormaps.sort()
-        self.colormap_combobox.setIconSize(QC.QSize(100,20))
+        self.colormap_combobox.setIconSize(QtCore.QSize(100,20))
         for cm_name in self.colormaps:
             icon = QG.QIcon(QG.QPixmap(":/colormap_%s.png"%cm_name))
             self.colormap_combobox.addItem(icon, cm_name)
@@ -211,7 +214,7 @@ class VisualizationOptionsWidget(QG.QWidget):
                 self.visualization_controls_moved)
         layout.addRow('Colormap:',self.colormap_combobox)
 
-        self.colormap_reverse_checkbox = QG.QCheckBox(self)
+        self.colormap_reverse_checkbox = QW.QCheckBox(self)
         self.colormap_reverse_checkbox.setChecked(vis_conf['colormap_reverse'])
         self.colormap_reverse_checkbox.stateChanged.connect(
                 self.visualization_controls_moved)
@@ -220,9 +223,9 @@ class VisualizationOptionsWidget(QG.QWidget):
         self.hist_plot = HistogramPlot( self)
         self.hist_plot.saturation_changed.connect(self.saturation_spinbox.setValue)
         main_layout.addWidget(self.hist_plot)
-        close_pb =QG.QPushButton("Close")
+        close_pb =QW.QPushButton("Close")
         #close_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
-        main_layout.addWidget(close_pb, QC.Qt.AlignRight)
+        main_layout.addWidget(close_pb, QtCore.Qt.AlignRight)
         close_pb.clicked.connect(self.close)
         #self.pipechain = pipechain
         self.update_pipechain(pipechain)
@@ -253,7 +256,7 @@ class VisualizationOptionsWidget(QG.QWidget):
             "visualization_options_reference", settings)
         self.do_histogram()
 
-class HistogramPlot(QG.QWidget):
+class HistogramPlot(QW.QWidget):
     saturation_changed = QC.pyqtSignal(float)
     @property
     def log_scale(self):
@@ -261,16 +264,16 @@ class HistogramPlot(QG.QWidget):
 
     def __init__(self,  parent = None):
         super(HistogramPlot, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.channel = parent.channel
         self.setLayout(layout)
         self.scene = HistogramScene(self)
         self.scene.clicked.connect(self.reverse_saturation)
         self.scene.setBackgroundBrush(QG.QBrush(QG.QColor('#1D3A3B')))
-        #gr = self.scene.addRect(QC.QRectF(0,0,200,100))
+        #gr = self.scene.addRect(QtCore.QRectF(0,0,200,100))
         self.view = RefitView(self)
         self.view.setScene(self.scene)
-        self.log_checkbox = QG.QCheckBox("Log scale histogram")
+        self.log_checkbox = QW.QCheckBox("Log scale histogram")
         #self.log_checkbox.stateChanged.connect(self.set_histogram)
         self.log_checkbox.stateChanged.connect(self.checkbox_changed)
         #self.setFixedSize(200, 150)
@@ -286,10 +289,10 @@ class HistogramPlot(QG.QWidget):
         #self.g_roiline = None
         #gt = self.scene.addText("No file selected")
         #self.view.centerOn(gr)
-        self.view.setFrameStyle(QG.QFrame.NoFrame)
+        self.view.setFrameStyle(QW.QFrame.NoFrame)
         self.view.setRenderHint(QG.QPainter.Antialiasing)
-        self.view.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
+        self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.saturation_pen = QG.QPen(QG.QColor('orange'))
         #self.saturation_pen.setWidth(3)
         self.saturation_pen.setCosmetic(True)
@@ -314,7 +317,7 @@ class HistogramPlot(QG.QWidget):
             return -val
 
     def sizeHint(self):
-        return QC.QSize(200,150)
+        return QtCore.QSize(200,150)
 
     @property
     def points(self):
@@ -397,22 +400,22 @@ class HistogramPlot(QG.QWidget):
     def make_points(self, data):
         points = []
         #skip the first point of the histogram because it will be all black values and will make the histogram unreadable unless in log scale.
-        points.append(QC.QPointF(data[1][1], 0))
+        points.append(QtCore.QPointF(data[1][1], 0))
         logmin = max(1/n.log(data[0][1:]+1e-12))
         for x,y in zip(data[1][1:],data[0][1:]):
-            point = QC.QPointF(x, self.scale_y(y,logmin = logmin))
+            point = QtCore.QPointF(x, self.scale_y(y,logmin = logmin))
             points.append(point)
-        points.append(QC.QPointF(data[1][-2], 0))
+        points.append(QtCore.QPointF(data[1][-2], 0))
         return points
 
-class HistogramScene(QG.QGraphicsScene):
+class HistogramScene(QW.QGraphicsScene):
     clicked = QC.pyqtSignal(float)
     def mousePressEvent(self, event):
         pos = event.scenePos()
         self.clicked.emit(pos.x())
 
-class RefitView(QG.QGraphicsView):
+class RefitView(QW.QGraphicsView):
     """GraphicsView extension that fits in view at every resize event"""
     def resizeEvent(self, event):
-        QG.QGraphicsView.resizeEvent(self,event)
+        QW.QGraphicsView.resizeEvent(self,event)
         self.fitInView(self.scene().itemsBoundingRect())

@@ -6,8 +6,8 @@ import sys
 import logging
 from subprocess import Popen, PIPE
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt4 import QtGui
+from PyQt4 import QtCore
 
 from lsjuicer.util import config
 from lsjuicer.ui.windows.main import MainUI
@@ -18,7 +18,7 @@ def java_check(parent):
     p = Popen(java_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     retcode = p.wait()
     if retcode:
-        QG.QMessageBox.warning(parent, 'Java missing', """It appears you do not
+        QtGui.QMessageBox.warning(parent, 'Java missing', """It appears you do not
         have Java installed.  It is needed to convert files into a readable
         format. Please download it from here: <a
         href="http://java.com/en/download/index.jsp">http://java.com</a>,
@@ -33,16 +33,16 @@ def dependencies_for_myprogram():
     id(_validation)
 
 if __name__ == "__main__":
-    app = QG.QApplication(sys.argv)
-    # app.setStyle(QG.QStyleFactory.create('GTK+'))
-    # app.setStyle(QG.QStyleFactory.create('Plastique'))
-    # app.setStyle(QG.QStyleFactory.create('Cleanlooks'))
-    app.setStyle(QG.QStyleFactory.create('Macintosh (aqua)'))
+    app = QtGui.QApplication(sys.argv)
+    # app.setStyle(QtGui.QStyleFactory.create('GTK+'))
+    # app.setStyle(QtGui.QStyleFactory.create('Plastique'))
+    # app.setStyle(QtGui.QStyleFactory.create('Cleanlooks'))
+    app.setStyle(QtGui.QStyleFactory.create('Macintosh (aqua)'))
     #make sure icons are shown in menus
-    app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
-    print 'Available styles: %s' % (str(QG.QStyleFactory.keys().join(' : ')))
-    logo = QG.QPixmap(":/juicerlogo.png")
-    # splash = QG.QSplashScreen(logo)
+    app.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, on = False)
+    print 'Available styles: %s' % (str(QtGui.QStyleFactory.keys().join(' : ')))
+    logo = QtGui.QPixmap(":/juicerlogo.png")
+    # splash = QtGui.QSplashScreen(logo)
     # splash.show()
     app.processEvents()
     # time.sleep(1)

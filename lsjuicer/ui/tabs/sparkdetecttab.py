@@ -1,5 +1,8 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 import numpy
 
 from lsjuicer.data.pipes.tools import PipeChain
@@ -21,30 +24,30 @@ from scipy import ndimage as sn
 def dic2str(dic):
     return "\n".join(["%s: %.3f"%(key,dic[key]) for key in dic.keys()])
 
-class SparkDataDialog(QG.QDialog):
+class SparkDataDialog(QW.QDialog):
     def __init__(self, spark, parent = None):
         super(SparkDataDialog, self).__init__(parent)
-        layout = QG.QFormLayout()
+        layout = QW.QFormLayout()
         self.setLayout(layout)
         digits = 5
-        temporal_F_field = QG.QPlainTextEdit(
+        temporal_F_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.temporal_smooth_data.tolist(),digits)+"]")
-        temporal_F_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
-        temporal_t_field = QG.QPlainTextEdit(
+        temporal_F_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        temporal_t_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.temporal_x_phys.tolist(),digits)+"]")
-        temporal_t_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
-        temporal_fit_field = QG.QPlainTextEdit(
+        temporal_t_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        temporal_fit_field = QW.QPlainTextEdit(
                 dic2str(spark.transient.params))
-        temporal_fit_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
-        spatial_F_field = QG.QPlainTextEdit(
+        temporal_fit_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_F_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.spatial_smooth_data.tolist(),digits)+"]")
-        spatial_F_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
-        spatial_y_field = QG.QPlainTextEdit(
+        spatial_F_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_y_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.spatial_axis_data.tolist(),digits)+"]")
-        spatial_y_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
-        spatial_fit_field = QG.QPlainTextEdit(
+        spatial_y_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_fit_field = QW.QPlainTextEdit(
                 dic2str(spark.spatial_profile.params))
-        spatial_fit_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
+        spatial_fit_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
         layout.addRow("Temporal:: F", temporal_F_field)
         layout.addRow("Temporal:: time:", temporal_t_field)
         layout.addRow("Temporal:: fit:", temporal_fit_field)
@@ -142,12 +145,12 @@ class SparkROIGraphicItem(object):
         #self.m_pixmap_item.setPos(rect.left(), rect.top())
 
     def makeSparkROI(self, rect, loc_x, loc_y, h_span, v_span):
-        group = QG.QGraphicsItemGroup()
+        group = QW.QGraphicsItemGroup()
         self.fscene.addItem(group)
         #self.ROI_rect = self.plot.makeRect(rect)
         #c = self.makeCircle(loc_x, loc_y)
-        hr = QC.QRectF(rect.left(), loc_y - v_span, rect.width(), v_span*2+1)
-        vr = QC.QRectF(loc_x - h_span,rect.top(), h_span*2+1,rect.height())
+        hr = QtCore.QRectF(rect.left(), loc_y - v_span, rect.width(), v_span*2+1)
+        vr = QtCore.QRectF(loc_x - h_span,rect.top(), h_span*2+1,rect.height())
         self.ROI_hrect = self.plot.makeRect(hr)
         self.ROI_vrect = self.plot.makeRect(vr)
         #group.addToGroup(self.ROI_rect)
@@ -173,7 +176,7 @@ class SparkROIGraphicItem(object):
         #self.fscene.removeItem(self.m_pixmap_item)
         super(SparkROIGraphicItem, self).__del__()
 
-class SparkRegionsTab(QG.QTabWidget):
+class SparkRegionsTab(QW.QTabWidget):
     def __init__(self, rois, imagedata, analysis, parent = None):
         super(SparkRegionsTab, self).__init__(parent)
         for i,roi in enumerate(rois[ISTN.ROI]):
@@ -200,7 +203,7 @@ def dict_float(dict_in):
         out[key] = float(dict_in[key])
     return out
 
-class SparkDetectTab(QG.QTabWidget):
+class SparkDetectTab(QW.QTabWidget):
     saved = QC.pyqtSignal()
     def __init__(self, roi, imagedata, analysis, parent = None):
         super(SparkDetectTab, self).__init__(parent)
@@ -251,7 +254,7 @@ class SparkDetectTab(QG.QTabWidget):
         self.setup_ui()
         self.force_new_pixmap()
         print "\n\n\n\n", self.size()
-        #QC.QTimer.singleShot(250,lambda :self.find_sparks())
+        #QtCore.QTimer.singleShot(250,lambda :self.find_sparks())
 
     @helpers.timeIt
     def find_sparks(self):
@@ -299,7 +302,7 @@ class SparkDetectTab(QG.QTabWidget):
             b = spark_coords[spark_no]['bottom']
 
             roi = [l,r,b,t]
-            rect = QC.QRectF(l, b, r-l, t-b)
+            rect = QtCore.QRectF(l, b, r-l, t-b)
 
             #separate roi for finding the maximum of the spark
             #this is needed in cases where a dim spark is close to
@@ -311,7 +314,7 @@ class SparkDetectTab(QG.QTabWidget):
             mb = spark_max_area_coords[spark_no]['bottom']
 
             mroi = [ml,mr,mb,mt]
-            mrect = QC.QRectF(ml,mb, mr-ml, mt-mb)
+            mrect = QtCore.QRectF(ml,mb, mr-ml, mt-mb)
             print l,r,t,b
             print 'ROI', roi, rect
             print ml,mr,mt,mb
@@ -611,7 +614,7 @@ class SparkDetectTab(QG.QTabWidget):
         self.sparkresult.update(self.sparks)
 
     def setup_ui(self):
-        main_layout = QG.QGridLayout()
+        main_layout = QW.QGridLayout()
         self.setLayout(main_layout)
         #label = QG.QLabel('sparks')
         self.sparksplot = PixmapPlotWidget(self)
@@ -619,16 +622,16 @@ class SparkDetectTab(QG.QTabWidget):
         main_layout.setRowStretch(0,1)
         main_layout.setRowStretch(1,3)
 
-        bottom_layout = QG.QGridLayout()
+        bottom_layout = QW.QGridLayout()
         self.sparkresult=SparkResultsWidget(None, self.imagedata)
         self.sparkresult.sparks_active.connect(self.show_sparks)
         bottom_layout.addWidget(self.sparkresult, 0,0)
-        interaction_layout = QG.QVBoxLayout()
+        interaction_layout = QW.QVBoxLayout()
 
-        detection_layout = QG.QHBoxLayout()
-        deltaf_treshold_layout = QG.QHBoxLayout()
-        deltaf_treshold_layout.addWidget(QG.QLabel('<b>Minimum &Delta;F</b>:'))
-        delta_f_spinbox = QG.QDoubleSpinBox()
+        detection_layout = QW.QHBoxLayout()
+        deltaf_treshold_layout = QW.QHBoxLayout()
+        deltaf_treshold_layout.addWidget(QW.QLabel('<b>Minimum &Delta;F</b>:'))
+        delta_f_spinbox = QW.QDoubleSpinBox()
         delta_f_spinbox.setDecimals(2)
         delta_f_spinbox.setMinimum(0.00)
         delta_f_spinbox.setMaximum(2.0)
@@ -639,8 +642,8 @@ class SparkDetectTab(QG.QTabWidget):
         interaction_layout.addLayout(deltaf_treshold_layout)
 
         detection_layout.addWidget(
-                QG.QLabel('<b>Detection treshold (value &times; SD):</b>'))
-        treshold_spinbox = QG.QDoubleSpinBox()
+                QW.QLabel('<b>Detection treshold (value &times; SD):</b>'))
+        treshold_spinbox = QW.QDoubleSpinBox()
         treshold_spinbox.setDecimals(1)
         treshold_spinbox.setMinimum(2.0)
         treshold_spinbox.setMaximum(6.0)
@@ -650,10 +653,10 @@ class SparkDetectTab(QG.QTabWidget):
         detection_layout.addWidget(treshold_spinbox)
 
 
-        area_treshold_layout = QG.QHBoxLayout()
+        area_treshold_layout = QW.QHBoxLayout()
         area_treshold_layout.addWidget(
-                QG.QLabel('<b>Minimum ROI area [&mu;m &times; ms]:</b>'))
-        area_spinbox = QG.QSpinBox()
+                QW.QLabel('<b>Minimum ROI area [&mu;m &times; ms]:</b>'))
+        area_spinbox = QW.QSpinBox()
         area_spinbox.setMinimum(20)
         area_spinbox.setMaximum(100)
         area_spinbox.setValue(20)
@@ -663,24 +666,24 @@ class SparkDetectTab(QG.QTabWidget):
         interaction_layout.addLayout(area_treshold_layout)
 
 
-        find_pb = QG.QPushButton(QG.QIcon(":/find.png"),'Find sparks')
-        delete_pb = QG.QPushButton(QG.QIcon(":/delete.png"),'Remove selected sparks')
-        save_pb = QG.QPushButton(QG.QIcon(":/report_disk.png"),'Save spark data')
-        show_mask_pb = QG.QPushButton('Show spark masks')
-        show_data_pb = QG.QPushButton(QG.QIcon(":/report.png"),'Show spark data')
-        next_spark_pb = QG.QPushButton(QG.QIcon(":/arrow_right.png"), 'Next spark')
-        previous_spark_pb = QG.QPushButton(QG.QIcon(":/arrow_left.png"),'Previous spark')
-        visualization_options_pb = QG.QPushButton(QG.QIcon(":/color_wheel.png"),'Visualization')
+        find_pb = QW.QPushButton(QG.QIcon(":/find.png"),'Find sparks')
+        delete_pb = QW.QPushButton(QG.QIcon(":/delete.png"),'Remove selected sparks')
+        save_pb = QW.QPushButton(QG.QIcon(":/report_disk.png"),'Save spark data')
+        show_mask_pb = QW.QPushButton('Show spark masks')
+        show_data_pb = QW.QPushButton(QG.QIcon(":/report.png"),'Show spark data')
+        next_spark_pb = QW.QPushButton(QG.QIcon(":/arrow_right.png"), 'Next spark')
+        previous_spark_pb = QW.QPushButton(QG.QIcon(":/arrow_left.png"),'Previous spark')
+        visualization_options_pb = QW.QPushButton(QG.QIcon(":/color_wheel.png"),'Visualization')
 
         find_pb.clicked.connect(lambda x:self.find_sparks())
         interaction_layout.addLayout(detection_layout)
-        pb_layout = QG.QVBoxLayout()
-        pb_layout_1= QG.QHBoxLayout()
-        pb_layout_2= QG.QHBoxLayout()
+        pb_layout = QW.QVBoxLayout()
+        pb_layout_1= QW.QHBoxLayout()
+        pb_layout_2= QW.QHBoxLayout()
         pb_layout.addLayout(pb_layout_1)
         pb_layout.addLayout(pb_layout_2)
         interaction_layout.addLayout(pb_layout)
-        interaction_widget = QG.QWidget(self)
+        interaction_widget = QW.QWidget(self)
         interaction_widget.setLayout(interaction_layout)
         bottom_layout.addWidget(interaction_widget, 1,0)
         visualization_options_pb.clicked.connect(self.show_vis_options_dialog)
@@ -688,7 +691,7 @@ class SparkDetectTab(QG.QTabWidget):
         self.visualization_options_pb =visualization_options_pb
         self.next_spark_pb =next_spark_pb
         self.previous_spark_pb = previous_spark_pb
-        self.save_label = QG.QLabel('<html style="background:red;"> Not saved</html>')
+        self.save_label = QW.QLabel('<html style="background:red;"> Not saved</html>')
         show_mask_pb.setCheckable(True)
         show_mask_pb.setChecked(True)
         pb_layout_1.addWidget(delete_pb)
@@ -712,15 +715,15 @@ class SparkDetectTab(QG.QTabWidget):
         bottom_layout.setColumnStretch(0,2)
         bottom_layout.setColumnStretch(1,2)
 
-        sparkplots_layout = QG.QGridLayout()
+        sparkplots_layout = QW.QGridLayout()
         #self.sparkplot = PlotWidget(self)
         #sparkplots_layout.addWidget(self.sparksplot)
         bottom_layout.addLayout(sparkplots_layout, 0, 1)
         ##
-        self.temporal_stack = QG.QStackedWidget(self)
-        self.spatial_stack = QG.QStackedWidget(self)
-        temporal_plot_groupbox = QG.QGroupBox('Temporal slice')
-        temporal_plot_groupbox.setLayout(QG.QVBoxLayout())
+        self.temporal_stack = QW.QStackedWidget(self)
+        self.spatial_stack = QW.QStackedWidget(self)
+        temporal_plot_groupbox = QW.QGroupBox('Temporal slice')
+        temporal_plot_groupbox.setLayout(QW.QVBoxLayout())
         temporal_plot_groupbox.layout().addWidget(self.temporal_stack)
         sparkplots_layout.addWidget(temporal_plot_groupbox,0,0)
         temporal_plot_groupbox.setStyleSheet("""
@@ -731,11 +734,11 @@ class SparkDetectTab(QG.QTabWidget):
         }
         """)
 
-        spatial_plot_groupbox = QG.QGroupBox('Spatial slice')
-        spatial_plot_groupbox.setLayout(QG.QVBoxLayout())
+        spatial_plot_groupbox = QW.QGroupBox('Spatial slice')
+        spatial_plot_groupbox.setLayout(QW.QVBoxLayout())
         spatial_plot_groupbox.layout().addWidget(self.spatial_stack)
         sparkplots_layout.addWidget(spatial_plot_groupbox,1,0)
-        sparkplots_layout.addWidget(QG.QLabel('x'),1,1)
+        sparkplots_layout.addWidget(QW.QLabel('x'),1,1)
 
         spatial_plot_groupbox.setStyleSheet("""
         QGroupBox
@@ -751,8 +754,8 @@ class SparkDetectTab(QG.QTabWidget):
             self.load_sparks()
 
     def show_vis_options_dialog(self):
-        dialog = QG.QDialog(self)
-        layout = QG.QHBoxLayout()
+        dialog = QW.QDialog(self)
+        layout = QW.QHBoxLayout()
         dialog.setLayout(layout)
         widget = VisualizationOptionsWidget(self.pipechain, parent=dialog)
         widget.settings_changed.connect(self.change_pixmap_settings)
@@ -832,19 +835,19 @@ class SparkDetectTab(QG.QTabWidget):
     def make_new_pixmap(self, settings = {}, force = False):
         print 'making new pix', force
         pixmaker = self.pixmaker
-        QC.QTimer.singleShot(100,lambda :
+        QtCore.QTimer.singleShot(100,lambda :
                 pixmaker.makeImage(image_settings = settings, force = force))
         if self.image_shown:
-            QC.QTimer.singleShot(150,lambda :
+            QtCore.QTimer.singleShot(150,lambda :
                     self.sparksplot.replacePixmap(pixmaker.pixmap))
         else:
             print 'showing image with tstamps'
-            QC.QTimer.singleShot(200,lambda :
+            QtCore.QTimer.singleShot(200,lambda :
                     self.sparksplot.addPixmap(pixmaker.pixmap,
                         self.xvals, self.yvals)
                     )
             self.image_shown = True
-        QC.QTimer.singleShot(250,lambda :self.sparksplot.fitView(0))
+        QtCore.QTimer.singleShot(250,lambda :self.sparksplot.fitView(0))
     def fit_sparkregion_plot(self):
         self.sparksplot.fitView(0)
 

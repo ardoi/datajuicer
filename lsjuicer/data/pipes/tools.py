@@ -1,8 +1,11 @@
 import re
 import traceback
 
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 
 import numpy as n
 
@@ -15,7 +18,7 @@ from lsjuicer.util import helpers
 from lsjuicer.static import selection_types
 from lsjuicer.ui.items.selection import BoundaryManager, SelectionDataModel
 from lsjuicer.static.constants import TransientBoundarySelectionTypeNames as TBSTN
-class Pipe(QC.QObject):
+class Pipe(QtCore.QObject):
     pipe_toggled = QC.pyqtSignal()
     new_data_out = QC.pyqtSignal()
     def _set_data_in(self, data_in):
@@ -162,7 +165,7 @@ class BlurPipe(SingleChannelProcessPipe):
         super(BlurPipe, self).__init__(*args, **kwargs)
 
         init_value = 0.6
-        option_2 = QG.QDoubleSpinBox()
+        option_2 = QW.QDoubleSpinBox()
         option_2.setMaximum(20)
         option_2.setMinimum(0)
         option_2.setSingleStep(0.1)
@@ -171,7 +174,7 @@ class BlurPipe(SingleChannelProcessPipe):
         self.values['Amount x'] = init_value
 
         init_value = 0.6
-        option_3 = QG.QDoubleSpinBox()
+        option_3 = QW.QDoubleSpinBox()
         option_3.setMaximum(200)
         option_3.setMinimum(0)
         option_3.setSingleStep(0.1)
@@ -179,7 +182,7 @@ class BlurPipe(SingleChannelProcessPipe):
         self.options['Amount y'] = option_3
         self.values['Amount y'] = init_value
 
-        option_1 = QG.QComboBox()
+        option_1 = QW.QComboBox()
         option_1.addItem("Gaussian")
         option_1.addItem("Uniform")
         option_1.addItem("Median")
@@ -215,7 +218,7 @@ class ShearPipe(MultiChannelProcessPipe):
 
         self.align_indices = None
         init_value = 100
-        option_1 = QG.QSpinBox()
+        option_1 = QW.QSpinBox()
         option_1.setMaximum(20000)
         option_1.setMinimum(1)
         option_1.setValue(init_value)
@@ -223,7 +226,7 @@ class ShearPipe(MultiChannelProcessPipe):
         self.values['Lines'] = init_value
 
         init_value = 0
-        option_2 = QG.QSpinBox()
+        option_2 = QW.QSpinBox()
         option_2.setMaximum(50000)
         option_2.setMinimum(0)
         option_2.setValue(init_value)
@@ -231,7 +234,7 @@ class ShearPipe(MultiChannelProcessPipe):
         self.values['Start'] = init_value
 
         init_value = 0
-        option_3 = QG.QSpinBox()
+        option_3 = QW.QSpinBox()
         option_3.setMaximum(50)
         option_3.setMinimum(0)
         option_3.setValue(init_value)
@@ -239,13 +242,13 @@ class ShearPipe(MultiChannelProcessPipe):
         self.values['Order'] = init_value
 
         init_value = False
-        option_4 = QG.QCheckBox("Reuse other channel")
+        option_4 = QW.QCheckBox("Reuse other channel")
         option_4.setChecked(init_value)
         self.options['Reuse'] = option_4
         self.values['Reuse'] = option_4
 
         init_value = 1
-        option_5 = QG.QSpinBox()
+        option_5 = QW.QSpinBox()
         option_5.setMaximum(10)
         option_5.setMinimum(1)
         option_5.setValue(init_value)
@@ -380,7 +383,7 @@ class ShearPipe(MultiChannelProcessPipe):
 
 
     def extra_ui(self):
-        button = QG.QPushButton('Select')
+        button = QW.QPushButton('Select')
         button.clicked.connect(lambda:self.roi_manager.activate_builder_by_type_name(TBSTN.MANUAL))
         return button
 
@@ -389,7 +392,7 @@ class ImageMathPipe(MultiChannelProcessPipe):
         super(ImageMathPipe, self).__init__(*args, **kwargs)
         self.needs_ROI = False
         self.option_names = ['Expression']
-        option_1 = QG.QLineEdit()
+        option_1 = QW.QLineEdit()
         self.options['Expression'] = option_1
         self.values['Expression'] = ""
 
@@ -415,7 +418,7 @@ class ImageMathPipe(MultiChannelProcessPipe):
             #print res.mean(), res.min(), res.max()
                 return n.vstack((res,)*self.data_in.shape[0])
             except Exception,e:
-                QG.QMessageBox.critical(None, "Error with expression!",
+                QW.QMessageBox.critical(None, "Error with expression!",
                         "Error:\n"+traceback.format_exception_only(type(e),e)[0])
         return self.data_in
 
@@ -430,14 +433,14 @@ class SelfRatioPipe(SingleChannelProcessPipe):
 
         self.option_names = ['Lines', 'Start']
         init_value = 100
-        option_1 = QG.QSpinBox()
+        option_1 = QW.QSpinBox()
         option_1.setMaximum(10000)
         option_1.setMinimum(1)
         option_1.setValue(init_value)
         self.options['Lines'] = option_1
         self.values['Lines'] = init_value
         init_value = 0
-        option_2 = QG.QSpinBox()
+        option_2 = QW.QSpinBox()
         option_2.setMaximum(50000)
         option_2.setMinimum(0)
         option_2.setValue(init_value)
@@ -478,7 +481,7 @@ class SelfRatioPipe(SingleChannelProcessPipe):
         return q
 
     def extra_ui(self):
-        button = QG.QPushButton('Select')
+        button = QW.QPushButton('Select')
         button.clicked.connect(lambda:self.roi_manager.activate_builder_by_type_name(TBSTN.MANUAL))
         return button
 
@@ -487,14 +490,14 @@ class ImageProcessPipe(ProcessPipe):
     def __init__(self, *args, **kwargs):
         super(ImageProcessPipe, self).__init__(*args, **kwargs)
         init_value = 2.0
-        option_1 = QG.QSpinBox()
+        option_1 = QW.QSpinBox()
         option_1.setMaximum(10)
         option_1.setMinimum(1)
         option_1.setValue(init_value)
         self.options['Multiplier 1'] = option_1
         self.values['Multiplier 1'] = init_value
         init_value = 3.0
-        option_2 = QG.QSpinBox()
+        option_2 = QW.QSpinBox()
         option_2.setMaximum(10)
         option_2.setMinimum(1)
         option_2.setValue(init_value)
@@ -506,7 +509,7 @@ class ImageProcessPipe(ProcessPipe):
         q = self.data_in**(1./self.values["Multiplier 1"])
         return q
 
-class PipeChain(QC.QObject):
+class PipeChain(QtCore.QObject):
     pipe_state_changed = QC.pyqtSignal()
     new_histogram = QC.pyqtSignal()
 
@@ -639,24 +642,24 @@ class PipeChain(QC.QObject):
         if self.inpipe.data_in is not None:
             self.inpipe.process()
 
-class PipeWidget(QG.QFrame):
+class PipeWidget(QW.QFrame):
     def __init__(self, pipe, parent = None):
         super(PipeWidget, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         self.setLayout(layout)
-        self.setFrameStyle(QG.QFrame.StyledPanel)
-        self.setFrameShadow(QG.QFrame.Plain)
-        visible_layout = QG.QHBoxLayout()
-        settings_layout = QG.QGridLayout()
+        self.setFrameStyle(QW.QFrame.StyledPanel)
+        self.setFrameShadow(QW.QFrame.Plain)
+        visible_layout = QW.QHBoxLayout()
+        settings_layout = QW.QGridLayout()
         settings_layout.setContentsMargins(0,0,0,0)
         settings_layout.setSpacing(0)
-        settings_frame = QG.QFrame()
+        settings_frame = QW.QFrame()
         settings_frame.setLayout(settings_layout)
         layout.addLayout(visible_layout)
         layout.addWidget(settings_frame)
-        name_label = QG.QLabel(pipe.name)
-        on_checkbox = QG.QCheckBox("Enabled")
+        name_label = QW.QLabel(pipe.name)
+        on_checkbox = QW.QCheckBox("Enabled")
         on_checkbox.setChecked(True)
         on_checkbox.toggled.connect(pipe.set_enabled)
         on_checkbox.toggled.connect(settings_frame.setEnabled)
@@ -669,11 +672,11 @@ class PipeWidget(QG.QFrame):
         visible_layout.addWidget(on_checkbox)
         #visible_layout.addWidget(details_pb)
         count = 0
-        apply_pb = QG.QPushButton("Apply")
+        apply_pb = QW.QPushButton("Apply")
         for option in pipe.options:
-            settings_layout.addWidget(QG.QLabel(option), count, 0)
+            settings_layout.addWidget(QW.QLabel(option), count, 0)
             settings_layout.addWidget(pipe.options[option], count, 1)
-            if isinstance(pipe.options[option], QG.QLineEdit):
+            if isinstance(pipe.options[option], QW.QLineEdit):
                 print 'connect lineedit'
                 pipe.options[option].returnPressed.connect(self.set_pipe_options)
             count +=1
@@ -681,26 +684,26 @@ class PipeWidget(QG.QFrame):
         if extra_ui:
             settings_layout.addWidget(extra_ui, count,0,1,2)
             count +=1
-        apply_pb = QG.QPushButton("Apply")
+        apply_pb = QW.QPushButton("Apply")
         settings_layout.addWidget(apply_pb, count, 1)
         apply_pb.clicked.connect(self.set_pipe_options)
         self.pipe = pipe
 
     def minimumSizeHint(self):
-        return QC.QSize(100,100)
+        return QtCore.QSize(100,100)
 
     def set_pipe_options(self):
         new = False
         for option in self.pipe.options:
             widget = self.pipe.options[option]
-            if isinstance(widget, QG.QCheckBox):
+            if isinstance(widget, QW.QCheckBox):
                 new_value = widget.isChecked()
-            elif isinstance(widget, QG.QComboBox):
+            elif isinstance(widget, QW.QComboBox):
                 new_value = str(widget.currentText())
-            elif isinstance(widget, QG.QLineEdit):
+            elif isinstance(widget, QW.QLineEdit):
                 new_value = str(widget.text())
                 if not test_string(new_value):
-                    QG.QMessageBox.critical(self, "Bad input!",
+                    QW.QMessageBox.critical(self, "Bad input!",
                             "The expression %s is invalid!"%new_value)
                     new_value = ""
             else:
@@ -727,7 +730,7 @@ def test_string(s):
         return True
 
 
-class PipeModel(QC.QAbstractListModel):
+class PipeModel(QtCore.QAbstractListModel):
     def __init__(self, parent = None):
         super(PipeModel, self).__init__(parent)
         self._pipedata = []
@@ -737,9 +740,9 @@ class PipeModel(QC.QAbstractListModel):
     @pipedata.setter
     def pipedata(self, pipes):
         #print 'new pipe'
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
+        self.modelAboutToBeReset.emit()
         self._pipedata = pipes
-        self.emit(QC.SIGNAL('modelReset()'))
+        self.modelReset.emit()
         #print self._pipedata
     @property
     def rows(self):
@@ -750,9 +753,9 @@ class PipeModel(QC.QAbstractListModel):
 
     def data(self, index, role):
         pipe = self.pipedata[index.row()]
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             return pipe.name
-        elif role==QC.Qt.DecorationRole:
+        elif role==QtCore.Qt.DecorationRole:
             if pipe.enabled:
                 if pipe.processed:
                     return QG.QColor('lime')
@@ -761,13 +764,13 @@ class PipeModel(QC.QAbstractListModel):
             else:
                 return QG.QColor('red')
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def pipes_updated(self):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
-        self.emit(QC.SIGNAL('modelReset()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.modelAboutToBeReset.emit()
+        self.layoutAboutToBeChanged.emit()
+        self.modelReset.emit()
+        self.layoutChanged.emit()
 
 pipe_classes = {'SelfRatio':SelfRatioPipe,
                 'Shear':ShearPipe, "Blur":BlurPipe,

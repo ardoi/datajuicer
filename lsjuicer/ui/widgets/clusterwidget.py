@@ -6,8 +6,8 @@ from sklearn.cluster import DBSCAN
 import scipy.ndimage as nd
 import scipy.stats as ss
 
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtGui as QG as QG
+from PyQt5 import QtWidgets as QW as QW
 
 from PyQt5 import QtCore as QC
 
@@ -85,7 +85,7 @@ class ClusterWidget(QW.QWidget):
         setting_layout.addWidget(action_pb)
         do_pb.clicked.connect(self.do)
         widget_layout.addLayout(setting_layout)
-        QC.QTimer.singleShot(50, lambda:self.do())
+        QtCore.QTimer.singleShot(50, lambda:self.do())
 
     def do_dilate(self):
         dims = self.result.active_dimensions()
@@ -191,7 +191,7 @@ class ClusterWidget(QW.QWidget):
         #print self.clusters
         #TODO remove existing events
         self.action_pb.setEnabled(False)
-        QW.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
+        QW.QApplication.setOverrideCursor(QG.QCursor(QtCore.Qt.BusyCursor))
         sess = dbmaster.get_session()
         sess.add(self.result)
 
@@ -289,7 +289,7 @@ class ClusterDialog(QW.QDialog):
         self.do_pb = do_pb
 
     def sizeHint(self):
-        return QC.QSize(1300,1000)
+        return QtCore.QSize(1300,1000)
 
     def stats(self):
         an = self.analysis
@@ -373,7 +373,7 @@ class EventCategoryWidget(QW.QWidget):
         layout.addWidget(gbox)
         combo = DBComboAddBox(category_class, show_None = False)
         self.combo=combo
-        combo.combo.currentIndexChanged[QC.QString].connect(self.update_settings)
+        combo.combo.currentIndexChanged[QtCore.QString].connect(self.update_settings)
         settings_layout.add_row("Type", combo)
         settings_combo = QW.QComboBox()
         settings_combo.currentIndexChanged.connect(self.update_spinboxes)

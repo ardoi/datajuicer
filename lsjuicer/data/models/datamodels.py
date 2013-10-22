@@ -1,8 +1,11 @@
 import glob
 import os
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore, QtWidgets
+
 
 from lsjuicer.inout.converters.OMEXMLMaker import OMEXMLMaker
 from lsjuicer.static.constants import Constants
@@ -10,22 +13,22 @@ from lsjuicer.inout.db.sqla import ImageMaker
 import lsjuicer.inout.db.sqla as sa
 from lsjuicer.static.constants import ImageStates
 
-class CheckBoxDelegate(QG.QItemDelegate):
+class CheckBoxDelegate(QW.QItemDelegate):
     def createEditor(self, parent, styleoption, modelindex):
-        box = QG.QCheckBox(parent)
+        box = QW.QCheckBox(parent)
         return box
 
     def setEditorData(self, editor, index):
-        state  = index.model().data(index, QC.Qt.DisplayRole)
+        state  = index.model().data(index, QtCore.Qt.DisplayRole)
         print 'edit',state
         editor.setChecked(state)
 
     def setModelData(self, editor, model, index):
         state = editor.isChecked()
         print 'set',state
-        model.setData(index, state, QC.Qt.DisplayRole)
+        model.setData(index, state, QtCore.Qt.DisplayRole)
 
-class TransientDataModel(QC.QAbstractTableModel):
+class TransientDataModel(QtCore.QAbstractTableModel):
     def __init__(self, parent = None):
         super(TransientDataModel, self).__init__(parent)
         self.visual_transient_collection = None
@@ -39,16 +42,16 @@ class TransientDataModel(QC.QAbstractTableModel):
             return 4
     rows = property(get_rows)
     def set_visual_transient_collection(self, visual_transient_collection):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit()
         self.visual_transient_collection = visual_transient_collection
         #self.transients = transients.ts
         #self.rows = len(self.visual_transient_collection)
         #print 'set %i vis transients'%self.rows
         #print 'transients',self.rows
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit()
 
     def remove_transients(self, indexes):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit()
         transients_to_remove = []
         for index in indexes:
             transient_key = self.visual_transient_collection.transient_group.order[index.row()]
@@ -58,13 +61,13 @@ class TransientDataModel(QC.QAbstractTableModel):
         for key in transients_to_remove:
             print 'remove', key
             self.visual_transient_collection.remove_transient(key)
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit()
 
 
     def set_transients_state(self, attrib, indexes):
         function = {'visible':'set_visible', 'editable':'set_editable'}
         assert attrib in function
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit()
         transients_to_modify_keys = []
         states = []
         for index in indexes:
@@ -76,7 +79,7 @@ class TransientDataModel(QC.QAbstractTableModel):
         print 'set state', attrib, indexes
         f = getattr(self.visual_transient_collection, function[attrib])
         f(transients_to_modify_keys, states)
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit()
 
     def set_transients_visible(self, indexes):
         self.set_transients_state('visible', indexes)
@@ -91,8 +94,8 @@ class TransientDataModel(QC.QAbstractTableModel):
         return self.columns
 
     def headerData(self, section, orientation, role):
-        if role == QC.Qt.DisplayRole:
-            if orientation == QC.Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 if section == 1:
                     return "Start"
                 elif section == 2:
@@ -114,12 +117,12 @@ class TransientDataModel(QC.QAbstractTableModel):
                 #elif section == 9:
                 #    return 'V'
                 else:
-                    return QC.QVariant()
+                    return QtCore.QVariant()
             else:
 #                return 'Transient %i'%(section+1)
-                QC.QVariant()
+                QtCore.QVariant()
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def data(self, index, role):
         if self.visual_transient_collection:
@@ -132,9 +135,9 @@ class TransientDataModel(QC.QAbstractTableModel):
                 tr = vtr.transient_rect.transient
             except KeyError:
                 print 'error', key
-                return QC.QVariant()
+                return QtCore.QVariant()
 #            tr = self.vis_transients.ts.transients[key]
-            if role == QC.Qt.DisplayRole:
+            if role == QtCore.Qt.DisplayRole:
                     if col == 0:
                         return "%i"%(row + 1)
                     elif col==1:
@@ -156,12 +159,12 @@ class TransientDataModel(QC.QAbstractTableModel):
                     #elif col==9:
                     #    return vtr.visible
                     else:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
 
-            elif role==QC.Qt.TextAlignmentRole:
-                return QC.Qt.AlignCenter
+            elif role==QtCore.Qt.TextAlignmentRole:
+                return QtCore.Qt.AlignCenter
 
-            elif role == QC.Qt.DecorationRole:
+            elif role == QtCore.Qt.DecorationRole:
                 if col==0:
                     pix = QG.QPixmap(20,20)
                     pix.fill(vtr.color)
@@ -170,30 +173,30 @@ class TransientDataModel(QC.QAbstractTableModel):
                     if vtr.group_color:
                         painter.setBrush(QG.QBrush(vtr.group_color))
                         painter.setPen(QG.QPen(vtr.group_color))
-                        painter.drawEllipse(QC.QPointF(10.,10.),5.,5.)
+                        painter.drawEllipse(QtCore.QPointF(10.,10.),5.,5.)
                     return pix
-            #elif role == QC.Qt.CheckStateRole:
+            #elif role == QtCore.Qt.CheckStateRole:
             #    if col == 9:
             #        #print 'col 9'
             #        if vtr.visible:
             #            #print 'check'
-            #            return QC.Qt.Checked
+            #            return QtCore.Qt.Checked
             #        else:
             #            #print 'ucheck'
-            #            return QC.Qt.Unchecked
+            #            return QtCore.Qt.Unchecked
             #    else:
-            #        return QC.QVariant()
+            #        return QtCore.QVariant()
             else:
-                return QC.QVariant()
+                return QtCore.QVariant()
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
     #def flags(self, index):
         #selection = self.filePath(index)
         #if os.path.isdir(selection):
         #if index.column()==9:
-    #    return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsUserCheckable | QC.Qt.ItemIsEditable | QC.Qt.ItemIsSelectable
+    #    return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsSelectable
         #else:
-        #    return QC.Qt.ItemIsEnabled
+        #    return QtCore.Qt.ItemIsEnabled
 
 class MyProxyModel(QG.QSortFilterProxyModel):
     """
@@ -216,22 +219,22 @@ class MyProxyModel(QG.QSortFilterProxyModel):
 
     def preparePlot(self):
         indices = self.uniqueIndices(self.view.selectedIndexes())
-        self.emit(QC.SIGNAL('doPlot(PyQt_PyObject)'),indices)
+        self.doPlot.emit(indices)
     def prepareShowReference(self):
         indices = self.uniqueIndices(self.view.selectedIndexes())
         return indices
         #self.emit(QC.SIGNAL('plotReference(PyQt_PyObject)'),indices)
 
-class MyFileIconProvider(QG.QFileIconProvider):
+class MyFileIconProvider(QW.QFileIconProvider):
     def icon(self, icontype):
         if icontype.isDir():
             return QG.QIcon(':/folder.png')
         elif icontype.isFile():
             return QG.QIcon(':/picture.png')
         else:
-            return QG.QFileIconProvider.icon(self,icontype)
+            return QW.QFileIconProvider.icon(self,icontype)
 
-class MyFileSystemModel(QG.QFileSystemModel):
+class MyFileSystemModel(QW.QFileSystemModel):
     """FileSystemModel that links to a :class:`RandomDataModel`
 
     Attributes
@@ -249,9 +252,9 @@ class MyFileSystemModel(QG.QFileSystemModel):
         print 'ftype', ftype
         if ftype=="oib":
             self.ftype="oib,oif"
-            self.setNameFilters(QC.QStringList([QC.QString("*.oib"),QC.QString("*.oif")]))
+            self.setNameFilters(QtCore.QStringList([QtCore.QString("*.oib"),QtCore.QString("*.oif")]))
         else:
-            self.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
+            self.setNameFilters(QtCore.QStringList([QtCore.QString("*.%s"%ftype)]))
 
     def setTarget(self, target):
         self.target = target
@@ -272,21 +275,21 @@ class MyFileSystemModel(QG.QFileSystemModel):
             filelist.extend(fl)
             print 'FILES',dd,len(filelist),os.path.join(str(dd),str(suffix)), filelist
         if filelist:
-            self.emit(QC.SIGNAL('inspect_visible(bool)'),True)
-            self.emit(QC.SIGNAL('inspect_needed(int)'),len(filelist))
+            self.inspect_visible.emit(True)
+            self.inspect_needed.emit(len(filelist)
         else:
-            self.emit(QC.SIGNAL('inspect_visible(bool)'),False)
+            self.inspect_visible.emit(False)
         return dd
 
     def flags(self, index):
         selection = self.filePath(index)
         if os.path.isdir(selection):
-            return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
         else:
-            return QC.Qt.ItemIsEnabled
+            return QtCore.Qt.ItemIsEnabled
 
 
-class RandomDataModel(QC.QAbstractTableModel):
+class RandomDataModel(QtCore.QAbstractTableModel):
     """DataModel to display data from image file in a directory"""
     conversion_finished = QC.pyqtSignal()
     switchToFileSelection = QC.pyqtSignal(str)
@@ -301,7 +304,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.ftype = sa.dbmaster.get_config_setting_value('filetype')
         #formats = ["*.lsm","*.ome"]
         self.omexml_maker = OMEXMLMaker()
-        self.connect(self.omexml_maker,QC.SIGNAL('conversion_update()'),self.conversion_update)
+        self.omexml_maker.conversion_update.connect(self.conversion_update)
 #        self.connect(self.omexml_maker,QC.SIGNAL('conversion_finished()'),self.conversion_finished)
         self.omexml_maker.conversion_finished.connect(self.ome_conversion_finished)
 
@@ -336,9 +339,9 @@ class RandomDataModel(QC.QAbstractTableModel):
         print 'formats:',self.formats
 
     def conversion_update(self):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
-        self.emit(QC.SIGNAL('fitColumns()'))
+        self.layoutAboutToBeChanged.emit()
+        self.layoutChanged.emit()
+        self.fitColumns.emit()
 
     def rowCount(self, parent):
         return self.rows
@@ -354,7 +357,7 @@ class RandomDataModel(QC.QAbstractTableModel):
             f.state=Constants.PLOTTED
             toplot.append(self.dirdatas[ind])
         print 'toplot:::',toplot
-        self.emit(QC.SIGNAL('plotFile(PyQt_PyObject)'),toplot)
+        self.plotFile.emit(toplot)
 
     def show_ref(self, indexlist):
         toplot = []
@@ -370,12 +373,12 @@ class RandomDataModel(QC.QAbstractTableModel):
     def updateData(self):
         print '\n\n\n\ndata update'
         self.dirdatas = []
-        self.emit(QC.SIGNAL('progressVisible(bool)'),True)
+        self.progressVisible.emit(True)
         files = []
         new_files=False
         for fmt in self.formats:
             files.extend(glob.glob(os.path.join(str(self.dirname),fmt)))
-        self.emit(QC.SIGNAL('totalFiles(int)'),len(files)-1)
+        self.totalFiles.emit(len(files)-1)
         self.session = sa.dbmaster.get_session()
 
         for i,f in enumerate(files):
@@ -390,7 +393,7 @@ class RandomDataModel(QC.QAbstractTableModel):
             #for result in fit_results:
             #    syn_im = sa.PixelFittedSyntheticImage(result)
             #    self.dirdatas.append(syn_im)
-            self.emit(QC.SIGNAL('filesRead(int)'), i)
+            self.filesRead.emit(i)
 
         ##self.files.sort(key=lambda f:self.dirdatas[self.dirname][f].datetime)
         #find how many files need to be converted
@@ -406,10 +409,10 @@ class RandomDataModel(QC.QAbstractTableModel):
                     self.omexml_maker.add_file_to_convert(fr)
             print 'conversion needed for %i files'%needs_converting
             if needs_converting:
-                self.emit(QC.SIGNAL('conversion_needed(int)'), needs_converting)
-                self.emit(QC.SIGNAL('totalFiles(int)'), needs_converting)
+                self.conversion_needed.emit(needs_converting)
+                self.totalFiles.emit(needs_converting)
 
-        self.emit(QC.SIGNAL('progressVisible(bool)'), False)
+        self.progressVisible.emit(False)
         if self.dirdatas:
             self.switchToFileSelection.emit(self.dirname)
         print self.dirdatas
@@ -418,16 +421,16 @@ class RandomDataModel(QC.QAbstractTableModel):
 
     def convert(self):
         print 'singleshot'
-        #return QC.QTimer.singleShot(500,lambda :self.omexml_maker.convert_all())
-        self.emit(QC.SIGNAL('convert_progress_visible(bool)'), True)
-        self.emit(QC.SIGNAL('convert_pb_visible(bool)'), False)
+        #return QtCore.QTimer.singleShot(500,lambda :self.omexml_maker.convert_all())
+        self.convert_progress_visible.emit(True)
+        self.convert_pb_visible.emit(False)
 #        self.emit(QC.SIGNAL('filesRead(int)'),0)
         self.omexml_maker.convert_all()
         #self.emit(QC.SIGNAL('progressVisible(bool)'),False)
 
     def headerData(self, section, orientation, role):
-        if role == QC.Qt.DisplayRole:
-            if orientation == QC.Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 if section == 0:
                     return "Filename"
                 elif section == 1:
@@ -463,14 +466,14 @@ class RandomDataModel(QC.QAbstractTableModel):
             else:
                 return section+1
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def flags(self, index):
         f = self.dirdatas[index.row()]
         if f.state in [ImageStates.CONVERSION_FAILED, ImageStates.NOT_CONVERTED]:
-            return QC.Qt.ItemIsEnabled
+            return QtCore.Qt.ItemIsEnabled
         else:
-            return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
+            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
 
     def recheck_images(self):
         #d = self.dirdatas
@@ -484,7 +487,7 @@ class RandomDataModel(QC.QAbstractTableModel):
 
 
     def data(self, index, role):
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             f = self.dirdatas[index.row()]
             col = index.column()
             exp_info = f.exp_info
@@ -526,12 +529,12 @@ class RandomDataModel(QC.QAbstractTableModel):
                 if f.record_date:
                     return f.record_date.strftime(fmt)
                 else:
-                    return QC.QVariant()
+                    return QtCore.QVariant()
             elif col==7:
                 if f.file_hash:
                     return f.file_hash
                 else:
-                    return QC.QVariant()
+                    return QtCore.QVariant()
             elif col==8:
                 return ifname(exp_info.project)
             elif col==9:
@@ -554,7 +557,7 @@ class RandomDataModel(QC.QAbstractTableModel):
                 return " | ".join([ifattr("comment"), dd])
                 #return d[f].description
 
-        elif role == QC.Qt.DecorationRole:
+        elif role == QtCore.Qt.DecorationRole:
             f = self.dirdatas[index.row()]
             col = index.column()
             if col==0:
@@ -570,27 +573,27 @@ class RandomDataModel(QC.QAbstractTableModel):
                 elif state==ImageStates.CONVERSION_FAILED:
                     return QG.QColor('black')
             else:
-                return QC.QVariant()
-        elif role==QC.Qt.TextAlignmentRole:
+                return QtCore.QVariant()
+        elif role==QtCore.Qt.TextAlignmentRole:
             col = index.column()
             if col not in [0,8]:
-                return QC.Qt.AlignCenter
+                return QtCore.Qt.AlignCenter
             else:
-                return QC.QVariant()
+                return QtCore.QVariant()
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def setDir(self, dirname):
         #if dirname != self.dirname:
         if 1:
             self.dirname = str(dirname)
             print 'new dir',str(self.dirname)
-            self.emit(QC.SIGNAL('modelAboutToBeReset()'))
-            self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+            self.modelAboutToBeReset.emit()
+            self.layoutAboutToBeChanged.emit()
             self.updateData()
  #           self.beginResetModel()
-            self.emit(QC.SIGNAL('modelReset()'))
-            self.emit(QC.SIGNAL('layoutChanged()'))
+            self.modelReset.emit()
+            self.layoutChanged.emit()
             #self.emit(QC.SIGNAL('fitColumns()'))
         else:
             print 'old dir'

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore as QC
 
 
-class EventFitParametersDataModel(QC.QAbstractTableModel):
+class EventFitParametersDataModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None):
         super(EventFitParametersDataModel, self).__init__(parent)
         self.rows = 0
@@ -23,25 +23,25 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
         return self.columns
 
     def headerData(self, section, orientation, role):
-        if role == QC.Qt.DisplayRole:
-            if orientation == QC.Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 if section<6:
                     return self.keys[section]
                 else:
-                    return QC.QVariant()
+                    return QtCore.QVariant()
 
             else:
                 return section+1
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def data(self, index, role):
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             row = index.row()
             event = self.events[row]
             col = index.column()
             #print event[self.keys[col]], self.keys[col]
             return "%.3f"%(event.parameters[self.keys[col]])
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 

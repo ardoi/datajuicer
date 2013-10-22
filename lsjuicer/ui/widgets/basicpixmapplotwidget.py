@@ -1,7 +1,7 @@
 import numpy
 
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtGui as QG as QG
+from PyQt5 import QtWidgets as QW as QW
 
 from PyQt5 import QtCore as QC
 
@@ -36,18 +36,18 @@ class BasicPixmapPlotWidget(QW.QWidget):
 
     def make_new_pixmap(self, settings = {}, force = False):
         pixmaker = self.pixmaker
-        QC.QTimer.singleShot(10, lambda :
+        QtCore.QTimer.singleShot(10, lambda :
                 pixmaker.makeImage(image_settings = settings, force = force))
         if self.image_shown:
-            QC.QTimer.singleShot(15, lambda :
+            QtCore.QTimer.singleShot(15, lambda :
                     self.plot_widget.replacePixmap(pixmaker.pixmap))
         else:
             print 'showing image with tstamps'
-            QC.QTimer.singleShot(20, lambda :
+            QtCore.QTimer.singleShot(20, lambda :
                     self.plot_widget.addPixmap(pixmaker.pixmap,
                         self.xvals, self.yvals))
             self.image_shown = True
-        QC.QTimer.singleShot(25, lambda :self.plot_widget.fitView())
+        QtCore.QTimer.singleShot(25, lambda :self.plot_widget.fitView())
 
     def set_data(self, data):
         if data.ndim == 2:

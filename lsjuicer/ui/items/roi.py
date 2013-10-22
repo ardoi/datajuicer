@@ -1,5 +1,5 @@
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtGui as QG as QG
+from PyQt5 import QtWidgets as QW as QW
 
 from PyQt5 import QtCore as QC
 
@@ -8,7 +8,7 @@ from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
 
 
-class ROIDataModel(QC.QAbstractListModel):
+class ROIDataModel(QtCore.QAbstractListModel):
     def __init__(self, parent=None):
         super(ROIDataModel, self).__init__(parent)
         self.builders = []
@@ -40,13 +40,13 @@ class ROIDataModel(QC.QAbstractListModel):
         self.builders.append(builder)
 
     def data(self, index, role):
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             return self.keys[index.row()]
-        elif role == QC.Qt.DecorationRole:
+        elif role == QtCore.Qt.DecorationRole:
             return QG.QColor(self.rois[self.keys[index.row()]]['roi'].color)
 
 
-class ROIManager(QC.QObject):
+class ROIManager(QtCore.QObject):
     def __init__(self, parent = None):
         super(ROIManager, self).__init__(parent)
         self.dataModel = ROIDataModel()
@@ -91,7 +91,7 @@ class ROIManager(QC.QObject):
             elif rtype == Constants.BGROI:
                 self.activeBuilder = self.bgRoiBuilder
             self.enableEditing(False)
-            self.ROIView.viewport().setCursor(QC.Qt.CrossCursor)
+            self.ROIView.viewport().setCursor(QtCore.Qt.CrossCursor)
         else:
             if rtype == Constants.ROI:
                 self.ROIButtonUncheck.emit()
@@ -99,7 +99,7 @@ class ROIManager(QC.QObject):
                 self.BgROIButtonUncheck.emit()
             self.activeBuilder = None
             self.enableEditing(True)
-            self.ROIView.viewport().setCursor(QC.Qt.ArrowCursor)
+            self.ROIView.viewport().setCursor(QtCore.Qt.ArrowCursor)
 
     def delete(self,indices):
         self.dataModel.delete(indices)
@@ -133,13 +133,13 @@ class GroupManager(ROIManager):
             if rtype == Constants.GROUP:
                 self.activeBuilder = self.roiBuilder
             self.enableEditing(False)
-            self.ROIView.viewport().setCursor(QC.Qt.CrossCursor)
+            self.ROIView.viewport().setCursor(QtCore.Qt.CrossCursor)
         else:
             if rtype == Constants.GROUP:
                 self.GroupButtonUncheck.emit()
             self.activeBuilder = None
             self.enableEditing(True)
-            self.ROIView.viewport().setCursor(QC.Qt.ArrowCursor)
+            self.ROIView.viewport().setCursor(QtCore.Qt.ArrowCursor)
 
 class GroupManagerWidget(QW.QWidget):
 
@@ -202,7 +202,7 @@ class ROIManagerWidget(QW.QWidget):
         self.manager.ROIButtonUncheck.connect(lambda:addRB.setChecked(False))
         self.manager.BgROIButtonUncheck.connect(lambda:addBgRB.setChecked(False))
 
-class ROIBuilder(QC.QObject):
+class ROIBuilder(QtCore.QObject):
 
     def __init__(self, name, colornames, maximum):
         super(ROIBuilder, self).__init__(None)
@@ -301,18 +301,18 @@ class ROIItem(QW.QGraphicsRectItem):
         super(ROIItem, self).__init__(parent)
         self.active = False
         self.pen = selection_type.appearance.pen
-#        self.pen= QG.QPen(QC.Qt.SolidLine)
+#        self.pen= QG.QPen(QtCore.Qt.SolidLine)
 #        self.pen.setWidth(4)
-        #self.pen.setColor(QC.Qt.white)
+        #self.pen.setColor(QtCore.Qt.white)
 #        self.pen_color = QG.QColor(selection_type.colorname)
 #        self.pen.setColor(self.pen_color)
 
  #       self.pen.setCosmetic(True)
- #       self.pen.setJoinStyle(QC.Qt.MiterJoin)
+ #       self.pen.setJoinStyle(QtCore.Qt.MiterJoin)
         self.active_pen = selection_type.appearance.active_pen
         self.state_colors=selection_type.appearance.state_colors
         self.setPen(self.pen)
-#        self.setBrush(QC.Qt.white)
+#        self.setBrush(QtCore.Qt.white)
       #  self.setAcceptHoverEvents(True)
         #self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setZValue(2)
@@ -341,14 +341,14 @@ class ROIItem(QW.QGraphicsRectItem):
     def set_state(self, state):
         self.setColor(self.state_colors[state])
     def mouseReleaseEvent(self,event):
-        #self.pen.setColor(QC.Qt.white)
+        #self.pen.setColor(QtCore.Qt.white)
         self.setPen(self.pen)
         self.setEditable(True)
         self.initialized = True
         #self.builder.endInit(self)
-        #self.setCursor(QC.Qt.ArrowCursor)
+        #self.setCursor(QtCore.Qt.ArrowCursor)
         #self.initialized = True
-        #self.emit(QC.QIGNAL('ROI_Initialized()'))
+        #self.emit(QtCore.QIGNAL('ROI_Initialized()'))
 
     def font_resize(self):
         #fm = QG.QFontMetrics(self.font)
@@ -396,7 +396,7 @@ class ROIItem(QW.QGraphicsRectItem):
         #self.setPen(self.pen)
     #def boundingRect(self):
     #    r = self.rect()
-    #    return QC.QRectF(r.x()-0.5*r.width()-0.5*r.height(),r.y()-0.5*r.width()-0.5*r.height(),2*r.width(),2*r.height())
+    #    return QtCore.QRectF(r.x()-0.5*r.width()-0.5*r.height(),r.y()-0.5*r.width()-0.5*r.height(),2*r.width(),2*r.height())
 
     def mouseMoveEvent(self,event):
         #self.prepareGeometryChange()
@@ -438,17 +438,17 @@ class ROIItem(QW.QGraphicsRectItem):
         #pos  = event.pos()
         #d = (pos - self.rect().bottomRight()).manhattanLength()
         #if d < 20:
-        #    self.setCursor(QC.Qt.SizeFDiagCursor)
+        #    self.setCursor(QtCore.Qt.SizeFDiagCursor)
         #   # self.setFlag(QGraphicsItem.ItemIsMovable,False)
         #else:
-        #    self.setCursor(QC.Qt.SizeAllCursor)
+        #    self.setCursor(QtCore.Qt.SizeAllCursor)
         #QGraphicsRectItem.hoverMoveEvent(self,event)
 
     def hoverLeaveEvent(self, event):
         if self.initialized:
-            #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
+            #hoverRect = QtCore.QRectF(self.bottomRight()-QtCore.QPoint(20,20),self.bottomRight())
             self.make_look_active(False)
-            #self.pen.setStyle(QC.Qt.SolidLine)
+            #self.pen.setStyle(QtCore.Qt.SolidLine)
             #self.setPen(self.pen)
         self.unsetCursor()
         QW.QGraphicsRectItem.hoverEnterEvent(self,event)
@@ -471,23 +471,23 @@ class ROIItem(QW.QGraphicsRectItem):
                 d_tr = (pos - self.rect().topRight()).manhattanLength()
                 d_tl = (pos - self.rect().topLeft()).manhattanLength()
                 if d_br < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeFDiagCursor)
+                    self.setCursor(QtCore.Qt.SizeFDiagCursor)
                     self.state  = Constants.resize_br
                 elif d_bl < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeBDiagCursor)
+                    self.setCursor(QtCore.Qt.SizeBDiagCursor)
                     self.state  = Constants.resize_bl
                 elif d_tr < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeBDiagCursor)
+                    self.setCursor(QtCore.Qt.SizeBDiagCursor)
                     self.state  = Constants.resize_tr
                 elif d_tl < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeFDiagCursor)
+                    self.setCursor(QtCore.Qt.SizeFDiagCursor)
                     self.state  = Constants.resize_tl
                    # self.setFlag(QGraphicsItem.ItemIsMovable,False)
                 else:
-                    self.setCursor(QC.Qt.SizeAllCursor)
+                    self.setCursor(QtCore.Qt.SizeAllCursor)
                     self.state = Constants.move
                    # self.setFlag(QGraphicsItem.ItemIsMovable)
-                #self.pen.setStyle(QC.Qt.DotLine)
+                #self.pen.setStyle(QtCore.Qt.DotLine)
                 #self.setPen(self.pen)
                 self.make_look_active(True)
         self.counter +=1
@@ -504,5 +504,5 @@ class ROIItem(QW.QGraphicsRectItem):
         print 'hover in'
         self.counter = 0
         self.cursorPositionBasedStyling(event)
-        #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
+        #hoverRect = QtCore.QRectF(self.bottomRight()-QtCore.QPoint(20,20),self.bottomRight())
         return QW.QGraphicsRectItem.hoverEnterEvent(self,event)

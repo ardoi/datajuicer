@@ -4,7 +4,8 @@ from collections import defaultdict
 
 import numpy as n
 
-import PyQt4.QtCore as QC
+from PyQt5 import QtCore
+
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, PickleType
 from sqlalchemy.orm.exc import NoResultFound
@@ -450,9 +451,9 @@ class Spark(dbmaster.Base):
         self.y0 = int(coords[2])
         self.y1 = int(coords[3])
     def get_qrectf(self):
-        topleft =  QC.QPointF(self.x0, self.y0)
-        bottomright =  QC.QPointF(self.x1, self.y1)
-        return QC.QRectF(topleft, bottomright)
+        topleft =  QtCore.QPointF(self.x0, self.y0)
+        bottomright =  QtCore.QPointF(self.x1, self.y1)
+        return QtCore.QRectF(topleft, bottomright)
 
 class Image(dbmaster.Base):
     """Base image class"""

@@ -4,7 +4,8 @@ import sys
 from subprocess import Popen, PIPE
 import logging
 
-import PyQt4.QtCore as QC
+from PyQt5 import QtCore
+
 
 
 class RunnerHerder:
@@ -84,7 +85,7 @@ def bfconvert_filename_from_runner(runner):
     name = os.path.basename(command.split('"')[1])
     return name
 
-class OMEXMLMaker(QC.QObject):
+class OMEXMLMaker(QtCore.QObject):
     conversion_finished = QC.pyqtSignal()
     def __init__(self, parent = None, signals = True):
         super(OMEXMLMaker, self).__init__(parent)
@@ -132,10 +133,10 @@ class OMEXMLMaker(QC.QObject):
                         running_names.append(bfconvert_filename_from_runner(runner))
                     running_string = ", ".join(running_names)
                     self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                            QC.QString(running_string))
+                            QtCore.QString(running_string))
                 else:
                     self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                            QC.QString('Done'))
+                            QtCore.QString('Done'))
 
                 #res = self.shellrunners[f].get()
                 res = self.shellrunners[f].result()
@@ -180,11 +181,11 @@ class OMEXMLMaker(QC.QObject):
                 print "Converting %s to %s"%(f,f_out)
                 run_cmd = self.convert_cmd.format(f,f_out)
                 print run_cmd
-                #QC.QTimer.singleShot(500,lambda :convert(run_cmd))
+                #QtCore.QTimer.singleShot(500,lambda :convert(run_cmd))
  #               convert(run_cmd)
                 #if len(self.shellrunners) == 0:
                 #    self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),\
-                #            QC.QString(os.path.basename(f)))
+                #            QtCore.QString(os.path.basename(f)))
                 runner = ShellRunner(run_cmd)
                 self.shellrunners[f] = runner
                 self.herder.add_runner(runner)
@@ -198,8 +199,8 @@ class OMEXMLMaker(QC.QObject):
         print 'signals',self.signals
         if self.signals:
             self.emit(QC.SIGNAL('set_file_being_inspected_label(QString)'),
-                    QC.QString(os.path.basename(filename)))
-            self.timer = QC.QTimer()
+                    QtCore.QString(os.path.basename(filename)))
+            self.timer = QtCore.QTimer()
             self.connect(self.timer, QC.SIGNAL('timeout()'),self.check_progress)
             self.timer.start(1000)
             self.emit(QC.SIGNAL('filesConverted(int)'),self.done)

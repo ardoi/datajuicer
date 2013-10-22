@@ -1,7 +1,8 @@
 import numpy as n
 from scipy import ndimage as sn
 
-import PyQt4.QtGui as QG
+from PyQt5 import QtGui as QG
+
 from skimage import exposure
 
 

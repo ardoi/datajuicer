@@ -1,5 +1,8 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 import numpy as n
 import datetime
 
@@ -9,7 +12,7 @@ from lsjuicer.ui.views.dataviews import CopyTableView
 
 import lsjuicer.data.spark as dspark
 import lsjuicer.inout.db.sqla as sqla
-class SparkDataModel(QC.QAbstractTableModel):
+class SparkDataModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None):
         super(SparkDataModel, self).__init__(parent)
         self.rows = 0
@@ -36,8 +39,8 @@ class SparkDataModel(QC.QAbstractTableModel):
         self.layoutChanged.emit()
         self.modelReset.emit()
     def headerData(self, section, orientation, role):
-        if role == QC.Qt.DisplayRole:
-            if orientation == QC.Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 if section == 0:
                     return "Spark ROI"
                 elif section == 1:
@@ -65,7 +68,7 @@ class SparkDataModel(QC.QAbstractTableModel):
             else:
                 return section + 1
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def get_active_spark_number(self, indexlist):
         indices = []
@@ -82,7 +85,7 @@ class SparkDataModel(QC.QAbstractTableModel):
 
     def data(self, index, role):
         col = index.column()
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             spark = self.model_data[index.row()][1]
             if isinstance(spark, dspark.Spark):
                 if col==0:
@@ -91,32 +94,32 @@ class SparkDataModel(QC.QAbstractTableModel):
                     return spark.number
                 elif col == 2:
                     if spark.max_val is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return"%.3f"%spark.max_val
                 elif col == 3:
                     if spark.max_val is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return"%.3f"%spark.baseline
                 elif col == 4:
                     if spark.FWHM is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.FWHM
                 elif col == 5:
                     if spark.FDHM is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.FDHM
                 elif col == 6:
                     if spark.risetime is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.risetime
                 elif col == 7:
                     if spark.decay_constant is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.decay_constant
                 elif col==8:
@@ -125,7 +128,7 @@ class SparkDataModel(QC.QAbstractTableModel):
                     try:
                         return "%.2f"%spark.FWHM_max_location
                     except:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                 elif col == 10:
                     fparam = spark.transient.params
                     if fparam:
@@ -133,10 +136,10 @@ class SparkDataModel(QC.QAbstractTableModel):
                         #return ", ".join(["%s:%.1f"%(key, fparam[key]) \
                         #    for key in fparam.keys()])
                     else:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                 elif col == 11:
                     if index.row()==0:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         prev_index = index.row()-1
                         dt = spark.max_time - self.model_data[index.row()-1][1].max_time
@@ -150,32 +153,32 @@ class SparkDataModel(QC.QAbstractTableModel):
                     return spark.id
                 elif col == 2:
                     if spark.val_at_max is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return"%.3f"%spark.val_at_max
                 elif col == 3:
                     if spark.val_at_max is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return"%.3f"%spark.baseline
                 elif col == 4:
                     if spark.fwhm is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.fwhm
                 elif col == 5:
                     if spark.fdhm is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.fdhm
                 elif col == 6:
                     if spark.risetime is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.risetime
                 elif col == 7:
                     if spark.decay_constant is None:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         return "%.2f"%spark.decay_constant
                 elif col==8:
@@ -184,7 +187,7 @@ class SparkDataModel(QC.QAbstractTableModel):
                     try:
                         return "%.2f"%spark.loc_at_max
                     except:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                 elif col == 10:
                     fparam = spark.temporal_fit_params
                     if fparam:
@@ -192,21 +195,21 @@ class SparkDataModel(QC.QAbstractTableModel):
                         #return ", ".join(["%s:%.1f"%(key, fparam[key]) \
                         #    for key in fparam.keys()])
                     else:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                 elif col == 11:
                     if index.row()==0:
-                        return QC.QVariant()
+                        return QtCore.QVariant()
                     else:
                         prev_index = index.row()-1
                         dt = spark.time_at_max - self.model_data[index.row()-1][1].time_at_max
                         return "%i"%int(dt)
 
-        elif role == QC.Qt.TextAlignmentRole:
-            return QC.Qt.AlignCenter
+        elif role == QtCore.Qt.TextAlignmentRole:
+            return QtCore.Qt.AlignCenter
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
-class GroupDataModel(QC.QAbstractTableModel):
+class GroupDataModel(QtCore.QAbstractTableModel):
     def __init__(self, parent=None):
         super(GroupDataModel, self).__init__(parent)
         self.rows = 0
@@ -225,8 +228,8 @@ class GroupDataModel(QC.QAbstractTableModel):
         self.groups.sort()
 
     def headerData(self, section, orientation, role):
-        if role == QC.Qt.DisplayRole:
-            if orientation == QC.Qt.Horizontal:
+        if role == QtCore.Qt.DisplayRole:
+            if orientation == QtCore.Qt.Horizontal:
                 if section == 0:
                     return "Group"
                 elif section == 1:
@@ -238,12 +241,12 @@ class GroupDataModel(QC.QAbstractTableModel):
             else:
                 return section + 1
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
     def data(self, index, role):
         k = self.groups[index.row()]
         col = index.column()
-        if role == QC.Qt.DisplayRole:
+        if role == QtCore.Qt.DisplayRole:
             if col == 0:
                 return self.groups[index.row()]
             elif col == 1:
@@ -252,23 +255,23 @@ class GroupDataModel(QC.QAbstractTableModel):
                 return "%.4f"%self.group_data[k]['std']
             elif col == 3:
                 return "%i"%self.group_data[k]['n']
-        elif role == QC.Qt.DecorationRole:
+        elif role == QtCore.Qt.DecorationRole:
             if col == 0:
                 return QG.QColor(self.group_data[k]['color'])
             else:
-                return QC.QVariant()
+                return QtCore.QVariant()
         else:
-            return QC.QVariant()
+            return QtCore.QVariant()
 
 def list2str(lin):
     return ", ".join(["%.5f"%el for el in lin])
 
-class SparkResultsWidget(QG.QWidget):
+class SparkResultsWidget(QW.QWidget):
     sparks_active = QC.pyqtSignal(list)
     def  __init__(self, sparks, imagedata, parent = None):
         super(SparkResultsWidget, self).__init__( parent)
         self.sparks = sparks
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.tableview = CopyTableView(self)
         self.dm = SparkDataModel()
@@ -276,12 +279,12 @@ class SparkResultsWidget(QG.QWidget):
             self.dm.setData(self.sparks)
         self.tableview.setModel(self.dm)
         self.tableview.items_selected.connect(self.spark_selected)
-        self.tableview.setSelectionMode(QG.QAbstractItemView.ExtendedSelection)
-        self.tableview.setSelectionBehavior(QG.QAbstractItemView.SelectRows)
+        self.tableview.setSelectionMode(QW.QAbstractItemView.ExtendedSelection)
+        self.tableview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
         self.tableview.setAlternatingRowColors(True)
-        #self.tableview.horizontalHeader().setResizeMode(QG.QHeaderView.Fixed)
-        self.tableview.horizontalHeader().setResizeMode(QG.QHeaderView.ResizeToContents)
-        self.tableview.horizontalHeader().setResizeMode(self.dm.rows-1, QG.QHeaderView.Stretch)
+        #self.tableview.horizontalHeader().setSectionResizeMode(QG.QHeaderView.Fixed)
+        self.tableview.horizontalHeader().setSectionResizeMode(QW.QHeaderView.ResizeToContents)
+        self.tableview.horizontalHeader().setSectionResizeMode(self.dm.rows-1, QW.QHeaderView.Stretch)
 
         #self.tableview.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
         layout.addWidget(self.tableview)
@@ -311,10 +314,10 @@ class SparkResultsWidget(QG.QWidget):
         self.dm.setData(self.sparks)
         self.tableview.resizeColumnsToContents()
     def save_data(self,datafilename):
-        comment,ok = QG.QInputDialog.getText(self,
-                'info','You can enter a comment on the line below:',QG.QLineEdit.Normal, '')
+        comment,ok = QW.QInputDialog.getText(self,
+                'info','You can enter a comment on the line below:',QW.QLineEdit.Normal, '')
         if not ok:
-            QG.QMessageBox.information(self,'Cancelled','Saving was cancelled')
+            QW.QMessageBox.information(self,'Cancelled','Saving was cancelled')
             return
         #print comment, ok
         print '::Saving::', datafilename
@@ -322,7 +325,7 @@ class SparkResultsWidget(QG.QWidget):
             datafile = open(datafilename,'w')
         except IOError:
             txt = 'Error saving file \n%s'%datafilename
-            QG.QMessageBox.warning(self,'Error',txt)
+            QW.QMessageBox.warning(self,'Error',txt)
             return
         datafile.write("# Comment: %s\n"%comment)
         reader = self.imagedata.readers[0] #use the first reader
@@ -345,7 +348,7 @@ class SparkResultsWidget(QG.QWidget):
         column_names.append("# 1: Spark")
         columns = ["1"]
         for i in range(self.dm.columnCount(None)):
-            value = self.dm.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole)
+            value = self.dm.headerData(i, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole)
             column_names.append("# %i: %s"%(i+2,value))
             columns.append(str(i+2))
         header = "\n".join(column_names)
@@ -361,7 +364,7 @@ class SparkResultsWidget(QG.QWidget):
             out.append(str(i+1))
             for j in range(self.dm.columnCount(None)):
                 index = self.dm.index(i, j)
-                value = self.dm.data(index, QC.Qt.DisplayRole)
+                value = self.dm.data(index, QtCore.Qt.DisplayRole)
                 #print type(value)
                 out.append(str(value))
             outline = ", ".join(out)
@@ -383,20 +386,20 @@ class SparkResultsWidget(QG.QWidget):
         #for vec in outdatas:
         #    datafile.write(vec + "\n")
         txt = 'Results saved to:\n%s'%datafilename
-        QG.QMessageBox.information(self,'Success',txt)
+        QW.QMessageBox.information(self,'Success',txt)
         datafile.close()
 
-class ResultTab(QG.QTabWidget):
+class ResultTab(QW.QTabWidget):
     def  __init__(self, parent = None):
         super(ResultTab, self).__init__(parent)
         self.currentChanged.connect(self.setc)
         self.groups={}
 
     def save_data(self,datafilename):
-        comment,ok = QG.QInputDialog.getText(self,
-                'info','You can enter a comment on the line below:',QG.QLineEdit.Normal, '')
+        comment,ok = QW.QInputDialog.getText(self,
+                'info','You can enter a comment on the line below:',QW.QLineEdit.Normal, '')
         if not ok:
-            QG.QMessageBox.information(self,'Cancelled','Saving was cancelled')
+            QW.QMessageBox.information(self,'Cancelled','Saving was cancelled')
             return
         #print comment, ok
         print '::Saving::', datafilename
@@ -404,7 +407,7 @@ class ResultTab(QG.QTabWidget):
             datafile = open(datafilename,'w')
         except IOError:
             txt = 'Error saving file \n%s'%datafilename
-            QG.QMessageBox.warning(self,'Error',txt)
+            QW.QMessageBox.warning(self,'Error',txt)
             return
         datafile.write("# Comment: %s\n"%comment)
         restypes = self.groups.keys()
@@ -437,7 +440,7 @@ class ResultTab(QG.QTabWidget):
                     out.append("%.5f"%vec[i])
             datafile.write(", ".join(out) + "\n")
         txt = 'Results saved to:\n%s'%datafilename
-        QG.QMessageBox.information(self,'Success',txt)
+        QW.QMessageBox.information(self,'Success',txt)
 
     def addResPlot(self, name, yval, xval,groups, size, plottype, color,append):
         groupsdata = {}
@@ -472,8 +475,8 @@ class ResultTab(QG.QTabWidget):
         print groupsdata
         if glines:
             glines.pop()
-        plot_widget = QG.QWidget()
-        layout = QG.QVBoxLayout()
+        plot_widget = QW.QWidget()
+        layout = QW.QVBoxLayout()
         plot_widget.setLayout(layout)
         plot = TracePlotWidget(sceneClass = FDisplay, parent = plot_widget)
         plot.updateLocation.connect(self.updateCoords)
@@ -482,12 +485,12 @@ class ResultTab(QG.QTabWidget):
         #w.setMaximumHeight(120)
         #w.setLayout(QG.QHBoxLayout())
         #w.layout().setContentsMargins(1,1,1,1)
-        tableview = QG.QTableView()
+        tableview = QW.QTableView()
         #w.layout().addWidget(tableview)
         #tableview.setMaximumHeight(130)
         #tableview.setMinimumWidth(450)
         tableview.setModel(dm)
-        tableview.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        tableview.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
         #w.setSizePolicy(QG.QSizePolicy.Minimum,QG.QSizePolicy.Minimum)
         #plot.extendControlArea(w)
         layout.addWidget(tableview)
@@ -517,4 +520,4 @@ class ResultTab(QG.QTabWidget):
         print t
     def updateCoords(self, xv, yv, xs, ys):
         #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.emit(QC.SIGNAL('positionTXT(QString)'),'x: %.3f , y: %.2f , sx: %i, sy: %i'%(xv,yv,xs,ys))
+        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys)

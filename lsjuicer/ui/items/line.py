@@ -1,5 +1,5 @@
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtGui as QG as QG
+from PyQt5 import QtWidgets as QW as QW
 
 from PyQt5 import QtCore as QC
 
@@ -81,16 +81,16 @@ class LineItem(QW.QGraphicsLineItem):
         #pos  = event.pos()
         #d = (pos - self.rect().bottomRight()).manhattanLength()
         #if d < 20:
-        #    self.setCursor(QC.Qt.SizeFDiagCursor)
+        #    self.setCursor(QtCore.Qt.SizeFDiagCursor)
         #   # self.setFlag(QGraphicsItem.ItemIsMovable,False)
         #else:
-        #    self.setCursor(QC.Qt.SizeAllCursor)
+        #    self.setCursor(QtCore.Qt.SizeAllCursor)
         return QW.QGraphicsRectItem.hoverMoveEvent(self,event)
 
     def hoverLeaveEvent(self, event):
         self.hovering = False
         #if self.initialized:
-        #    #self.pen.setStyle(QC.Qt.SolidLine)
+        #    #self.pen.setStyle(QtCore.Qt.SolidLine)
         #    self.setPen(self.pen)
         self.make_look_active(False)
         self.unsetCursor()
@@ -106,13 +106,13 @@ class LineItem(QW.QGraphicsLineItem):
                 d_t = (pos - self.line().p1()).manhattanLength()
                 d_b = (pos - self.line().p2()).manhattanLength()
                 if d_t < self.resizeDistance():
-                    self.setCursor(QC.Qt.CrossCursor)
+                    self.setCursor(QtCore.Qt.CrossCursor)
                     self.state  = Constants.resize_t
                 elif d_b < self.resizeDistance():
-                    self.setCursor(QC.Qt.CrossCursor)
+                    self.setCursor(QtCore.Qt.CrossCursor)
                     self.state  = Constants.resize_b
                 else:
-                    self.setCursor(QC.Qt.SizeAllCursor)
+                    self.setCursor(QtCore.Qt.SizeAllCursor)
                     self.state = Constants.move
                 self.make_look_active(True)
         self.counter +=1

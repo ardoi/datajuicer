@@ -1,8 +1,11 @@
 import copy
 import datetime
 
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 import numpy as n
 
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
@@ -18,27 +21,27 @@ from lsjuicer.static.constants import TransientBoundarySelectionTypeNames as TBS
 from lsjuicer.data.data import Fl_Data
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 
-class SaveTracesDialog(QG.QDialog):
+class SaveTracesDialog(QW.QDialog):
     def __init__(self, parent = None):
         super(SaveTracesDialog, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        location_layout = QG.QHBoxLayout()
-        location_layout.addWidget(QG.QLabel("Saving to:"))
+        location_layout = QW.QHBoxLayout()
+        location_layout.addWidget(QW.QLabel("Saving to:"))
         #try:
         #    self.save_folder_name = Config.get_property('save_folder_name')
         #except KeyError:
         self.save_file_name = None
-        self.location_label = QG.QLabel()
+        self.location_label = QW.QLabel()
         location_layout.addWidget(self.location_label)
-        location_change_pb = QG.QPushButton("Choose file")
+        location_change_pb = QW.QPushButton("Choose file")
         location_layout.addWidget(location_change_pb)
         layout.addLayout(location_layout)
         location_change_pb.clicked.connect(self.choose_file)
 
-        exp_type_layout = QG.QHBoxLayout()
-        exp_type_layout.addWidget(QG.QLabel('Experiment type:'))
-        self.exp_type_combo = QG.QComboBox()
+        exp_type_layout = QW.QHBoxLayout()
+        exp_type_layout.addWidget(QW.QLabel('Experiment type:'))
+        self.exp_type_combo = QW.QComboBox()
         #key = 'experiment.types'
         #if shelf_db.has_key(key):
         #    types = shelf_db[key]
@@ -60,9 +63,9 @@ class SaveTracesDialog(QG.QDialog):
 
         layout.addLayout(exp_type_layout)
 
-        button_layout = QG.QHBoxLayout()
-        self.save_pb = QG.QPushButton("Save")
-        cancel_pb = QG.QPushButton("Cancel")
+        button_layout = QW.QHBoxLayout()
+        self.save_pb = QW.QPushButton("Save")
+        cancel_pb = QW.QPushButton("Cancel")
         button_layout.addWidget(self.save_pb)
         button_layout.addWidget(cancel_pb)
         self.save_pb.clicked.connect(self.accept)
@@ -75,9 +78,9 @@ class SaveTracesDialog(QG.QDialog):
         #fname_layout.addWidget(self.fname_box)
         #layout.addLayout(fname_layout)
 
-        comment_layout = QG.QHBoxLayout()
-        comment_layout.addWidget(QG.QLabel("Comment"))
-        self.comment_box = QG.QLineEdit()
+        comment_layout = QW.QHBoxLayout()
+        comment_layout.addWidget(QW.QLabel("Comment"))
+        self.comment_box = QW.QLineEdit()
         #self.comment_box.editingFinished.connect(self.ready)
 
         comment_layout.addWidget(self.comment_box)
@@ -92,7 +95,7 @@ class SaveTracesDialog(QG.QDialog):
         self.set_location_label()
 
     def choose_file_dialog(self):
-        save_file_name = str(QG.QFileDialog.getSaveFileName(self))
+        save_file_name = str(QW.QFileDialog.getSaveFileName(self)[0])
         #Config.set_property('save_folder_name', save_folder_name)
         return save_file_name
 
@@ -112,7 +115,7 @@ class SaveTracesDialog(QG.QDialog):
         self.exp_type = self.exp_type_combo.currentText()
         self.comment = self.comment_box.text()
         #Config.set_property('comment', self.comment)
-        return QG.QDialog.accept(self)
+        return QW.QDialog.accept(self)
 
 
 def setAll(indices):
@@ -151,7 +154,7 @@ def set_indices(indices, value, array):
     print all_indices,tuple(all_indices.T)
     array[tuple(all_indices.T)] = value
 
-class TransientTab(QG.QTabWidget):
+class TransientTab(QW.QTabWidget):
 
     @property
     def fl_ds(self):
@@ -209,7 +212,7 @@ class TransientTab(QG.QTabWidget):
         self.approved_transients = None
         self.toggling_buttons = False
         self.toggle_buttons()
-        QC.QTimer.singleShot(50, lambda :self.initialPlots())
+        QtCore.QTimer.singleShot(50, lambda :self.initialPlots())
 
     def setName(self,name):
         self.filename = name
@@ -302,7 +305,7 @@ class TransientTab(QG.QTabWidget):
             for row in rows:
                 f.write(row)
             f.close()
-            QG.QMessageBox.information(self,'Done',"%i rows saved to %s"%(len(rows),fullfname))
+            QW.QMessageBox.information(self,'Done',"%i rows saved to %s"%(len(rows),fullfname))
             self.save_label.setText("Saved")
 
 
@@ -311,7 +314,7 @@ class TransientTab(QG.QTabWidget):
 
 
     def setup_ui(self):
-        main_layout = QG.QGridLayout()
+        main_layout = QW.QGridLayout()
         self.setLayout(main_layout)
         #closeIcon = QG.QIcon(":/cancel.png")
         #self.closePB = QG.QPushButton(closeIcon, 'Close tabs')
@@ -331,16 +334,16 @@ class TransientTab(QG.QTabWidget):
         main_layout.setSpacing(2)
 
         #main layout for right hand buttons and widgets
-        tool_layout = QG.QVBoxLayout()
+        tool_layout = QW.QVBoxLayout()
         tool_layout.setContentsMargins(2, 2,2, 2)
-        channel_box = QG.QGroupBox("Channels")
-        channel_main_layout = QG.QVBoxLayout()
-        channel_layout=QG.QVBoxLayout()
+        channel_box = QW.QGroupBox("Channels")
+        channel_main_layout = QW.QVBoxLayout()
+        channel_layout=QW.QVBoxLayout()
         channel_box.setLayout(channel_main_layout)
         channel_main_layout.addLayout(channel_layout)
         self.channel_checkboxes=[]
         for channel in self.channel_fl_datas:
-            checkbox = QG.QCheckBox("Channel %i"%channel)
+            checkbox = QW.QCheckBox("Channel %i"%channel)
             channel_layout.addWidget(checkbox)
             checkbox.setChecked(True)
             checkbox.toggled.connect(self.channel_visibility)
@@ -348,21 +351,21 @@ class TransientTab(QG.QTabWidget):
 
 
         save_data_icon = QG.QIcon(':/report_disk.png')
-        save_pb = QG.QPushButton(save_data_icon, "Save traces")
+        save_pb = QW.QPushButton(save_data_icon, "Save traces")
         save_pb.clicked.connect(self.save_traces)
-        save_layout = QG.QHBoxLayout()
+        save_layout = QW.QHBoxLayout()
         save_layout.addWidget(save_pb)
         channel_main_layout.addLayout(save_layout)
-        self.save_label = QG.QLabel()
+        self.save_label = QW.QLabel()
         save_layout.addWidget(self.save_label)
 
 
-        detection_box = QG.QGroupBox('Detection')
-        detection_layout = QG.QVBoxLayout()
+        detection_box = QW.QGroupBox('Detection')
+        detection_layout = QW.QVBoxLayout()
         detection_box.setLayout(detection_layout)
 
         manual_icon = QG.QIcon(":/user.png")
-        self.pb_manual = QG.QPushButton(manual_icon,'Manual')
+        self.pb_manual = QW.QPushButton(manual_icon,'Manual')
         self.pb_manual.setObjectName('Manual PB')
         #self.pb_manual.setEnabled(False)
         self.pb_manual.setCheckable(True)
@@ -376,7 +379,7 @@ class TransientTab(QG.QTabWidget):
         detection_layout.addWidget(self.pb_manual)
 
         auto_icon = QG.QIcon(":/wand.png")
-        self.pb_auto  = QG.QPushButton(auto_icon, 'Automatic' )
+        self.pb_auto  = QW.QPushButton(auto_icon, 'Automatic' )
         self.pb_auto.setObjectName('Auto PB')
         self.pb_auto.setCheckable(True)
         d = n.zeros((3,3,2),dtype=bool)
@@ -387,7 +390,7 @@ class TransientTab(QG.QTabWidget):
         detection_layout.addWidget(self.pb_auto)
 
         find_icon = QG.QIcon(":/find.png")
-        self.pb_find = QG.QPushButton(find_icon, 'Find')
+        self.pb_find = QW.QPushButton(find_icon, 'Find')
         self.pb_find.setObjectName('Find PB')
         d = n.zeros((3,3,2),dtype=bool)
         settings = [[TS.TRANSIENTS_HIDDEN,TS.TRANSIENTS_NONE],
@@ -405,19 +408,19 @@ class TransientTab(QG.QTabWidget):
         ####
         #smoothing
         #
-        self.smooth_widget = QG.QWidget()
-        smooth_widget_layout = QG.QVBoxLayout()
+        self.smooth_widget = QW.QWidget()
+        smooth_widget_layout = QW.QVBoxLayout()
         smooth_widget_layout.setContentsMargins(0,0,0,0)
         self.smooth_widget.setLayout(smooth_widget_layout)
         initval = 1
 #        initval=5
-        self.label_smoothing_value = QG.QLabel("Smoothing: " + str(initval))
+        self.label_smoothing_value = QW.QLabel("Smoothing: " + str(initval))
         self.label_smoothing_value.setToolTip('Amount of smoothing to be done \non fluorescence signal')
         smooth_widget_layout.addWidget(self.label_smoothing_value)
         detection_layout.addWidget(self.smooth_widget)
 
-        self.slider_smoothing = QG.QSlider(QC.Qt.Horizontal)
-        self.slider_smoothing.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
+        self.slider_smoothing = QW.QSlider(QtCore.Qt.Horizontal)
+        self.slider_smoothing.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
         self.slider_smoothing.setSingleStep(1)
         self.slider_smoothing.setValue(initval)
         self.slider_smoothing.setRange(0, 40)
@@ -427,28 +430,27 @@ class TransientTab(QG.QTabWidget):
         self.smooth_widget.setObjectName('Smooth widget')
         self.state_matrix.update({self.smooth_widget:d})
         smooth_widget_layout.addWidget(self.slider_smoothing)
-        self.connect(self.slider_smoothing, QC.SIGNAL('valueChanged(int)'),\
-                lambda x: self.label_smoothing_value.setText("Smoothing: %i"%x))
-        self.connect(self.slider_smoothing, QC.SIGNAL('sliderReleased()'), self.set_smooth)
+        self.slider_smoothing.valueChanged[int].connect(\lambda x: self.label_smoothing_value.setText("Smoothing: %i"%x))
+        self.slider_smoothing.sliderReleased.connect(self.set_smooth)
         #
         ####
 
         ####
         #
         #Detection
-        detection_widget_layout = QG.QVBoxLayout()
+        detection_widget_layout = QW.QVBoxLayout()
         detection_widget_layout.setContentsMargins(0,0,0,0)
-        self.detection_widget = QG.QWidget()
+        self.detection_widget = QW.QWidget()
         self.detection_widget.setLayout(detection_widget_layout)
         initval = 15
-        self.label_detection_value = QG.QLabel("Detection: "+str(initval))
+        self.label_detection_value = QW.QLabel("Detection: "+str(initval))
         self.label_detection_value.setToolTip('Amount of smoothing to be done \ non fluorescence signal')
         detection_widget_layout.addWidget(self.label_detection_value)
         detection_layout.addWidget(self.detection_widget)
 
 
-        self.slider_detection = QG.QSlider(QC.Qt.Horizontal)
-        self.slider_detection.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
+        self.slider_detection = QW.QSlider(QtCore.Qt.Horizontal)
+        self.slider_detection.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
         self.slider_detection.setSingleStep(10)
         self.slider_detection.setValue(initval)
         self.slider_detection.setRange(1, 200)
@@ -460,9 +462,8 @@ class TransientTab(QG.QTabWidget):
         self.slider_detection.setObjectName('Detection slider')
         detection_layout.addWidget(self.detection_widget)
         self.state_matrix.update({self.detection_widget:d})
-        self.connect(self.slider_detection, QC.SIGNAL('valueChanged(int)'),\
-                lambda x: self.label_detection_value.setText("Detection: %i"%x))
-        self.connect(self.slider_detection, QC.SIGNAL('sliderReleased()'), self.find_transients)
+        self.slider_detection.valueChanged[int].connect(\lambda x: self.label_detection_value.setText("Detection: %i"%x))
+        self.slider_detection.sliderReleased.connect(self.find_transients)
         #
         ####
 
@@ -470,10 +471,10 @@ class TransientTab(QG.QTabWidget):
         ####
         #
         #Plotting
-        plot_box = QG.QGroupBox('Plotting')
-        plot_layout = QG.QVBoxLayout()
+        plot_box = QW.QGroupBox('Plotting')
+        plot_layout = QW.QVBoxLayout()
         plot_box.setLayout(plot_layout)
-        self.pb_show_transients = QG.QPushButton('Show transients')
+        self.pb_show_transients = QW.QPushButton('Show transients')
         d = n.zeros((3,3,2),dtype=bool)
         settings = [TS.TRANSIENTS_HIDDEN, TS.SELECTIONMODE_NONE, TS.SELECTION_NONE]
         set_indices(settings, True, d)
@@ -484,12 +485,12 @@ class TransientTab(QG.QTabWidget):
         plot_layout.addWidget(self.pb_show_transients)
 
         accept_icon = QG.QIcon(":/accept.png")
-        self.pb_accept_transients = QG.QPushButton(accept_icon,'Accept')
+        self.pb_accept_transients = QW.QPushButton(accept_icon,'Accept')
         self.pb_accept_transients.setVisible(False)
         plot_layout.addWidget(self.pb_accept_transients)
 
         reject_icon = QG.QIcon(":/cancel.png")
-        self.pb_reject_transients = QG.QPushButton(reject_icon,'Reject')
+        self.pb_reject_transients = QW.QPushButton(reject_icon,'Reject')
         self.pb_reject_transients.setVisible(False)
         plot_layout.addWidget(self.pb_reject_transients)
 
@@ -500,9 +501,9 @@ class TransientTab(QG.QTabWidget):
         ####
         #
         #Analysis
-        do_analysis_layout = QG.QVBoxLayout()
+        do_analysis_layout = QW.QVBoxLayout()
         analyze_icon = QG.QIcon(":/calculator.png")
-        self.pb_analyze = QG.QPushButton(analyze_icon, 'Analyze')
+        self.pb_analyze = QW.QPushButton(analyze_icon, 'Analyze')
 
         d = n.zeros((3, 3, 2),dtype=bool)
         settings = [[TS.TRANSIENTS_HIDDEN,TS.TRANSIENTS_VISIBLE],
@@ -518,28 +519,28 @@ class TransientTab(QG.QTabWidget):
         ####
         #
         # Transient edit widget
-        self.transient_action_widget = QG.QWidget()
-        transient_action_layout = QG.QVBoxLayout()
+        self.transient_action_widget = QW.QWidget()
+        transient_action_layout = QW.QVBoxLayout()
         self.transient_action_widget.setLayout(transient_action_layout)
         self.transient_tableview = CopyTableView()
         self.transient_datamodel = TransientDataModel()
         #boxdelegate = CheckBoxDelegate()
         self.transient_tableview.setModel(self.transient_datamodel)
         #self.transient_tableview.setItemDelegateForColumn(9, boxdelegate)
-        #transient_tableview.horizontalHeader().setResizeMode(0, QG.QHeaderView.ResizeToContents)
-        #transient_tableview.horizontalHeader().setResizeMode(1, QG.QHeaderView.ResizeToContents)
-        #transient_tableview.horizontalHeader().setResizeMode(2, QG.QHeaderView.ResizeToContents)
-        self.transient_tableview.horizontalHeader().setResizeMode(
-                QG.QHeaderView.ResizeToContents)
+        #transient_tableview.horizontalHeader().setSectionResizeMode(0, QG.QHeaderView.ResizeToContents)
+        #transient_tableview.horizontalHeader().setSectionResizeMode(1, QG.QHeaderView.ResizeToContents)
+        #transient_tableview.horizontalHeader().setSectionResizeMode(2, QG.QHeaderView.ResizeToContents)
+        self.transient_tableview.horizontalHeader().setSectionResizeMode(
+                QW.QHeaderView.ResizeToContents)
         self.transient_tableview.horizontalHeader().setStretchLastSection(True)
-        self.transient_tableview.verticalHeader().setResizeMode(QG.QHeaderView.Fixed)
-        self.transient_tableview.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
-        self.transient_tableview.setSelectionBehavior(QG.QAbstractItemView.SelectRows)
-        self.transient_tableview.setSelectionMode(QG.QAbstractItemView.ExtendedSelection)
+        self.transient_tableview.verticalHeader().setSectionResizeMode(QW.QHeaderView.Fixed)
+        self.transient_tableview.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.transient_tableview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
+        self.transient_tableview.setSelectionMode(QW.QAbstractItemView.ExtendedSelection)
         transient_action_layout.addWidget(self.transient_tableview)
-        transient_action_toolbar = QG.QToolBar('Action')
+        transient_action_toolbar = QW.QToolBar('Action')
         self.transient_tableview.items_selected.connect(transient_action_toolbar.setEnabled)
-        transient_action_toolbar.setToolButtonStyle(QC.Qt.ToolButtonTextUnderIcon)
+        transient_action_toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
         transient_show_action = transient_action_toolbar.addAction(
                 QG.QIcon(':/eye.png'), 'Show')
         #transient_show_action.setCheckable(True)
@@ -554,7 +555,7 @@ class TransientTab(QG.QTabWidget):
         transient_delete_action.triggered.connect(self.transient_delete_action_triggered)
         transient_action_layout.addWidget(transient_action_toolbar)
         transient_action_toolbar.setContentsMargins(0,0,0,0)
-        transient_action_layout.setAlignment(transient_action_toolbar, QC.Qt.AlignCenter)
+        transient_action_layout.setAlignment(transient_action_toolbar, QtCore.Qt.AlignCenter)
 
         d = n.zeros((3,3,2),dtype = bool)
         settings = [[TS.TRANSIENTS_HIDDEN, TS.TRANSIENTS_VISIBLE],
@@ -614,15 +615,15 @@ class TransientTab(QG.QTabWidget):
         self.selection_datamodel.set_selection_manager(self.roi_manager)
         #selection_widget.set_model(selection_datamodel)
         #self.lsmButtonLayout.addWidget(selection_widget)
-        self.connect(self.pb_manual, QC.SIGNAL('toggled(bool)'),self.pb_manual_toggled)
-        self.connect(self.pb_auto, QC.SIGNAL('toggled(bool)'),self.pb_auto_toggled)
-        self.connect(self.roi_manager,QC.SIGNAL('ROI_available()'),lambda: self.enable_find(True))
+        self.pb_manual.toggled[bool].connect(self.pb_manual_toggled)
+        self.pb_auto.toggled[bool].connect(self.pb_auto_toggled)
+        self.roi_manager.ROI_available.connect(lambda: self.enable_find(True))
         self.fplot.updateLocation.connect(self.updateCoords)
-        self.connect(self.pb_find, QC.SIGNAL('clicked()'), self.find_transients)
-        self.connect(self.pb_show_transients, QC.SIGNAL('toggled(bool)'), self.toggleTransients)
-        self.connect(self.pb_accept_transients, QC.SIGNAL('clicked()'), self.acceptKeyPressed)
-        self.connect(self.pb_reject_transients, QC.SIGNAL('clicked()'), self.rejectPBPressed)
-        self.connect(self.pb_analyze, QC.SIGNAL('clicked()'), self.analyze)
+        self.pb_find.clicked[()].connect(self.find_transients)
+        self.pb_show_transients.toggled[bool].connect(self.toggleTransients)
+        self.pb_accept_transients.clicked[()].connect(self.acceptKeyPressed)
+        self.pb_reject_transients.clicked[()].connect(self.rejectPBPressed)
+        self.pb_analyze.clicked[()].connect(self.analyze)
 
     def transient_show_action_triggered(self):
         selected = self.transient_tableview.selectedIndexes()
@@ -709,7 +710,7 @@ class TransientTab(QG.QTabWidget):
         if self.approved_transients is None:
             color = QG.QColor(140, 0, 250, 128)
             self.approved_transients = VisualTransientCollection(self.new_transients, self.fplot, color)
-            self.connect(self.approved_transients, QC.SIGNAL('maxUpdate()'), self.update_maxima)
+            self.approved_transients.maxUpdate.connect(self.update_maxima)
         self.approved_transients.showAll()
         self.approved_transients.hideAll()
         print 'approved transients0',self.approved_transients.visual_transients.keys()
@@ -1017,7 +1018,7 @@ class TransientTab(QG.QTabWidget):
             #.get(tuple(state))
             print 'button',button,state,new_state
             button.setEnabled(new_state)
-            if isinstance(button, QG.QPushButton):
+            if isinstance(button, QW.QPushButton):
                 print button.text()
                 if new_state == False and button.isChecked():
                     button.setChecked(new_state)
@@ -1104,7 +1105,7 @@ class TransientTab(QG.QTabWidget):
 
     def updateCoords(self, xv, yv, xs, ys):
         #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.emit(QC.SIGNAL('positionTXT(QString)'),'x: %.3f , y: %.2f , sx: %i, sy: %i'%(xv,yv,xs,ys))
+        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys)
 
 
 class FluorescenceTab(TransientTab):
@@ -1144,7 +1145,7 @@ class FluorescenceTab(TransientTab):
 #        detection_widget_layout.addWidget(qls4)
 #        detection_widget_layout.addWidget(self.qls5)
 #        self.detectionLayout.addLayout(detection_widget_layout)
-#        self.qms = QG.QSlider(QC.Qt.Horizontal)
+#        self.qms = QG.QSlider(QtCore.Qt.Horizontal)
 #        self.qms.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
 #        self.qms.setRange(50, 300)
 #        self.qms.setSingleStep(25)

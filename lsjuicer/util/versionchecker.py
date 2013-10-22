@@ -1,18 +1,20 @@
 import pickle
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
-import PyQt4.QtNetwork as QN
+from PyQt5 import QtWidgets as QW
 
-class VersionChecker(QC.QObject):
+from PyQt5 import QtCore, QtWidgets
+
+import PyQt5.QtNetwork as QN
+
+class VersionChecker(QtCore.QObject):
     def __init__(self,version):
         self.version = version
     
     def checkVersion(self):
-        self.url = QC.QUrl("http://lsjuicer.googlecode.com/files/version")
-        self.buffer = QC.QBuffer()
+        self.url = QtCore.QUrl("http://lsjuicer.googlecode.com/files/version")
+        self.buffer = QtCore.QBuffer()
         self.http = QN.QHttp()
-        self.connect(self.http,QC.SIGNAL('done(bool)'),self.done)
+        self.http.done[bool].connect(self.done)
         self.http.setHost(self.url.host())
         self.http.get(self.url.path(),self.buffer)
         self.http.close()
@@ -43,14 +45,14 @@ class VersionChecker(QC.QObject):
             for key in updates:
                 versiontxt+=' * '+version_d[key]+'\n'
 
-            te = QG.QTextBrowser()
+            te = QW.QTextBrowser()
             te.setOpenExternalLinks(True)
-            te.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
+            te.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
             te.setHtml(versiontxt.replace('\n','<br>'))
             
-            infoL = QG.QHBoxLayout()
+            infoL = QW.QHBoxLayout()
             infoL.addWidget(te)
-            self.versiondialog = QG.QDialog()
+            self.versiondialog = QW.QDialog()
             self.versiondialog.setWindowTitle('New version')
             self.versiondialog.setFixedWidth(350)
             self.versiondialog.setFixedHeight(300)

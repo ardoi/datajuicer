@@ -1,7 +1,9 @@
 import time
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+
+from PyQt5 import QtCore
+
 
 import numpy
 from scipy.signal import convolve2d
@@ -445,7 +447,7 @@ def doit(data):
 
 def rect_from_list(plist):
     l1 = plist
-    r = QC.QRectF(l1[0], l1[2], l1[1]-l1[0], -(l1[2]-l1[3]))
+    r = QtCore.QRectF(l1[0], l1[2], l1[1]-l1[0], -(l1[2]-l1[3]))
     return r
 
 
@@ -458,7 +460,7 @@ def point_dict(rect):
 #def plot_rect(r, color='black'):
 #    if isinstance(r, list):
 #        rect = rect_from_list(r)
-#    elif isinstance(r, QC.QRectF):
+#    elif isinstance(r, QtCore.QRectF):
 #        rect = r
 #    lines_x = []
 #    lines_y = []
@@ -486,7 +488,7 @@ def point_dict(rect):
 
 def rect_from_dict(dict_in):
     print 'q'
-    return QC.QRectF(dict_in['tl'].x(), dict_in['tl'].y(),
+    return QtCore.QRectF(dict_in['tl'].x(), dict_in['tl'].y(),
                      abs(dict_in['br'].x() - dict_in['bl'].x()),
                      abs(dict_in['tr'].y()-dict_in['br'].y()))
 
@@ -690,5 +692,5 @@ def make_mask_pixmap_cm(twodmask, colormap):
     return pixmap
 
 
-class SenderObject(QC.QObject):
+class SenderObject(QtCore.QObject):
     selection_changed = QC.pyqtSignal()

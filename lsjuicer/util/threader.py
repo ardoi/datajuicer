@@ -5,8 +5,10 @@ import random
 import time
 import traceback
 
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtWidgets as QW
+
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
@@ -154,7 +156,7 @@ class Worker(Process):
         return
 
 
-class Threader(QC.QObject):
+class Threader(QtCore.QObject):
     threads_done = QC.pyqtSignal()
     progress_update = QC.pyqtSignal(int, int, int, int)
     time_stats = QC.pyqtSignal(float, float, float)
@@ -323,7 +325,7 @@ class Threader(QC.QObject):
                 (total_time, computational_time, average_comp_time)
             print job_run_times.mean(), job_run_times.min(), job_run_times.max()
             # print "RESULTS ",self.out_data
-            # qc=QC.QCoreApplication.instance()
+            # qc=QtCore.QCoreApplication.instance()
             # qc.exit()
             self.threads_done.emit()
         session.commit()
@@ -336,7 +338,7 @@ class Threader(QC.QObject):
         return selection
 
     def __init__(self, parent=None):
-        QC.QObject.__init__(self, parent)
+        QtCore.QObject.__init__(self, parent)
         self.waiting_workers = []
         self.running_workers = []
         self.finished_workers = []
@@ -369,16 +371,16 @@ class Threader(QC.QObject):
         self.failed_jobs = []
 
 
-class FitDialog(QG.QDialog):
+class FitDialog(QW.QDialog):
     progress_map_update = QC.pyqtSignal(np.ndarray)
 
     def __init__(self, parameters, settings, parent=None):
-        QG.QDialog.__init__(self, parent)
+        QW.QDialog.__init__(self, parent)
 
         self.d = Threader(self)
         self.d.do(parameters, settings)
 
-        self.timer = QC.QTimer(self)
+        self.timer = QtCore.QTimer(self)
         self.timer.timeout.connect(self.d.update)
 
         self.d.threads_done.connect(self.timer.stop)
@@ -387,71 +389,71 @@ class FitDialog(QG.QDialog):
         self.d.time_stats.connect(self.update_timings)
         self.d.new_progress_array.connect(self.update_progress_pixmap)
 
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
 
-        progress_layout = QG.QGridLayout()
+        progress_layout = QW.QGridLayout()
         layout.addLayout(progress_layout)
 
         # waiting_layout = QG.QHBoxLayout()
         # progress_layout.addLayout(waiting_layout)
-        label = QG.QLabel("Waiting")
-        waiting_progress = QG.QProgressBar()
+        label = QW.QLabel("Waiting")
+        waiting_progress = QW.QProgressBar()
         waiting_progress.setMinimum(0)
         waiting_progress.setValue(0)
         waiting_progress.setMaximum(self.d.jobs_to_run)
         # waiting_progress.setStyleSheet(self.make_progress_style("skyblue"))
-        waiting_label = QG.QLabel()
+        waiting_label = QW.QLabel()
         self.waiting_progress = waiting_progress
         self.waiting_label = waiting_label
         progress_layout.addWidget(label, 0, 0)
         progress_layout.addWidget(waiting_progress, 0, 1)
         progress_layout.addWidget(waiting_label, 0, 2)
 
-        label = QG.QLabel("Finished")
-        finished_progress = QG.QProgressBar()
+        label = QW.QLabel("Finished")
+        finished_progress = QW.QProgressBar()
         finished_progress.setValue(0)
         # finished_progress.setStyleSheet(self.make_progress_style("lime"))
         finished_progress.setMinimum(0)
         finished_progress.setMaximum(self.d.jobs_to_run)
-        finished_label = QG.QLabel()
+        finished_label = QW.QLabel()
         self.finished_progress = finished_progress
         self.finished_label = finished_label
         progress_layout.addWidget(label, 1, 0)
         progress_layout.addWidget(finished_progress, 1, 1)
         progress_layout.addWidget(finished_label, 1, 2)
 
-        label = QG.QLabel("Failed")
-        failed_progress = QG.QProgressBar()
+        label = QW.QLabel("Failed")
+        failed_progress = QW.QProgressBar()
         # style = self.make_progress_style("red")
         # failed_progress.setStyleSheet(style)
         failed_progress.setMinimum(0)
         failed_progress.setMaximum(self.d.jobs_to_run)
-        failed_label = QG.QLabel()
+        failed_label = QW.QLabel()
         self.failed_progress = failed_progress
         self.failed_label = failed_label
         progress_layout.addWidget(label, 2, 0)
         progress_layout.addWidget(failed_progress, 2, 1)
         progress_layout.addWidget(failed_label, 2, 2)
 
-        label = QG.QLabel("Timed out")
-        timed_out_progress = QG.QProgressBar()
+        label = QW.QLabel("Timed out")
+        timed_out_progress = QW.QProgressBar()
         # timed_out_progress.setStyleSheet(self.make_progress_style("black"))
         timed_out_progress.setMinimum(0)
         timed_out_progress.setMaximum(self.d.jobs_to_run)
-        timed_out_label = QG.QLabel()
+        timed_out_label = QW.QLabel()
         self.timed_out_progress = timed_out_progress
         self.timed_out_label = timed_out_label
         progress_layout.addWidget(label, 3, 0)
         progress_layout.addWidget(timed_out_progress, 3, 1)
         progress_layout.addWidget(timed_out_label, 3, 2)
-        self.time_label = QG.QLabel()
+        self.time_label = QW.QLabel()
         layout.addWidget(self.time_label)
-        button_layout = QG.QHBoxLayout()
-        stop_pb = QG.QPushButton("Stop")
-        start_pb = QG.QPushButton("Start")
-        save_pb = QG.QPushButton("Save")
-        close_pb = QG.QPushButton("Close")
+        button_layout = QW.QHBoxLayout()
+        stop_pb = QW.QPushButton("Stop")
+        start_pb = QW.QPushButton("Start")
+        save_pb = QW.QPushButton("Save")
+        close_pb = QW.QPushButton("Close")
 
         button_layout.addWidget(start_pb)
         button_layout.addWidget(stop_pb)

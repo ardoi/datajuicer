@@ -1,9 +1,11 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore, QtWidgets
+
+from PyQt5 import QtWidgets as QW
+
 from lsjuicer.util.helpers import timeIt
 
 
-class ZoomView(QG.QGraphicsView):
+class ZoomView(QW.QGraphicsView):
     hor_zoom_changed = QC.pyqtSignal(float, float)
     hor_range_changed = QC.pyqtSignal(float, float)
     ver_zoom_changed = QC.pyqtSignal(float, float)
@@ -12,7 +14,7 @@ class ZoomView(QG.QGraphicsView):
     v_axis_param = QC.pyqtSignal(int, int)
     #scaleSignal = QC.pyqtSignal(float)
     #centerSignal = QC.pyqtSignal(float)
-    #visibleRectSignal = QC.pyqtSignal(QC.QRectF)
+    #visibleRectSignal = QC.pyqtSignal(QtCore.QRectF)
     def __init__(self, parent=None, locked = True):
         super(ZoomView, self).__init__(parent)
         #full_view is False if the scene does not take up the entire view.
@@ -24,10 +26,10 @@ class ZoomView(QG.QGraphicsView):
         self.zooming_ver = False
         #lock horizontal and vertical zoom
         self.locked = locked
-        self.setTransformationAnchor(QG.QGraphicsView.AnchorUnderMouse)
+        self.setTransformationAnchor(QW.QGraphicsView.AnchorUnderMouse)
         #self.setOptimizationFlag(QG.QGraphicsView.DontAdjustForAntialiasing)
-        self.setViewportUpdateMode(QG.QGraphicsView.FullViewportUpdate)
-        self.setFrameStyle(QG.QFrame.NoFrame)
+        self.setViewportUpdateMode(QW.QGraphicsView.FullViewportUpdate)
+        self.setFrameStyle(QW.QFrame.NoFrame)
 
     def alert_horizontal_zoom_change(self):
         left, right = self.visible_horizontal_range()
@@ -81,7 +83,7 @@ class ZoomView(QG.QGraphicsView):
         self.scale_view(hor_factor, ver_factor)
         self.alert_horizontal_zoom_change()
         self.alert_vertical_zoom_change()
-        self.setDragMode(QG.QGraphicsView.NoDrag)
+        self.setDragMode(QW.QGraphicsView.NoDrag)
 
     @timeIt
     def wheelEvent(self,event):
@@ -96,10 +98,10 @@ class ZoomView(QG.QGraphicsView):
         ver_factor = 1.0
         self.zooming_ver = False
         self.zooming_hor = False
-        if event.modifiers() & QC.Qt.ShiftModifier:
+        if event.modifiers() & QtCore.Qt.ShiftModifier:
             #zoom in y
             self.zooming_ver = True
-        elif event.modifiers() & QC.Qt.ControlModifier:
+        elif event.modifiers() & QtCore.Qt.ControlModifier:
             self.zooming_hor = True
         else:
             self.zooming_hor = True
@@ -108,7 +110,7 @@ class ZoomView(QG.QGraphicsView):
 
         #print 'zoom',self.zoom_count_hor, self.zoom_count_ver
         #print self.zooming_hor, self.zooming_ver
-        if event.delta() > 0:
+        if event.angleDelta().y() > 0:
             if self.zooming_hor:
                 self.zoom_count_hor += 1
                 hor_factor = 1.25
@@ -144,9 +146,9 @@ class ZoomView(QG.QGraphicsView):
         #else:
         #    self.setDragMode(QG.QGraphicsView.NoDrag)
         if self.full_view and (self.zoom_count_hor > 0 or self.zoom_count_ver > 0):
-            self.setDragMode(QG.QGraphicsView.ScrollHandDrag)
+            self.setDragMode(QW.QGraphicsView.ScrollHandDrag)
         else:
-            self.setDragMode(QG.QGraphicsView.NoDrag)
+            self.setDragMode(QW.QGraphicsView.NoDrag)
         #self.visibleRectSignal.emit(self.mapToScene(self.viewport().geometry()).boundingRect())
         #print self.sceneRect()
         if self.locked:
@@ -195,12 +197,12 @@ class ZoomView(QG.QGraphicsView):
     #def mousePressEvent(self, event):
     #    """Overridden to catch right click and reset original zoom"""
     #    #pass
-    #    #if event.button() == QC.Qt.RightButton:
+    #    #if event.button() == QtCore.Qt.RightButton:
     #    #    factor = self.transform().m11()
     #    #    self.scale(self.originalZoom/factor,1)
     #    #    self.scaleSignal.emit(self.originalZoom/factor)
     #    #    #print factor
-    #    #elif event.button() == QC.Qt.LeftButton:
+    #    #elif event.button() == QtCore.Qt.LeftButton:
     #    #    self.dragging = True
     #    #    #print 'dragging',self.dragging
 
@@ -223,5 +225,5 @@ class ZoomView(QG.QGraphicsView):
    #     self.fitInView(self.scene().itemsBoundingRect())
     @timeIt
     def paintEvent(self,*args):
-        QG.QGraphicsView.paintEvent(self, *args)
+        QW.QGraphicsView.paintEvent(self, *args)
 

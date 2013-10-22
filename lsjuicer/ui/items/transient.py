@@ -1,7 +1,7 @@
 from PyQt5 import QtCore as QC
 
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
+from PyQt5 import QtGui as QG as QG
+from PyQt5 import QtWidgets as QW as QW
 
 
 from lsjuicer.util.helpers import SenderObject
@@ -30,7 +30,7 @@ class TransientGraphicItem(QW.QGraphicsItemGroup):
     def set_fit_line(self, fit_pd):
         self.fit_line = fit_pd
         self.addToGroup(fit_pd.graphic_item)
-        #normal_pen = QG.QPen(QC.Qt.black)
+        #normal_pen = QG.QPen(QtCore.Qt.black)
         #normal_pen.setWidth(2)
         #normal_pen.setCosmetic(True)
         #self.fit_line.setPen(normal_pen)
@@ -97,11 +97,11 @@ class TransientRect(QW.QGraphicsRectItem):
         self.transient = transient
         self.state = Constants.move
         self.selected_pen =QG.QPen()
-        self.selected_pen.setStyle(QC.Qt.SolidLine)
-        self.selected_pen.setColor(QC.Qt.red)
+        self.selected_pen.setStyle(QtCore.Qt.SolidLine)
+        self.selected_pen.setColor(QtCore.Qt.red)
         self.selected_pen.setWidth(1)
         self.selected_pen.setCosmetic(True)
-        self.normal_pen = QG.QPen(QC.Qt.black)
+        self.normal_pen = QG.QPen(QtCore.Qt.black)
         self.normal_pen.setWidth(1)
         self.normal_pen.setCosmetic(True)
         self.collection = collection
@@ -225,13 +225,13 @@ class TransientRect(QW.QGraphicsRectItem):
                 d_r = abs(pos.x() - self.rect().right())
                 d_l = abs(pos.x() - self.rect().left())
                 if d_r < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeHorCursor)
+                    self.setCursor(QtCore.Qt.SizeHorCursor)
                     self.state  = Constants.resize_r
                 elif d_l < self.resizeDistance():
-                    self.setCursor(QC.Qt.SizeHorCursor)
+                    self.setCursor(QtCore.Qt.SizeHorCursor)
                     self.state  = Constants.resize_l
                 else:
-                    self.setCursor(QC.Qt.SizeAllCursor)
+                    self.setCursor(QtCore.Qt.SizeAllCursor)
                     self.state = Constants.move
         self.counter +=1
 
@@ -249,7 +249,7 @@ class TransientRect(QW.QGraphicsRectItem):
         if self.selected:
             self.counter = 0
             self.cursorPositionBasedStyling(event)
-            #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
+            #hoverRect = QtCore.QRectF(self.bottomRight()-QtCore.QPoint(20,20),self.bottomRight())
         #return QG.QGraphicsRectItem.hoverEnterEvent(self,event)
     def contextMenuEvent(self, event):
         print 'context'
@@ -258,7 +258,7 @@ class TransientRect(QW.QGraphicsRectItem):
         menu.addAction("Mark")
         menu._exec()
 
-class VisualTransientCollection(QC.QObject):
+class VisualTransientCollection(QtCore.QObject):
     def __len__(self):
         return len(self.visual_transients)
 
@@ -280,8 +280,8 @@ class VisualTransientCollection(QC.QObject):
         for key in self.transient_group.transients.keys():
             print 'new',key
             t = self.transient_group.transients[key]
-            rec = QC.QRectF(QC.QPointF(t.start, self.scene.sceneRect().top()),
-                    QC.QPointF(t.end, self.scene.sceneRect().bottom()))
+            rec = QtCore.QRectF(QtCore.QPointF(t.start, self.scene.sceneRect().top()),
+                    QtCore.QPointF(t.end, self.scene.sceneRect().bottom()))
             print rec
             tr = TransientRect(rec, t, self, key, self.color)
             tg = TransientGraphicItem()
@@ -295,7 +295,7 @@ class VisualTransientCollection(QC.QObject):
             #print 'adding',tr,self.scene,tr.scene()
 
     #def checkTransients(self,x,y):
-    #    eventpoint = QC.QPointF(x,y)
+    #    eventpoint = QtCore.QPointF(x,y)
     #    for r in self.visual_transients.values():
     #        if r.contains(eventpoint):
     #            r.toggleSelected()

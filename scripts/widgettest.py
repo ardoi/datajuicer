@@ -12,8 +12,8 @@ from lsjuicer.data.pipes.tools import PipeChain
 
 if __name__=="__main__":
 
-    app=QG.QApplication([])
-    app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
+    app=QtGui.QApplication([])
+    app.setAttribute(QtCore.Qt.AA_DontShowIconsInMenus, on = False)
     panels = Panels()
     panels.add_type("Default")
     panels.add_panel("Default", PipeChainPanel)
