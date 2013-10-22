@@ -1,9 +1,12 @@
-from PyQt4 import QtCore as QC
-from PyQt4 import QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 
 from lsjuicer.util.helpers import SenderObject
 from lsjuicer.static.constants import Constants
-class TransientGraphicItem(QG.QGraphicsItemGroup):
+class TransientGraphicItem(QW.QGraphicsItemGroup):
     def __init__(self, parent = None):
         self.transient_rect = None
         self.sender = SenderObject()
@@ -86,7 +89,7 @@ class TransientGraphicItem(QG.QGraphicsItemGroup):
 
 
 
-class TransientRect(QG.QGraphicsRectItem):
+class TransientRect(QW.QGraphicsRectItem):
     def __init__(self, rect, transient, collection, key, normalbrushcolor):
         self.selected = False
         self.moved=False
@@ -205,7 +208,7 @@ class TransientRect(QG.QGraphicsRectItem):
             #QG.QGraphicsRectItem.mouseMoveEvent(self,event)
             #self.key=self.collection.update(self.key,self.rect())
             self.collection.update(self.key,self.rect())
-        return QG.QGraphicsRectItem.mouseMoveEvent(self,event)
+        return QW.QGraphicsRectItem.mouseMoveEvent(self,event)
 
     def resizeDistance(self):
         if self.rect().width() / 2. > self.maxResizeDistance:
@@ -250,7 +253,7 @@ class TransientRect(QG.QGraphicsRectItem):
         #return QG.QGraphicsRectItem.hoverEnterEvent(self,event)
     def contextMenuEvent(self, event):
         print 'context'
-        menu = QG.QMenu()
+        menu = QW.QMenu()
         menu.addAction("Remove")
         menu.addAction("Mark")
         menu._exec()
@@ -305,7 +308,7 @@ class VisualTransientCollection(QC.QObject):
         self.scene.removeItem(tg)
         #del(tr)
         self.transient_group.remove(key)
-        self.emit(QC.SIGNAL('maxUpdate()'))
+        self.maxUpdate.emit()
 
     def update(self,key,rect):
         #t=self.ts.transients[key]
@@ -316,7 +319,7 @@ class VisualTransientCollection(QC.QObject):
         #if newkey != key:
         #    tt = self.visual_transients.pop(key)
         #    self.visual_transients[newkey] = tt
-        self.emit(QC.SIGNAL('maxUpdate()'))
+        self.maxUpdate.emit()
         #return newkey
 
     def showAll(self):

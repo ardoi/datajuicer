@@ -2,8 +2,11 @@ import datetime
 import traceback
 #from collections import defaultdict
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
@@ -16,7 +19,7 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
 from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
 
-class PixelByPixelTab(QG.QTabWidget):
+class PixelByPixelTab(QW.QTabWidget):
     @property
     def settings_text(self):
         out_image = "<strong>Image:</strong> <br>Width: %i<br>Height: %i<br>Pixels in frame: %i<br>Frames: %i"\
@@ -200,17 +203,17 @@ class PixelByPixelTab(QG.QTabWidget):
         #self.coords = QC.QRectF(211,22,121,15)
         #self.coords = QC.QRectF(121,29, 115, 31)
         #self.coords = QC.QRectF(202, 43, 276-202, 61-43)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        settings_box = QG.QGroupBox('Fit settings')
-        settings_layout = QG.QVBoxLayout()
+        settings_box = QW.QGroupBox('Fit settings')
+        settings_layout = QW.QVBoxLayout()
         settings_box.setLayout(settings_layout)
         layout.addWidget(settings_box)
 
-        padding_layout = QG.QHBoxLayout()
-        padding_label = QG.QLabel("Element padding")
+        padding_layout = QW.QHBoxLayout()
+        padding_label = QW.QLabel("Element padding")
         padding_layout.addWidget(padding_label)
-        padding_spinbox = QG.QSpinBox(self)
+        padding_spinbox = QW.QSpinBox(self)
         padding_layout.addWidget(padding_spinbox)
         padding_spinbox.setMinimum(0)
         padding_spinbox.setValue(1)
@@ -219,11 +222,11 @@ class PixelByPixelTab(QG.QTabWidget):
         settings_layout.addLayout(padding_layout)
         padding_spinbox.valueChanged.connect(self.set_info_text)
 
-        limit_layout = QG.QHBoxLayout()
-        limit_checkbox = QG.QCheckBox("Ignore transients less than x stds")
+        limit_layout = QW.QHBoxLayout()
+        limit_checkbox = QW.QCheckBox("Ignore transients less than x stds")
         self.limit_checkbox = limit_checkbox
         limit_layout.addWidget(limit_checkbox)
-        limit_spinbox = QG.QSpinBox(self)
+        limit_spinbox = QW.QSpinBox(self)
         self.limit_spinbox = limit_spinbox
         limit_layout.addWidget(limit_spinbox)
         limit_checkbox.toggled.connect(limit_spinbox.setEnabled)
@@ -232,12 +235,12 @@ class PixelByPixelTab(QG.QTabWidget):
         limit_spinbox.setMaximum(10)
         settings_layout.addLayout(limit_layout)
 
-        info_widget = QG.QTextEdit(self)
+        info_widget = QW.QTextEdit(self)
         info_widget.setReadOnly(True)
         self.info_widget = info_widget
         self.set_info_text()
         settings_layout.addWidget(info_widget)
-        fit_pb = QG.QPushButton("Do fit")
+        fit_pb = QW.QPushButton("Do fit")
         #previous_pb = QG.QPushButton("Show previous")
         settings_layout.addWidget(fit_pb)
         #settings_layout.addWidget(previous_pb)
@@ -246,7 +249,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.plot_widget = BasicPixmapPlotWidget(self)
         self.pixel_trace_widget = PixelTracesPlotWidget(self.plot_widget.scene,
                 self, parent=self)
-        plots_layout = QG.QHBoxLayout()
+        plots_layout = QW.QHBoxLayout()
         plots_layout.addWidget(self.plot_widget)
         plots_layout.addWidget(self.pixel_trace_widget)
         layout.addLayout(plots_layout)
@@ -273,7 +276,7 @@ class PixelByPixelTab(QG.QTabWidget):
         results['y0'] = self.fit_result.region.y0
         results['fits'] = fitted_pixels
         self.res = results
-        param_combo = QG.QComboBox()
+        param_combo = QW.QComboBox()
         events = tf.data_events(self.res)
         #convert numpy.int64 to python int so that sqlalchemy can
         #understand it
@@ -291,21 +294,21 @@ class PixelByPixelTab(QG.QTabWidget):
         param_combo.addItem('Events')
         param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)
 
-        n_combo = QG.QComboBox()
+        n_combo = QW.QComboBox()
         for i in range(max_n):
             n_combo.addItem("%i"%i)
         n_combo.currentIndexChanged.connect(self.n_combo_changed)
 
-        hlayout = QG.QHBoxLayout()
+        hlayout = QW.QHBoxLayout()
         hlayout.addWidget(param_combo)
         hlayout.addWidget(n_combo)
         self.layout().addLayout(hlayout)
         self.t_number = 0
         self.param = "A"
-        pb_do_clustering  = QG.QPushButton("Do clustering")
+        pb_do_clustering  = QW.QPushButton("Do clustering")
         pb_do_clustering.setCheckable(True)
         pb_do_clustering.clicked.connect(self.do_clustering)
-        pb_make_new_stack = QG.QPushButton("New stack from fit")
+        pb_make_new_stack = QW.QPushButton("New stack from fit")
         pb_make_new_stack.clicked.connect(self.make_new_stack)
         hlayout.addWidget(pb_do_clustering)
         hlayout.addWidget(pb_make_new_stack)

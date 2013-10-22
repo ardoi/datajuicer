@@ -1,4 +1,5 @@
-from PyQt4 import QtCore as QC
+from PyQt5 import QtCore as QC
+
 
 class EventFitParametersDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):

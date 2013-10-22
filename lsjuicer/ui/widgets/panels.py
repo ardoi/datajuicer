@@ -1,5 +1,8 @@
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 import numpy as n
 
@@ -21,7 +24,7 @@ from lsjuicer.data.imagedata import ImageDataLineScan
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
 
-class ActionPanel(QG.QWidget):
+class ActionPanel(QW.QWidget):
     def __init__(self, parent = None):
         super(ActionPanel, self).__init__(parent)
         self.imagedata = parent.imagedata
@@ -38,17 +41,17 @@ class EventPanel(ActionPanel):
     __shortname__ = "Events"
 
     def setup_ui(self):
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         combo_layout = MyFormLikeLayout()
         layout.addLayout(combo_layout)
         self.setLayout(layout)
         self.events = None
-        region_select = QG.QComboBox()
+        region_select = QW.QComboBox()
         for i,reg in enumerate(self.analysis.fitregions):
             region_select.addItem("{}".format(i))
         region_select.currentIndexChanged.connect(self.region_changed)
         combo_layout.add_row("Region:", region_select)
-        result_select = QG.QComboBox()
+        result_select = QW.QComboBox()
         combo_layout.add_row("Result:", result_select)
         self.result_select = result_select
         result_select.currentIndexChanged.connect(self.result_changed)
@@ -58,7 +61,7 @@ class EventPanel(ActionPanel):
         layout.addWidget(clicktree)
         region_select.setCurrentIndex(0)
         self.region_changed(0)
-        set_data_pb = QG.QPushButton("Set data")
+        set_data_pb = QW.QPushButton("Set data")
         set_data_pb.clicked.connect(lambda :self.set_data())
         layout.addWidget(set_data_pb)
 
@@ -118,23 +121,23 @@ class PipeChainPanel(ActionPanel):
     def setup_ui(self):
         self.settings_widgets={}
 
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         self.setLayout(layout)
         self.types = pipe_classes
-        self.typecombo = QG.QComboBox()
+        self.typecombo = QW.QComboBox()
         for t in self.types:
             self.typecombo.addItem(t)
-        add_layout = QG.QVBoxLayout()
+        add_layout = QW.QVBoxLayout()
         add_layout.addWidget(self.typecombo)
-        add_pb = QG.QPushButton('Add')
+        add_pb = QW.QPushButton('Add')
         add_layout.addWidget(add_pb)
         add_pb.clicked.connect(self.add_pipe)
 
-        pipelist = QG.QListView()
+        pipelist = QW.QListView()
         self.pipemodel = PipeModel()
         pipelist.setModel(self.pipemodel)
 
-        self.setting_stack = QG.QStackedWidget()
+        self.setting_stack = QW.QStackedWidget()
 
         self.pipechain.pipe_state_changed.connect(self.update_model)
 
@@ -174,7 +177,7 @@ class VisualizationPanel(ActionPanel):
     __shortname__ = "Visualization"
     settings_changed = QC.pyqtSignal(dict)
     def setup_ui(self):
-        vis_layout = QG.QStackedLayout()
+        vis_layout = QW.QStackedLayout()
         self.setLayout(vis_layout)
         channels = self.imagedata.channels
         for channel in range(channels):
@@ -194,30 +197,30 @@ class FramePanel(ActionPanel):
     frame_changed = QC.pyqtSignal(int)
 
     def setup_ui(self):
-        self.channel_combobox = QG.QComboBox()
-        self.selection_slider = QG.QSlider(QC.Qt.Horizontal)
-        self.selection_spinbox = QG.QSpinBox()
+        self.channel_combobox = QW.QComboBox()
+        self.selection_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.selection_spinbox = QW.QSpinBox()
 
-        vlayout = QG.QVBoxLayout()
+        vlayout = QW.QVBoxLayout()
         self.setLayout(vlayout)
-        layout = QG.QHBoxLayout()
-        layout.addWidget(QG.QLabel("Channel:"))
+        layout = QW.QHBoxLayout()
+        layout.addWidget(QW.QLabel("Channel:"))
         layout.addWidget(self.channel_combobox)
         vlayout.addLayout(layout)
-        layout = QG.QHBoxLayout()
-        layout.addWidget(QG.QLabel("Frame:"))
+        layout = QW.QHBoxLayout()
+        layout.addWidget(QW.QLabel("Frame:"))
         layout.addWidget(self.selection_slider)
         layout.addWidget(self.selection_spinbox)
         vlayout.addLayout(layout)
 
-        layout = QG.QHBoxLayout()
-        set_start_pb = QG.QPushButton("Set start")
-        set_end_pb = QG.QPushButton("Set end")
-        clear_pb = QG.QPushButton("Clear")
+        layout = QW.QHBoxLayout()
+        set_start_pb = QW.QPushButton("Set start")
+        set_end_pb = QW.QPushButton("Set end")
+        clear_pb = QW.QPushButton("Clear")
         layout.addWidget(set_start_pb)
         layout.addWidget(set_end_pb)
         layout.addWidget(clear_pb)
-        range_label = QG.QLabel("<p style='border:red;'>Start: -<br/>End: -<br/>Duration: -</p>")
+        range_label = QW.QLabel("<p style='border:red;'>Start: -<br/>End: -<br/>Duration: -</p>")
         self.range_label = range_label
         self.set_range_label_color()
         layout.addWidget(range_label)
@@ -301,9 +304,9 @@ class AnalysisPanel(ActionPanel):
     __doc__ = """Choose analysis mode"""
     __shortname__ = "Analysis"
     def setup_ui(self):
-        analysistype_layout = QG.QVBoxLayout()
+        analysistype_layout = QW.QVBoxLayout()
         self.setLayout(analysistype_layout)
-        self.analysistype_combo = QG.QComboBox()
+        self.analysistype_combo = QW.QComboBox()
         analysistype_layout.addWidget(self.analysistype_combo)
         self.analysistype_combo.addItem('Transients')
         self.analysistype_combo.addItem('Sparks')
@@ -312,14 +315,14 @@ class AnalysisPanel(ActionPanel):
         self.analysistype_combo.addItem('TimeAverage')
         self.analysistype_combo.addItem('PixelByPixel')
         self.analysistype_combo.setCurrentIndex(5)
-        analysistype_use_pb = QG.QPushButton("Use")
+        analysistype_use_pb = QW.QPushButton("Use")
         analysistype_layout.addWidget(analysistype_use_pb)
         analysistype_use_pb.clicked.connect(self.analysis_type_set)
         self.analysistype_combo.currentIndexChanged[QC.QString].connect(
                 self.analysis_combo_changed)
 
         plotIcon=QG.QIcon(":/chart_curve_go.png")
-        plotFluorescencePB  = QG.QPushButton(plotIcon,'Next')
+        plotFluorescencePB  = QW.QPushButton(plotIcon,'Next')
         plotFluorescencePB.setEnabled(False)
         plotFluorescencePB.clicked.connect(self.on_next_PB_clicked)
         self.plotFluorescencePB = plotFluorescencePB

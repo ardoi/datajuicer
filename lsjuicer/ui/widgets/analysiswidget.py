@@ -1,12 +1,15 @@
 import os
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
 from lsjuicer.ui.tabs.resulttab import ResultTab
 
-class AnalysisWidget(QG.QTabWidget):
+class AnalysisWidget(QW.QTabWidget):
     """Widget containing all analysis related stuff (fluorescence view, selection view)"""
     @property
     def analysis_type(self):
@@ -28,10 +31,10 @@ class AnalysisWidget(QG.QTabWidget):
             alignment: right;
         }
         """)
-        self.connect(self.imageTab,QC.SIGNAL('positionTXT(QString)'), self.emitStatusTXT)
+        self.imageTab.positionTXT['QString'].connect(self.emitStatusTXT)
 
     def emitStatusTXT(self, txt):
-        self.emit(QC.SIGNAL('setStatusText(QString)'),txt)
+        self.setStatusText.emit(txt)
 
     def getImageTab(self):
         return self.imageTab
@@ -62,7 +65,7 @@ class AnalysisWidget(QG.QTabWidget):
 #        self.resultTab = FluorescenceTab(self.DS1,self)
         self.addTab(self.resultTab,'Results')
         #self.setCurrentIndex(2)
-        self.connect(self.resultTab,QC.SIGNAL('positionTXT(QString)'),self.emitStatusTXT)
+        self.resultTab.positionTXT['QString'].connect(self.emitStatusTXT)
         #self.setCurrentIndex(2)
 
     def addResPlot(self,*args,**kwargs):

@@ -1,6 +1,9 @@
 from collections import defaultdict
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.ui.scenes import LSMDisplay
 from lsjuicer.static.constants import Constants
@@ -58,23 +61,23 @@ class Events(object):
                 self.status_dict[event_type][k] = status
         print self.status_dict
 
-class EventClickTree(QG.QWidget):
+class EventClickTree(QW.QWidget):
     visibility_toggled = QC.pyqtSignal(str, int)
 
     def __init__(self, parent = None):
         super(EventClickTree, self).__init__(parent)
-        layout  = QG.QVBoxLayout()
+        layout  = QW.QVBoxLayout()
         self.setLayout(layout)
-        view = QG.QTreeView(self)
+        view = QW.QTreeView(self)
         model = QG.QStandardItemModel()
         self.model = model
         self.items_by_name = defaultdict(list)
         model.setHorizontalHeaderLabels(["Event"])
         view.setIndentation(10)
-        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(0, QW.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(1, QW.QHeaderView.ResizeToContents)
         view.setModel(model)
-        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
+        view.setEditTriggers(QW.QAbstractItemView.NoEditTriggers)
         view.expanded.connect(lambda: view.resizeColumnToContents(0))
         view.collapsed.connect(lambda: view.resizeColumnToContents(0))
         view.clicked.connect(self.clicked)
@@ -126,15 +129,15 @@ class EventClickTree(QG.QWidget):
         if event_type:
             self.events.change(event_type, row, state)
 
-class ClickTree(QG.QWidget):
+class ClickTree(QW.QWidget):
     visibility_toggled = QC.pyqtSignal(str, int)
 
     def __init__(self, panels, parent = None):
         super(ClickTree, self).__init__(parent)
-        layout  = QG.QVBoxLayout()
+        layout  = QW.QVBoxLayout()
         self.panels = panels
         self.setLayout(layout)
-        view = QG.QTreeView(self)
+        view = QW.QTreeView(self)
         model = QG.QStandardItemModel()
         self.model = model
         self.items_by_name = {}
@@ -153,10 +156,10 @@ class ClickTree(QG.QWidget):
                 self.items_by_name[pi.__shortname__] = panel_item
         #view.setWordWrap(True)
         view.setIndentation(10)
-        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(0, QW.QHeaderView.ResizeToContents)
+        view.header().setResizeMode(1, QW.QHeaderView.ResizeToContents)
         view.setModel(model)
-        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
+        view.setEditTriggers(QW.QAbstractItemView.NoEditTriggers)
         view.expanded.connect(lambda: view.resizeColumnToContents(0))
         view.collapsed.connect(lambda: view.resizeColumnToContents(0))
         view.clicked.connect(self.clicked)
@@ -185,17 +188,17 @@ class ClickTree(QG.QWidget):
         print name,state,actionpanel
         if actionpanel:
             if modelindex.column() == 1:
-                QG.QMessageBox.information(self, "Panel info",
+                QW.QMessageBox.information(self, "Panel info",
                         "<strong>{0.__shortname__}</strong><br>{0.__doc__}".format(actionpanel))
             elif modelindex.column() == 0:
                 self.visibility_toggled.emit(str(name), state)
 
 
 
-class ControlWidget(QG.QWidget):
+class ControlWidget(QW.QWidget):
     def  __init__(self, panels, parent = None):
         super(ControlWidget, self).__init__(parent)
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         layout.setAlignment(QC.Qt.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
@@ -207,10 +210,10 @@ class ControlWidget(QG.QWidget):
         self.add_grouping(chooser, "Panels")
 
     def add_grouping(self, widget, name):
-        groupbox = QG.QGroupBox(name)
-        layout = QG.QVBoxLayout()
+        groupbox = QW.QGroupBox(name)
+        layout = QW.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        groupbox.setSizePolicy(QG.QSizePolicy.Maximum,QG.QSizePolicy.Minimum)
+        groupbox.setSizePolicy(QW.QSizePolicy.Maximum,QW.QSizePolicy.Minimum)
         groupbox.setLayout(layout)
         layout.addWidget(widget)
         self.groupboxes[name]=groupbox
@@ -233,14 +236,14 @@ class ControlWidget(QG.QWidget):
 
 
 
-class AnalysisImageTab(QG.QWidget):
+class AnalysisImageTab(QW.QWidget):
     """Tab containing image to analyze"""
     def  __init__(self, analysis = None, parent = None):
         super(AnalysisImageTab, self).__init__(parent)
         self.image_shown = False
         self.analysis = analysis
         self.sess = sa.dbmaster.get_session()
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.image_plot =self.makePlotArea()
         self.image_plot.updateLocation.connect(self.updateCoords)
@@ -343,8 +346,7 @@ class AnalysisImageTab(QG.QWidget):
 
 
     def updateCoords(self,x,y,xx,yy):
-        self.emit(QC.SIGNAL('positionTXT(QString)'),
-                'x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x,y,xx,yy))
+        self.positionTXT.emit('x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x, y, xx, yy)
 
     def makePlotArea(self):
         return PixmapPlotWidget(sceneClass=LSMDisplay, parent=self)

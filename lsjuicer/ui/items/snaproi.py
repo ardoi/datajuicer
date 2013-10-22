@@ -1,11 +1,14 @@
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
 from lsjuicer.util.helpers import round_point
 
-class SnapROIItem(QG.QGraphicsRectItem):
+class SnapROIItem(QW.QGraphicsRectItem):
 
     def __init__(self, selection_type, number, size = None, update_on_release = False, parent = None):
         super(SnapROIItem, self).__init__(parent)
@@ -98,7 +101,7 @@ class SnapROIItem(QG.QGraphicsRectItem):
             if self.emit and not self.update_on_release:
                 self.sender.selection_changed.emit()
 
-        QG.QGraphicsRectItem.mouseMoveEvent(self,event)
+        QW.QGraphicsRectItem.mouseMoveEvent(self,event)
 
     def hoverMoveEvent(self, event):
         self.cursorPositionBasedStyling(event)
@@ -110,7 +113,7 @@ class SnapROIItem(QG.QGraphicsRectItem):
             #self.pen.setStyle(QC.Qt.SolidLine)
             #self.setPen(self.pen)
         self.unsetCursor()
-        QG.QGraphicsRectItem.hoverEnterEvent(self,event)
+        QW.QGraphicsRectItem.hoverEnterEvent(self,event)
 
     def resizeDistance(self):
         if self.rect().width() / 2. > self.maxResizeDistance and self.rect().height()/2. > self.maxResizeDistance:
@@ -168,4 +171,4 @@ class SnapROIItem(QG.QGraphicsRectItem):
         self.counter = 0
         self.cursorPositionBasedStyling(event)
         #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
-        return QG.QGraphicsRectItem.hoverEnterEvent(self,event)
+        return QW.QGraphicsRectItem.hoverEnterEvent(self,event)

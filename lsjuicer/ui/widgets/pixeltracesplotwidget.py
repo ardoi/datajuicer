@@ -1,7 +1,10 @@
 import numpy
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.items.selection import SelectionDataModel, SelectionWidget, FixedSizeSnapROIManager
@@ -11,16 +14,16 @@ import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.data.models.eventfitparameters import EventFitParametersDataModel
 
-class PixelTracesPlotWidget(QG.QWidget):
+class PixelTracesPlotWidget(QW.QWidget):
     def __init__(self, scene, pixpixw, parent=None):
         super(PixelTracesPlotWidget, self).__init__(parent)
         self.plot_widget = TracePlotWidget(parent=self)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         #original image
         self.pixpixw = pixpixw
         self.setLayout(layout)
         layout.addWidget(self.plot_widget)
-        tables_layout = QG.QHBoxLayout()
+        tables_layout = QW.QHBoxLayout()
 
         layout.addLayout(tables_layout)
 
