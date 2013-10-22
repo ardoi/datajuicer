@@ -1,5 +1,5 @@
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -198,7 +198,7 @@ class FramePanel(ActionPanel):
 
     def setup_ui(self):
         self.channel_combobox = QW.QComboBox()
-        self.selection_slider = QW.QSlider(QtCore.Qt.Horizontal)
+        self.selection_slider = QW.QSlider(QC.Qt.Horizontal)
         self.selection_spinbox = QW.QSpinBox()
 
         vlayout = QW.QVBoxLayout()
@@ -318,7 +318,7 @@ class AnalysisPanel(ActionPanel):
         analysistype_use_pb = QW.QPushButton("Use")
         analysistype_layout.addWidget(analysistype_use_pb)
         analysistype_use_pb.clicked.connect(self.analysis_type_set)
-        self.analysistype_combo.currentIndexChanged[QtCore.QString].connect(
+        self.analysistype_combo.currentIndexChanged[QC.QString].connect(
                 self.analysis_combo_changed)
 
         plotIcon=QG.QIcon(":/chart_curve_go.png")
@@ -390,10 +390,10 @@ class AnalysisPanel(ActionPanel):
         #            builder = self.roi_manager.builder
         #            for region in self.analysis.searchregions:
         #                #print "region",region
-        #                topleft = QtCore.QPointF(region._x0, region._y0)
-        #                bottomright = QtCore.QPointF(region._x1, region._y1)
+        #                topleft = QC.QPointF(region._x0, region._y0)
+        #                bottomright = QC.QPointF(region._x1, region._y1)
         #                #print topleft, bottomright
-        #                builder.make_selection_rect(None, QtCore.QRectF(topleft, bottomright))
+        #                builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
         #    except:
         #        pass
         if self.analysis:
@@ -408,9 +408,9 @@ class AnalysisPanel(ActionPanel):
                     else:
                         x0 = region.x0
                         x1 = region.x1
-                    topleft = QtCore.QPointF(x0, region.y0)
-                    bottomright = QtCore.QPointF(x1, region.y1)
-                    builder.make_selection_rect(None, QtCore.QRectF(topleft, bottomright))
+                    topleft = QC.QPointF(x0, region.y0)
+                    bottomright = QC.QPointF(x1, region.y1)
+                    builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
                 #self.time_range_start = 100
                 #self.selection_slider.setValue(500)
                 #self.set_time_range_end()

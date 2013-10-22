@@ -2,8 +2,8 @@ import datetime
 import traceback
 #from collections import defaultdict
 
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -198,11 +198,11 @@ class PixelByPixelTab(QW.QTabWidget):
             self.end_frame = time_range['end']
         self.acquisitions = self.end_frame - self.start_frame
 
-        #self.coords = QtCore.QRectF(167, 38, 148, 22)
-        #self.coords = QtCore.QRectF(190, 44, 60, 9)
-        #self.coords = QtCore.QRectF(211,22,121,15)
-        #self.coords = QtCore.QRectF(121,29, 115, 31)
-        #self.coords = QtCore.QRectF(202, 43, 276-202, 61-43)
+        #self.coords = QC.QRectF(167, 38, 148, 22)
+        #self.coords = QC.QRectF(190, 44, 60, 9)
+        #self.coords = QC.QRectF(211,22,121,15)
+        #self.coords = QC.QRectF(121,29, 115, 31)
+        #self.coords = QC.QRectF(202, 43, 276-202, 61-43)
         layout = QW.QVBoxLayout()
         self.setLayout(layout)
         settings_box = QW.QGroupBox('Fit settings')
@@ -292,7 +292,7 @@ class PixelByPixelTab(QW.QTabWidget):
         for key in parameters:
             param_combo.addItem(key)
         param_combo.addItem('Events')
-        param_combo.currentIndexChanged[QtCore.QString].connect(self.param_combo_changed)
+        param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)
 
         n_combo = QW.QComboBox()
         for i in range(max_n):

@@ -1,7 +1,7 @@
 from PyQt5 import QtCore as QC
 
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 
 

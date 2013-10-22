@@ -102,7 +102,7 @@ class ConfigTab(QW.QTabWidget):
         self.colormap_combobox = QW.QComboBox(vis_conf_groupbox)
         self.colormaps = [name for name in cm.datad if not name.endswith("_r")]
         self.colormaps.sort()
-        self.colormap_combobox.setIconSize(QtCore.QSize(100,20))
+        self.colormap_combobox.setIconSize(QC.QSize(100,20))
         for cm_name in self.colormaps:
             icon = QG.QIcon(QG.QPixmap(":/colormap_%s.png"%cm_name))
             self.colormap_combobox.addItem(icon, cm_name)
@@ -195,7 +195,7 @@ class ConfigTab(QW.QTabWidget):
         dialog.setModal(True)
         dialog.show()
 
-class ExperimentTypeDataModel(QtCore.QAbstractListModel):
+class ExperimentTypeDataModel(QC.QAbstractListModel):
     @property
     def experimenttypes(self):
         if self.shelf_db.has_key(self.key):
@@ -233,16 +233,16 @@ class ExperimentTypeDataModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         ets = self.experimenttypes
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             try:
                 return ets[index.row()]
             except IndexError:
                 print 'error @',index.row()
-                return QtCore.QVariant()
-        #elif role == QtCore.Qt.DecorationRole:
+                return QC.QVariant()
+        #elif role == QC.Qt.DecorationRole:
         #    return selections[index.row()].appearance.fillcolor
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def does_name_exist(self, name):
        for sel in self.experimenttypes:
@@ -251,7 +251,7 @@ class ExperimentTypeDataModel(QtCore.QAbstractListModel):
        else:
             return False
 
-class BoundaryDataModel(QtCore.QAbstractListModel):
+class BoundaryDataModel(QC.QAbstractListModel):
 
     def _get_selectiontypes(self):
         if self.shelf_db.has_key(self.key):
@@ -298,16 +298,16 @@ class BoundaryDataModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         selections = self.selectiontypes
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             try:
                 return selections[index.row()].name
             except IndexError:
                 print 'error @',index.row()
-                return QtCore.QVariant()
-        elif role == QtCore.Qt.DecorationRole:
+                return QC.QVariant()
+        elif role == QC.Qt.DecorationRole:
             return selections[index.row()].appearance.fillcolor
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def does_name_exist(self, name):
        for sel in self.selectiontypes:

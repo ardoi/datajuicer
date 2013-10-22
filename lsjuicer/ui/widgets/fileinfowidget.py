@@ -229,7 +229,7 @@ class DBAttributeLineEdit(QW.QWidget):
         return str(self.lineedit.toPlainText())
 
 
-class ResultDataModel(QtCore.QAbstractTableModel):
+class ResultDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):
         super(ResultDataModel, self).__init__(parent)
         self.columns = 9
@@ -269,8 +269,8 @@ class ResultDataModel(QtCore.QAbstractTableModel):
         return self.columns
 
     def headerData(self, section, orientation, role):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QC.Qt.DisplayRole:
+            if orientation == QC.Qt.Horizontal:
                 if section == 0:
                     return "Id"
                 elif section == 1:
@@ -292,10 +292,10 @@ class ResultDataModel(QtCore.QAbstractTableModel):
             else:
                 return section+1
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def data(self, index, role):
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             col = index.column()
             row = index.row()
             res = self.results[row]
@@ -327,10 +327,10 @@ class ResultDataModel(QtCore.QAbstractTableModel):
                 return ifattr("cell")
             elif col ==8:
                 return " ".join(ifattr("comment").split('\n'))
-        elif role==QtCore.Qt.TextAlignmentRole:
-            return QtCore.Qt.AlignCenter
+        elif role==QC.Qt.TextAlignmentRole:
+            return QC.Qt.AlignCenter
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
 
     def get_selected(self, indexlist):
@@ -338,7 +338,7 @@ class ResultDataModel(QtCore.QAbstractTableModel):
         ind = indexlist
         return self.results[ind.row()]
 
-class AnalysesDataModel(QtCore.QAbstractTableModel):
+class AnalysesDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):
         super(AnalysesDataModel, self).__init__(parent)
         self.columns = 2
@@ -354,8 +354,8 @@ class AnalysesDataModel(QtCore.QAbstractTableModel):
         return self.columns
 
     def headerData(self, section, orientation, role):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QC.Qt.DisplayRole:
+            if orientation == QC.Qt.Horizontal:
                 if section == 0:
                     return "Type"
                 elif section == 1:
@@ -363,10 +363,10 @@ class AnalysesDataModel(QtCore.QAbstractTableModel):
             else:
                 return section+1
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def data(self, index, role):
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             col = index.column()
             row = index.row()
             res = self.analyses[row]
@@ -375,10 +375,10 @@ class AnalysesDataModel(QtCore.QAbstractTableModel):
                 return str(res.__class__.__tablename__)
             elif col == 1:
                 return str(res)
-        elif role==QtCore.Qt.TextAlignmentRole:
-            return QtCore.Qt.AlignCenter
+        elif role==QC.Qt.TextAlignmentRole:
+            return QC.Qt.AlignCenter
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def set_mimage(self, mimage):
         self.microscope_image = mimage
@@ -642,7 +642,7 @@ class ReferencePlot(QW.QWidget):
         layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.scene = QW.QGraphicsScene(self)
-        #self.scene.addRect(QtCore.QRectF(0,0,100,100))
+        #self.scene.addRect(QC.QRectF(0,0,100,100))
         self.view = ZoomView(self, locked = True)
         self.view.setScene(self.scene)
         self.pc = PipeChain()
@@ -655,7 +655,7 @@ class ReferencePlot(QW.QWidget):
             self.view.setFixedSize(512, 512)
         else:
             self.view.setFixedSize(256, 256)
-        layout.addWidget(self.view, QtCore.Qt.AlignTop)
+        layout.addWidget(self.view, QC.Qt.AlignTop)
 
         vis_options_pb = QW.QPushButton("Visualization properties")
         vis_options_pb.clicked.connect(self.show_vis_options_dialog)
@@ -703,18 +703,18 @@ class ReferencePlot(QW.QWidget):
     @helpers.timeIt
     def make_new_pixmap(self, settings={}, viewreset=True, force=False):
         pixmaker = self.pixmaker
-        QtCore.QTimer.singleShot(50,lambda :
+        QC.QTimer.singleShot(50,lambda :
                 pixmaker.makeImage(force = force, image_settings=settings))
-        QtCore.QTimer.singleShot(100,lambda :
+        QC.QTimer.singleShot(100,lambda :
                 #self.image_widget.addPixmap(pixmaker.image, range(self.xvals),range(self.yvals))
                 self.set_pixmap(pixmaker.pixmap, viewreset)
                 )
         if self.roi_data:
             roi_data = self.roi_data
             #x and y and swapped from microscope
-            roiline = QtCore.QLineF(roi_data["y1"],roi_data["x1"],
+            roiline = QC.QLineF(roi_data["y1"],roi_data["x1"],
                 roi_data["y2"], roi_data["x2"])
-            QtCore.QTimer.singleShot(105,lambda : self.show_roi(roiline))
+            QC.QTimer.singleShot(105,lambda : self.show_roi(roiline))
         else:
             self.clear_roi()
         self.image_shown = True

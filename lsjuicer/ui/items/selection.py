@@ -1,7 +1,7 @@
 from collections import defaultdict
 
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -42,7 +42,7 @@ class SelectionAppearance:
         self.state_colors = {}
         self.state = 'normal'
 
-    def set_line_params(self, colorname, linewidth, linestyle=QtCore.Qt.SolidLine):
+    def set_line_params(self, colorname, linewidth, linestyle=QC.Qt.SolidLine):
         self.state_colors['normal']=colorname
         self.linecolor = QG.QColor(colorname)
         self.linestyle = linestyle
@@ -52,11 +52,11 @@ class SelectionAppearance:
             self.pen.setWidth(self.linewidth)
             self.pen.setColor(self.linecolor)
             self.pen.setCosmetic(True)
-            self.pen.setJoinStyle(QtCore.Qt.MiterJoin)
+            self.pen.setJoinStyle(QC.Qt.MiterJoin)
         else:
-            self.pen = QG.QPen(QtCore.Qt.NoPen)
+            self.pen = QG.QPen(QC.Qt.NoPen)
 
-    def set_active_line_params(self, colorname=None, linestyle=QtCore.Qt.DotLine):
+    def set_active_line_params(self, colorname=None, linestyle=QC.Qt.DotLine):
         if colorname:
             self.active_linecolor = QG.QColor(colorname)
         else:
@@ -67,7 +67,7 @@ class SelectionAppearance:
         self.active_pen.setWidth(self.linewidth)
         self.active_pen.setColor(self.active_linecolor)
         self.active_pen.setCosmetic(True)
-        self.active_pen.setJoinStyle(QtCore.Qt.MiterJoin)
+        self.active_pen.setJoinStyle(QC.Qt.MiterJoin)
 
     def add_state_color(self, state, colorname):
         self.state_colors[state] = colorname
@@ -156,7 +156,7 @@ class NewExperimentTypeWidget(QW.QWidget):
 
         self.status_label = QW.QLabel('<strong> Enter name for group</strong>')
 
-        new_gb_layout.addWidget(self.status_label, 1, 1, QtCore.Qt.AlignRight)
+        new_gb_layout.addWidget(self.status_label, 1, 1, QC.Qt.AlignRight)
         new_gb_layout.setSpacing(0)
 
         self.accept_pb = QW.QPushButton('Accept')
@@ -229,7 +229,7 @@ class NewBoundaryWidget(QW.QWidget):
         self.color_pb.clicked.connect(self.show_color_dialog)
 
         new_gb_layout.addWidget(self.color_pb, 2, 1)
-        new_gb_layout.addWidget(self.status_label, 1, 1, QtCore.Qt.AlignRight)
+        new_gb_layout.addWidget(self.status_label, 1, 1, QC.Qt.AlignRight)
         new_gb_layout.setSpacing(0)
 
         self.accept_pb = QW.QPushButton('Accept')
@@ -336,11 +336,11 @@ class SelectionSelectDialog(QW.QDialog):
         new_gb_layout.addWidget(QW.QLabel('Color:'),2,0)
         self.color_pb = QW.QToolButton()
         self.color_pb.clicked.connect(self.show_color_dialog)
-        #new_gb_layout.setAlignment(QtCore.Qt.AlignLeft)
+        #new_gb_layout.setAlignment(QC.Qt.AlignLeft)
         #self.color_pb.resize(20, 20)
         new_gb_layout.addWidget(self.color_pb,2,1)
         #new_gb_layout.addLayout(new_b1_layout)
-        new_gb_layout.addWidget(self.status_label, 1, 1, QtCore.Qt.AlignRight)
+        new_gb_layout.addWidget(self.status_label, 1, 1, QC.Qt.AlignRight)
         #new_gb_layout.setContentsMargins(0,0,0,0)
         new_gb_layout.setSpacing(0)
 #        new_gb_layout.addLayout(new_b2_layout)
@@ -352,7 +352,7 @@ class SelectionSelectDialog(QW.QDialog):
         button_layout = QW.QHBoxLayout()
         new_layout.addLayout(button_layout)
         button_layout.addWidget(self.accept_pb)
-        #button_layout.setAlignment(QtCore.Qt.AlignCenter)
+        #button_layout.setAlignment(QC.Qt.AlignCenter)
         #button_layout.setContentsMargins(0,0,0,0)
         new_layout.setSpacing(0)
         #new_layout.setContentsMargins(0,0,0,0)
@@ -413,7 +413,7 @@ class SelectionSelectDialog(QW.QDialog):
 
 
 class SelectionWidget(QW.QWidget):
-    item_clicked = QC.pyqtSignal(QtCore.QModelIndex)
+    item_clicked = QC.pyqtSignal(QC.QModelIndex)
     def view_item_clicked(self, index):
         self.item_clicked.emit(index)
     def __init__(self, user_can_add_types = False, parent = None):
@@ -421,7 +421,7 @@ class SelectionWidget(QW.QWidget):
         layout = QW.QVBoxLayout()
         self.user_can_add_types = user_can_add_types
         self.view = QW.QListView()
-        self.view.setIconSize(QtCore.QSize(12,12))
+        self.view.setIconSize(QC.QSize(12,12))
         ff=self.view.font()
         #print '\n\n\nFONT',ff.family(), ff.bold(), ff.pixelSize(), ff.pointSize()
         #font = QG.QFont()
@@ -465,8 +465,8 @@ class SelectionWidget(QW.QWidget):
         self.model = None
 
     def deselect(self):
-        self.view.setCurrentIndex(QtCore.QModelIndex())
-        self.model.active_look(QtCore.QModelIndex())
+        self.view.setCurrentIndex(QC.QModelIndex())
+        self.model.active_look(QC.QModelIndex())
 
     def set_model(self, model):
         if self.model is not None:
@@ -521,7 +521,7 @@ class SelectionWidget(QW.QWidget):
     def set_index(self, index):
         self.view.setCurrentIndex(index)
 
-class Selection(QtCore.QObject):
+class Selection(QC.QObject):
     """Generic selection"""
     selection_changed = QC.pyqtSignal()
     def set_name(self, name):
@@ -547,8 +547,8 @@ class Line(Selection):
     def __init__(self, start_point, scene_rect, selection_type, number):
         super(Line, self).__init__(None)
         print 'making Line with', start_point, scene_rect
-        end_point = start_point + QtCore.QPointF(1, 1)
-        self.linef = QtCore.QLineF(start_point, end_point)
+        end_point = start_point + QC.QPointF(1, 1)
+        self.linef = QC.QLineF(start_point, end_point)
         self.selection_type = selection_type
         self.graphic_item  = LineItem(selection_type, number, parent=self.linef)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
@@ -564,8 +564,8 @@ class ROI(Selection):
         if not start_point:
             self.rectf = scene_rect
         else:
-            end_point = start_point + QtCore.QPointF(1, 1)
-            self.rectf = QtCore.QRectF(start_point, end_point)
+            end_point = start_point + QC.QPointF(1, 1)
+            self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type=selection_type
         self.graphic_item  = ROIItem(selection_type, number, parent=self.rectf)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
@@ -588,8 +588,8 @@ class SnapROI(Selection):
             self.rectf = scene_rect
         else:
             round_point(start_point)
-            end_point = start_point + QtCore.QPointF(1, 1)
-            self.rectf = QtCore.QRectF(start_point, end_point)
+            end_point = start_point + QC.QPointF(1, 1)
+            self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
         self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf,size=size)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
@@ -610,8 +610,8 @@ class FixedSizeSnapROI(Selection):
             self.rectf = scene_rect
         else:
             round_point(start_point)
-            end_point = start_point + QtCore.QPointF(size, size)
-            self.rectf = QtCore.QRectF(start_point, end_point)
+            end_point = start_point + QC.QPointF(size, size)
+            self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
         self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf,size=size, update_on_release = True)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
@@ -625,8 +625,8 @@ class Boundary(Selection):
         super(Boundary, self).__init__(parent)
         self.selection_type = selection_type
         start_point.setY(scene_rect.y())
-        end_point = QtCore.QPointF(start_point.x(), scene_rect.bottom())
-        self.rectf = QtCore.QRectF(start_point, end_point)
+        end_point = QC.QPointF(start_point.x(), scene_rect.bottom())
+        self.rectf = QC.QRectF(start_point, end_point)
         self.graphic_item  = BoundaryItem(selection_type,self, self.rectf)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
         self.name = selection_type.name
@@ -639,7 +639,7 @@ class Boundary(Selection):
     def set_editable(self, state):
         self.graphic_item.setEditable(state)
 
-class SelectionManager(QtCore.QObject):
+class SelectionManager(QC.QObject):
     """Abstract selection manager"""
     def _active(self):
         return bool(self.builder)
@@ -775,7 +775,7 @@ class BoundaryManager(SelectionManager):
     def sub_init(self):
         self.selection_class = Boundary
 
-class SelectionDataModel(QtCore.QAbstractListModel):
+class SelectionDataModel(QC.QAbstractListModel):
     def __init__(self, parent=None):
         super(SelectionDataModel, self).__init__(parent)
         self.selection_manager = None
@@ -814,13 +814,13 @@ class SelectionDataModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         selections = self.selection_manager.selections
-        if role == QtCore.Qt.DisplayRole and self.selection_manager:
+        if role == QC.Qt.DisplayRole and self.selection_manager:
             try:
                 return selections[index.row()].name
             except IndexError:
                 print 'error @',index.row()
-                return QtCore.QVariant()
-        elif role == QtCore.Qt.DecorationRole:
+                return QC.QVariant()
+        elif role == QC.Qt.DecorationRole:
             if isinstance(self.selection_manager, ROIManager):
                 return selections[index.row()].selection_type.appearance.linecolor
             elif isinstance(self.selection_manager, BoundaryManager):
@@ -829,10 +829,10 @@ class SelectionDataModel(QtCore.QAbstractListModel):
                 except IndexError:
                     print index.row(), self.rowCount(None), selections
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
 
-class SelectionBuilder(QtCore.QObject):
+class SelectionBuilder(QC.QObject):
     selection_added = QC.pyqtSignal()
     selection_changed = QC.pyqtSignal(Selection)
     def __init__(self, selection_class, graphics_scene, selection_type) :

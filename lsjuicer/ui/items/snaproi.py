@@ -1,5 +1,5 @@
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -15,18 +15,18 @@ class SnapROIItem(QW.QGraphicsRectItem):
         self.active = False
         self.pen = selection_type.appearance.pen
         self.sender = SenderObject()
-#        self.pen= QG.QPen(QtCore.Qt.SolidLine)
+#        self.pen= QG.QPen(QC.Qt.SolidLine)
 #        self.pen.setWidth(4)
-        #self.pen.setColor(QtCore.Qt.white)
+        #self.pen.setColor(QC.Qt.white)
 #        self.pen_color = QG.QColor(selection_type.colorname)
 #        self.pen.setColor(self.pen_color)
 
  #       self.pen.setCosmetic(True)
- #       self.pen.setJoinStyle(QtCore.Qt.MiterJoin)
+ #       self.pen.setJoinStyle(QC.Qt.MiterJoin)
         self.active_pen = selection_type.appearance.active_pen
         self.state_colors=selection_type.appearance.state_colors
         self.setPen(self.pen)
-#        self.setBrush(QtCore.Qt.white)
+#        self.setBrush(QC.Qt.white)
       #  self.setAcceptHoverEvents(True)
         #self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setZValue(2)
@@ -108,9 +108,9 @@ class SnapROIItem(QW.QGraphicsRectItem):
 
     def hoverLeaveEvent(self, event):
         if self.initialized:
-            #hoverRect = QtCore.QRectF(self.bottomRight()-QtCore.QPoint(20,20),self.bottomRight())
+            #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
             self.make_look_active(False)
-            #self.pen.setStyle(QtCore.Qt.SolidLine)
+            #self.pen.setStyle(QC.Qt.SolidLine)
             #self.setPen(self.pen)
         self.unsetCursor()
         QW.QGraphicsRectItem.hoverEnterEvent(self,event)
@@ -134,26 +134,26 @@ class SnapROIItem(QW.QGraphicsRectItem):
                     d_tr = (pos - self.rect().topRight()).manhattanLength()
                     d_tl = (pos - self.rect().topLeft()).manhattanLength()
                     if d_br < self.resizeDistance():
-                        self.setCursor(QtCore.Qt.SizeFDiagCursor)
+                        self.setCursor(QC.Qt.SizeFDiagCursor)
                         self.state  = Constants.resize_br
                     elif d_bl < self.resizeDistance():
-                        self.setCursor(QtCore.Qt.SizeBDiagCursor)
+                        self.setCursor(QC.Qt.SizeBDiagCursor)
                         self.state  = Constants.resize_bl
                     elif d_tr < self.resizeDistance():
-                        self.setCursor(QtCore.Qt.SizeBDiagCursor)
+                        self.setCursor(QC.Qt.SizeBDiagCursor)
                         self.state  = Constants.resize_tr
                     elif d_tl < self.resizeDistance():
-                        self.setCursor(QtCore.Qt.SizeFDiagCursor)
+                        self.setCursor(QC.Qt.SizeFDiagCursor)
                         self.state  = Constants.resize_tl
                        # self.setFlag(QGraphicsItem.ItemIsMovable,False)
                     else:
-                        self.setCursor(QtCore.Qt.SizeAllCursor)
+                        self.setCursor(QC.Qt.SizeAllCursor)
                         self.state = Constants.move
                 else:
-                    self.setCursor(QtCore.Qt.SizeAllCursor)
+                    self.setCursor(QC.Qt.SizeAllCursor)
                     self.state = Constants.move
                    # self.setFlag(QGraphicsItem.ItemIsMovable)
-                #self.pen.setStyle(QtCore.Qt.DotLine)
+                #self.pen.setStyle(QC.Qt.DotLine)
                 #self.setPen(self.pen)
                 self.make_look_active(True)
         self.counter +=1
@@ -170,5 +170,5 @@ class SnapROIItem(QW.QGraphicsRectItem):
         print 'hover in'
         self.counter = 0
         self.cursorPositionBasedStyling(event)
-        #hoverRect = QtCore.QRectF(self.bottomRight()-QtCore.QPoint(20,20),self.bottomRight())
+        #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
         return QW.QGraphicsRectItem.hoverEnterEvent(self,event)

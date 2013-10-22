@@ -38,7 +38,7 @@ class PlotWithAxesWidget(QW.QWidget):
         self.gpix = None
         self.updating = False
         # fill view by default
-        self.aspect_ratio = QtCore.Qt.IgnoreAspectRatio
+        self.aspect_ratio = QC.Qt.IgnoreAspectRatio
         self.Hlines = {Constants.EVENTS: [], Constants.GAPS: []}
 
     def addHLines(self, locs, linetype, color='lime'):
@@ -164,11 +164,11 @@ class PlotWithAxesWidget(QW.QWidget):
         self.reset_zoom_action = reset_zoom_action
 
         fit_width_action.triggered.connect(
-            lambda: self.fitView(QtCore.Qt.KeepAspectRatio))
+            lambda: self.fitView(QC.Qt.KeepAspectRatio))
         fit_height_action.triggered.connect(
-            lambda: self.fitView(QtCore.Qt.KeepAspectRatioByExpanding))
+            lambda: self.fitView(QC.Qt.KeepAspectRatioByExpanding))
         fit_in_view_action.triggered.connect(
-            lambda: self.fitView(QtCore.Qt.IgnoreAspectRatio))
+            lambda: self.fitView(QC.Qt.IgnoreAspectRatio))
         action_text = """<h3>Zooming</h3>
         Using the mouse wheel it is possible to zoom in into the image
         <ul>
@@ -234,7 +234,7 @@ class PlotWithAxesWidget(QW.QWidget):
         zoomlevel_widget.setMaximumWidth(40)
         zoomlevel_widget.setMaximumHeight(20)
         zoomlevel_widget.setToolTip('Zoom levels - horizontal : vertical')
-        fLayout.addWidget(zoomlevel_widget, 2, 0, QtCore.Qt.AlignHCenter)
+        fLayout.addWidget(zoomlevel_widget, 2, 0, QC.Qt.AlignHCenter)
 
         self.fV.show()
 
@@ -247,8 +247,8 @@ class PlotWithAxesWidget(QW.QWidget):
         if self.antialias:
             self.fV.setRenderHint(QG.QPainter.Antialiasing)
 #        self.fV.setRenderHint(QG.QPainter.HighQualityAntialiasing)
-        self.fV.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.fV.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.fV.setVerticalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
+        self.fV.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
 
         self.fscene.setLocation.connect(self.updateCoords)
         QW.QApplication.processEvents()
@@ -286,7 +286,7 @@ class PlotWithAxesWidget(QW.QWidget):
         self.vertical_scrollbar.setVisible(minv != maxv)
 
     def showHLines(self, state, hlines):
-        if state == QtCore.Qt.Checked:
+        if state == QC.Qt.Checked:
             visible = True
         else:
             visible = False
@@ -311,7 +311,7 @@ class PlotWithAxesWidget(QW.QWidget):
         pen.setColor(QG.QColor('navy'))
         start = self.data2scene((start, height))
         end = self.data2scene((end, height))
-        gl = self.fscene.addLine(QtCore.QLineF(start, end), pen)
+        gl = self.fscene.addLine(QC.QLineF(start, end), pen)
         gl.setZValue(500)
         return gl
 
@@ -337,14 +337,14 @@ class PlotWithAxesWidget(QW.QWidget):
         self.scene2data_xvals = None
 
     def makeHLine(self, loc, color):
-        eventPen = QG.QPen(QtCore.Qt.SolidLine)
+        eventPen = QG.QPen(QC.Qt.SolidLine)
         eventPen.setWidth(2)
         eventPen.setColor(QG.QColor(color))
         eventPen.setCosmetic(True)
         x_loc = self.data2scene((loc, 0)).x()
-        x0 = QtCore.QPointF(x_loc, self.fscene.sceneRect().top())
-        x1 = QtCore.QPointF(x_loc, self.fscene.sceneRect().bottom())
-        line = self.fscene.addLine(QtCore.QLineF(x0, x1), eventPen)
+        x0 = QC.QPointF(x_loc, self.fscene.sceneRect().top())
+        x1 = QC.QPointF(x_loc, self.fscene.sceneRect().bottom())
+        line = self.fscene.addLine(QC.QLineF(x0, x1), eventPen)
         line.setZValue(1000.)
         return line
 
@@ -412,7 +412,7 @@ class PlotWithAxesWidget(QW.QWidget):
         self.ymin = min([pd.y_min for pd in self.plot_datas.values()])
         self.ymax = max([pd.y_max for pd in self.plot_datas.values()])
         print 'extents', self.ymin, self.ymax, self.xmin, self.xmax
-        self.scene_rect = QtCore.QRectF(self.xmin,-self.ymax, self.xmax-self.xmin, self.ymax-self.ymin)
+        self.scene_rect = QC.QRectF(self.xmin,-self.ymax, self.xmax-self.xmin, self.ymax-self.ymin)
         #self.scene_rect = self.scene.sceneRect()
 
         #if dont_shrink_in_y:
@@ -497,7 +497,7 @@ class PlotWithAxesWidget(QW.QWidget):
         return
 
     def makeCircle(self, loc_x, loc_y):
-        r = QtCore.QRectF(loc_x-2, loc_y-2, 4., 4.)
+        r = QC.QRectF(loc_x-2, loc_y-2, 4., 4.)
         c = self.fscene.addEllipse(r)
         return c
 
@@ -539,8 +539,8 @@ class PlotWithAxesWidget(QW.QWidget):
                       zip(plotd.phys_xvalues, plotd.data)]
         group = QW.QGraphicsItemGroup()
         circle_size = 10 * plotd.size
-        p1 = self.fV.mapToScene(QtCore.QPoint(0, 0))
-        p2 = self.fV.mapToScene(QtCore.QPoint(circle_size, circle_size))
+        p1 = self.fV.mapToScene(QC.QPoint(0, 0))
+        p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
         p = p2 - p1
         xsize = p.x()
         ysize = p.y()
@@ -586,8 +586,8 @@ class PlotWithAxesWidget(QW.QWidget):
                     if plotd.drawn:
                         children = plotd.graphic_item.childItems()
                         circle_size = 10 * plotd.size
-                        p1 = self.fV.mapToScene(QtCore.QPoint(0, 0))
-                        p2 = self.fV.mapToScene(QtCore.QPoint(circle_size, circle_size))
+                        p1 = self.fV.mapToScene(QC.QPoint(0, 0))
+                        p2 = self.fV.mapToScene(QC.QPoint(circle_size, circle_size))
                         p = p2-p1
                         xsize = p.x()
                         ysize = p.y()
@@ -623,7 +623,7 @@ class FunctionItem(QW.QGraphicsItem):
         self.xmin = min(xdata)
         self.xmax = max(xdata)
         self.ydata = ydata
-        self.b_rect = QtCore.QRectF(min(xdata),min(ydata),max(xdata)-min(xdata), max(ydata)-min(ydata))
+        self.b_rect = QC.QRectF(min(xdata),min(ydata),max(xdata)-min(xdata), max(ydata)-min(ydata))
 
     def set_points(self, points):
         xdata = [p.x() for p in points]
@@ -671,7 +671,7 @@ class FunctionItem(QW.QGraphicsItem):
 
 class PixmapPlotWidget(PlotWithAxesWidget):
     def scene2data(self, spoint):
-        if isinstance(spoint, QtCore.QPointF):
+        if isinstance(spoint, QC.QPointF):
             sx = spoint.x()
             sy = - spoint.y()
         else:
@@ -690,13 +690,13 @@ class PixmapPlotWidget(PlotWithAxesWidget):
             #else:
             #    y_out = self.scene2data_yvals[int(sy)]
 
-            return QtCore.QPointF(x_out, y_out)
+            return QC.QPointF(x_out, y_out)
 
     def data2scene(self, dpoint):
         dx = dpoint[0]
         dy = dpoint[1]
-        #ret = QtCore.QPointF(self.data2scene_xfunc(dx), -dy)
-        ret = QtCore.QPointF(dx, self.ymax - dy)
+        #ret = QC.QPointF(self.data2scene_xfunc(dx), -dy)
+        ret = QC.QPointF(dx, self.ymax - dy)
         return ret
 
     def addPixmap(self, pixmap, xvals=None, yvals=None):
@@ -716,7 +716,7 @@ class PixmapPlotWidget(PlotWithAxesWidget):
         self.fscene.setBackgroundBrush(brush)
         self.gpix = self.fscene.addPixmap(pixmap)
         #self.gpix.setPos(0, pixmap.height())
-        rect = QtCore.QRectF(0, 0, pixmap.width(), pixmap.height())
+        rect = QC.QRectF(0, 0, pixmap.width(), pixmap.height())
         if self.scene_rect == rect:
             return
         self.scene_rect = rect  # path.boundingRect()
@@ -725,7 +725,7 @@ class PixmapPlotWidget(PlotWithAxesWidget):
 
 class TracePlotWidget(PlotWithAxesWidget):
     def scene2data(self, spoint):
-        if isinstance(spoint, QtCore.QPointF):
+        if isinstance(spoint, QC.QPointF):
             sx = spoint.x()
             sy = - spoint.y()
         else:
@@ -741,13 +741,13 @@ class TracePlotWidget(PlotWithAxesWidget):
             #else:
             #    y_out = self.scene2data_yvals[int(sy)]
 
-            return QtCore.QPointF(x_out, y_out)
+            return QC.QPointF(x_out, y_out)
 
     def data2scene(self, dpoint):
         dx = dpoint[0]
         dy = dpoint[1]
-        #ret = QtCore.QPointF(self.data2scene_xfunc(dx), -dy)
-        ret = QtCore.QPointF(dx, -dy)
+        #ret = QC.QPointF(self.data2scene_xfunc(dx), -dy)
+        ret = QC.QPointF(dx, -dy)
         return ret
 
 
@@ -772,7 +772,7 @@ class TracePlotWidget(PlotWithAxesWidget):
     #def convert_data(self, plotd):
     #    if not plotd.physical_x_data:
     #        # pixel vs data. fluorescence data from image
-    #        plot_data = [QtCore.QPointF(x,dy) for x, dy in
+    #        plot_data = [QC.QPointF(x,dy) for x, dy in
     #                     zip(plotd.xvalues, plotd.data)]
     #    else:
     #        # time vs data

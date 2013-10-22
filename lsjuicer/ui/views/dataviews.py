@@ -32,7 +32,7 @@ class CopyTableView(QW.QTableView):
             column_names = []
             column_count = header_model.columnCount(selected[0])
             for i in range(column_count):
-                column_names.append(str(header_model.headerData(i, QtCore.Qt.Horizontal, QtCore.Qt.DisplayRole).toString()))
+                column_names.append(str(header_model.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole).toString()))
             copyLines.insert(0, ', '.join(column_names))
         outTxt = '\n'.join(copyLines)
         #print outTxt
@@ -41,7 +41,7 @@ class CopyTableView(QW.QTableView):
         return
 
     def keyPressEvent(self, event):
-        if (event.modifiers() & QtCore.Qt.ControlModifier) and event.key() == QtCore.Qt.Key_C:
+        if (event.modifiers() & QC.Qt.ControlModifier) and event.key() == QC.Qt.Key_C:
             self.copy()
             return
         else:

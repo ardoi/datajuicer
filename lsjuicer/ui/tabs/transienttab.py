@@ -212,7 +212,7 @@ class TransientTab(QW.QTabWidget):
         self.approved_transients = None
         self.toggling_buttons = False
         self.toggle_buttons()
-        QtCore.QTimer.singleShot(50, lambda :self.initialPlots())
+        QC.QTimer.singleShot(50, lambda :self.initialPlots())
 
     def setName(self,name):
         self.filename = name
@@ -419,7 +419,7 @@ class TransientTab(QW.QTabWidget):
         smooth_widget_layout.addWidget(self.label_smoothing_value)
         detection_layout.addWidget(self.smooth_widget)
 
-        self.slider_smoothing = QW.QSlider(QtCore.Qt.Horizontal)
+        self.slider_smoothing = QW.QSlider(QC.Qt.Horizontal)
         self.slider_smoothing.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
         self.slider_smoothing.setSingleStep(1)
         self.slider_smoothing.setValue(initval)
@@ -449,7 +449,7 @@ class TransientTab(QW.QTabWidget):
         detection_layout.addWidget(self.detection_widget)
 
 
-        self.slider_detection = QW.QSlider(QtCore.Qt.Horizontal)
+        self.slider_detection = QW.QSlider(QC.Qt.Horizontal)
         self.slider_detection.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
         self.slider_detection.setSingleStep(10)
         self.slider_detection.setValue(initval)
@@ -534,13 +534,13 @@ class TransientTab(QW.QTabWidget):
                 QW.QHeaderView.ResizeToContents)
         self.transient_tableview.horizontalHeader().setStretchLastSection(True)
         self.transient_tableview.verticalHeader().setSectionResizeMode(QW.QHeaderView.Fixed)
-        self.transient_tableview.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.transient_tableview.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         self.transient_tableview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
         self.transient_tableview.setSelectionMode(QW.QAbstractItemView.ExtendedSelection)
         transient_action_layout.addWidget(self.transient_tableview)
         transient_action_toolbar = QW.QToolBar('Action')
         self.transient_tableview.items_selected.connect(transient_action_toolbar.setEnabled)
-        transient_action_toolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
+        transient_action_toolbar.setToolButtonStyle(QC.Qt.ToolButtonTextUnderIcon)
         transient_show_action = transient_action_toolbar.addAction(
                 QG.QIcon(':/eye.png'), 'Show')
         #transient_show_action.setCheckable(True)
@@ -555,7 +555,7 @@ class TransientTab(QW.QTabWidget):
         transient_delete_action.triggered.connect(self.transient_delete_action_triggered)
         transient_action_layout.addWidget(transient_action_toolbar)
         transient_action_toolbar.setContentsMargins(0,0,0,0)
-        transient_action_layout.setAlignment(transient_action_toolbar, QtCore.Qt.AlignCenter)
+        transient_action_layout.setAlignment(transient_action_toolbar, QC.Qt.AlignCenter)
 
         d = n.zeros((3,3,2),dtype = bool)
         settings = [[TS.TRANSIENTS_HIDDEN, TS.TRANSIENTS_VISIBLE],
@@ -1145,7 +1145,7 @@ class FluorescenceTab(TransientTab):
 #        detection_widget_layout.addWidget(qls4)
 #        detection_widget_layout.addWidget(self.qls5)
 #        self.detectionLayout.addLayout(detection_widget_layout)
-#        self.qms = QG.QSlider(QtCore.Qt.Horizontal)
+#        self.qms = QG.QSlider(QC.Qt.Horizontal)
 #        self.qms.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
 #        self.qms.setRange(50, 300)
 #        self.qms.setSingleStep(25)

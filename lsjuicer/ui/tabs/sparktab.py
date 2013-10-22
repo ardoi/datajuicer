@@ -18,7 +18,7 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.data.spark import SparkData
 from lsjuicer.ui.widgets.smallwidgets import SparkResultWidget, VisualizationOptionsWidget
 
-class LocatedSpark(QtCore.QObject):
+class LocatedSpark(QC.QObject):
     """Combines spark with its horizontal(temporal) location"""
     def __init__(self, spark, location_h, location_v):
         self.spark = spark
@@ -72,7 +72,7 @@ class SparkTab(QW.QTabWidget):
         self.spark_roi = self.spark_rois[0]
         self.spark = None
         self.setup_ui()
-        QtCore.QTimer.singleShot(50, lambda :self.fit_all_plots())
+        QC.QTimer.singleShot(50, lambda :self.fit_all_plots())
 
     def set_settings(self, settings=None):
         shape = self.spark_roi.data.shape
@@ -221,7 +221,7 @@ class SparkTab(QW.QTabWidget):
         self.temporal_stack.setCurrentIndex(number)
         self.spatial_stack.setCurrentIndex(number)
 
-        QtCore.QTimer.singleShot(102, lambda:self.reset_selected_spark())
+        QC.QTimer.singleShot(102, lambda:self.reset_selected_spark())
 
 
     def reset_selected_spark(self):
@@ -433,7 +433,7 @@ class SparkTab(QW.QTabWidget):
         results_layout.addWidget(self.accept_button,0,2)
         results_layout.addWidget(results_pb,1,2)
         results_layout.addWidget(self.recalc_button, 2,1)
-        select_and_result_layout.addWidget(results_groupbox, 0, QtCore.Qt.AlignHCenter)
+        select_and_result_layout.addWidget(results_groupbox, 0, QC.Qt.AlignHCenter)
         select_and_result_layout.addStretch()
 
         self.sparkplot = PlotWidget(self)
@@ -444,8 +444,8 @@ class SparkTab(QW.QTabWidget):
         spark_plot_layout.addWidget(self.sparkplot, 1, 0)
         ver_layout = QW.QVBoxLayout()
         hor_layout = QW.QHBoxLayout()
-        self.hor_slider = QW.QSlider(QtCore.Qt.Horizontal)
-        self.ver_slider = QW.QSlider(QtCore.Qt.Vertical)
+        self.hor_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.ver_slider = QW.QSlider(QC.Qt.Vertical)
         self.hor_spinner = QW.QSpinBox()
         self.hor_spinner.setStyleSheet("""
         QSpinBox{
@@ -473,8 +473,8 @@ class SparkTab(QW.QTabWidget):
         spark_plot_layout.addWidget(vis_options_pb)
 
 
-        self.left_F0_slider = QW.QSlider(QtCore.Qt.Horizontal)
-        self.right_F0_slider = QW.QSlider(QtCore.Qt.Horizontal)
+        self.left_F0_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.right_F0_slider = QW.QSlider(QC.Qt.Horizontal)
         F0_layout = QW.QHBoxLayout()
         F0_layout.addWidget(QW.QLabel('<b>F0:</b> left:'))
         F0_layout.addWidget(self.left_F0_slider)
@@ -552,14 +552,14 @@ class SparkTab(QW.QTabWidget):
             #print 'max',max_vals,self.ds.data.max()
 
 
-        #QtCore.QTimer.singleShot(20, lambda:self.change_active_spark_region(0))
+        #QC.QTimer.singleShot(20, lambda:self.change_active_spark_region(0))
         self.change_active_spark_region(0)
         #self.recalculate_locations()
-        #QtCore.QTimer.singleShot(40, lambda:self.recalculate_locations())
+        #QC.QTimer.singleShot(40, lambda:self.recalculate_locations())
         #main_height = main_layout.sizeHint().height()
         self.fplot_temporal.setSizePolicy(QW.QSizePolicy.Expanding,QW.QSizePolicy.Expanding)
         self.fplot_spatial.setSizePolicy(QW.QSizePolicy.Expanding,QW.QSizePolicy.Expanding)
-        QtCore.QTimer.singleShot(50,lambda:self.sparkplot.fitView(0))
+        QC.QTimer.singleShot(50,lambda:self.sparkplot.fitView(0))
 
     def show_vis_options_dialog(self):
         dialog = QW.QDialog(self)
@@ -677,9 +677,9 @@ class SparkTab(QW.QTabWidget):
     def recalculate_locations(self):
         new_max, new_max_h = self.get_max_spatial_loc()
         if new_max:
-            QtCore.QTimer.singleShot(12,
+            QC.QTimer.singleShot(12,
                     lambda:self.ver_slider.setValue(new_max))
-            QtCore.QTimer.singleShot(13,
+            QC.QTimer.singleShot(13,
                     lambda:self.hor_slider.setValue(new_max_h))
         return
 

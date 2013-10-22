@@ -29,7 +29,7 @@ class StartUI(QW.QDialog):
 
         self.sparkb = QW.QPushButton(self.sparkicon,'')
         self.sparkb.setCheckable(True)
-        self.sparkb.setIconSize(QtCore.QSize(140, 140))
+        self.sparkb.setIconSize(QC.QSize(140, 140))
         self.sparkb.setSizePolicy(QW.QSizePolicy.Expanding,
                 QW.QSizePolicy.Expanding)
 
@@ -37,7 +37,7 @@ class StartUI(QW.QDialog):
         self.transientb = QW.QPushButton(self.transienticon,'')
         self.transientb.setCheckable(True)
         self.transientb.setMouseTracking(True)
-        self.transientb.setIconSize(QtCore.QSize(140, 140))
+        self.transientb.setIconSize(QC.QSize(140, 140))
         self.transientb.setSizePolicy(QW.QSizePolicy.Expanding,
                 QW.QSizePolicy.Expanding)
         buttonlayout.addWidget(self.sparkb)
@@ -55,7 +55,7 @@ class StartUI(QW.QDialog):
         self.transientb.clicked[()].connect(ontc)
         self.gobutton.clicked[()].connect(self.go)
 
-        #self.setWindowFlags(QtCore.Qt.Dialog)
+        #self.setWindowFlags(QC.Qt.Dialog)
 
     def go(self):
         if self.sparkb.isChecked():

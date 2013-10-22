@@ -18,7 +18,7 @@ from lsjuicer.util import helpers
 from lsjuicer.static import selection_types
 from lsjuicer.ui.items.selection import BoundaryManager, SelectionDataModel
 from lsjuicer.static.constants import TransientBoundarySelectionTypeNames as TBSTN
-class Pipe(QtCore.QObject):
+class Pipe(QC.QObject):
     pipe_toggled = QC.pyqtSignal()
     new_data_out = QC.pyqtSignal()
     def _set_data_in(self, data_in):
@@ -509,7 +509,7 @@ class ImageProcessPipe(ProcessPipe):
         q = self.data_in**(1./self.values["Multiplier 1"])
         return q
 
-class PipeChain(QtCore.QObject):
+class PipeChain(QC.QObject):
     pipe_state_changed = QC.pyqtSignal()
     new_histogram = QC.pyqtSignal()
 
@@ -690,7 +690,7 @@ class PipeWidget(QW.QFrame):
         self.pipe = pipe
 
     def minimumSizeHint(self):
-        return QtCore.QSize(100,100)
+        return QC.QSize(100,100)
 
     def set_pipe_options(self):
         new = False
@@ -730,7 +730,7 @@ def test_string(s):
         return True
 
 
-class PipeModel(QtCore.QAbstractListModel):
+class PipeModel(QC.QAbstractListModel):
     def __init__(self, parent = None):
         super(PipeModel, self).__init__(parent)
         self._pipedata = []
@@ -753,9 +753,9 @@ class PipeModel(QtCore.QAbstractListModel):
 
     def data(self, index, role):
         pipe = self.pipedata[index.row()]
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             return pipe.name
-        elif role==QtCore.Qt.DecorationRole:
+        elif role==QC.Qt.DecorationRole:
             if pipe.enabled:
                 if pipe.processed:
                     return QG.QColor('lime')
@@ -764,7 +764,7 @@ class PipeModel(QtCore.QAbstractListModel):
             else:
                 return QG.QColor('red')
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def pipes_updated(self):
         self.modelAboutToBeReset.emit()

@@ -35,7 +35,7 @@ class FramePlayer(QW.QWidget):
         hlayout = QW.QHBoxLayout()
         hlayout.addWidget(QW.QLabel("FPS"))
         fps_selector = QW.QComboBox(self)
-        fps_selector.setInputMethodHints(QtCore.Qt.ImhDigitsOnly)
+        fps_selector.setInputMethodHints(QC.Qt.ImhDigitsOnly)
         fps_selector.setEditable(True)
         self.fps_selector=fps_selector
         fpss = [5, 10, 25, 50, 100, 150]
@@ -62,7 +62,7 @@ class FramePlayer(QW.QWidget):
         if self.frame_get_func() == self.frame_max_func():
             self.frame_set_func(0)
         self.last_frame_time = None
-        self.timer = QtCore.QTimer(self)
+        self.timer = QC.QTimer(self)
         self.timer.timeout.connect(self.increase_frame)
         self.timer.start(1./self.fps*1000) #in msec
         self.stop_pb.setEnabled(True)
@@ -124,15 +124,15 @@ class SparkResultWidget(QW.QFrame):
         super(SparkResultWidget, self).__init__(parent)
         self.setFrameShape(QW.QFrame.StyledPanel)
         stats_layout = QW.QGridLayout()
-        stats_layout.addWidget(QW.QLabel('<b>Amplitude:</b>'),1,0,QtCore.Qt.AlignRight)
-        #stats_layout.addWidget(QG.QLabel('<b>dF/F0:</b>'),1,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>FWHM:</b>'),3,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>FDHM:</b>'),4,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>Decay rate:</b>'),5,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>Rise time:</b>'),6,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>Time @ max:</b>'),7,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>Location @ max:</b>'),8,0,QtCore.Qt.AlignRight)
-        stats_layout.addWidget(QW.QLabel('<b>Baseline:</b>'),9,0,QtCore.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Amplitude:</b>'),1,0,QC.Qt.AlignRight)
+        #stats_layout.addWidget(QG.QLabel('<b>dF/F0:</b>'),1,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>FWHM:</b>'),3,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>FDHM:</b>'),4,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Decay rate:</b>'),5,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Rise time:</b>'),6,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Time @ max:</b>'),7,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Location @ max:</b>'),8,0,QC.Qt.AlignRight)
+        stats_layout.addWidget(QW.QLabel('<b>Baseline:</b>'),9,0,QC.Qt.AlignRight)
         stats_layout.setSpacing(0)
         self.setLayout(stats_layout)
         self.amp_label = QW.QLabel('0')
@@ -151,7 +151,7 @@ class SparkResultWidget(QW.QFrame):
         font-weight:bold;
         }
         """)
-        self.spark_name_label.setAlignment(QtCore.Qt.AlignCenter)
+        self.spark_name_label.setAlignment(QC.Qt.AlignCenter)
         stats_layout.addWidget(self.spark_name_label,0,0,1,2)
         stats_layout.addWidget(self.amp_label, 1,1)
         #stats_layout.addWidget(self.dFF0_label, 1,1)
@@ -204,7 +204,7 @@ class VisualizationOptionsWidget(QW.QWidget):
 
         self.colormaps = [name for name in cm.datad if not name.endswith("_r")]
         self.colormaps.sort()
-        self.colormap_combobox.setIconSize(QtCore.QSize(100,20))
+        self.colormap_combobox.setIconSize(QC.QSize(100,20))
         for cm_name in self.colormaps:
             icon = QG.QIcon(QG.QPixmap(":/colormap_%s.png"%cm_name))
             self.colormap_combobox.addItem(icon, cm_name)
@@ -225,7 +225,7 @@ class VisualizationOptionsWidget(QW.QWidget):
         main_layout.addWidget(self.hist_plot)
         close_pb =QW.QPushButton("Close")
         #close_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
-        main_layout.addWidget(close_pb, QtCore.Qt.AlignRight)
+        main_layout.addWidget(close_pb, QC.Qt.AlignRight)
         close_pb.clicked.connect(self.close)
         #self.pipechain = pipechain
         self.update_pipechain(pipechain)
@@ -270,7 +270,7 @@ class HistogramPlot(QW.QWidget):
         self.scene = HistogramScene(self)
         self.scene.clicked.connect(self.reverse_saturation)
         self.scene.setBackgroundBrush(QG.QBrush(QG.QColor('#1D3A3B')))
-        #gr = self.scene.addRect(QtCore.QRectF(0,0,200,100))
+        #gr = self.scene.addRect(QC.QRectF(0,0,200,100))
         self.view = RefitView(self)
         self.view.setScene(self.scene)
         self.log_checkbox = QW.QCheckBox("Log scale histogram")
@@ -291,8 +291,8 @@ class HistogramPlot(QW.QWidget):
         #self.view.centerOn(gr)
         self.view.setFrameStyle(QW.QFrame.NoFrame)
         self.view.setRenderHint(QG.QPainter.Antialiasing)
-        self.view.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        self.view.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.view.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
+        self.view.setVerticalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         self.saturation_pen = QG.QPen(QG.QColor('orange'))
         #self.saturation_pen.setWidth(3)
         self.saturation_pen.setCosmetic(True)
@@ -317,7 +317,7 @@ class HistogramPlot(QW.QWidget):
             return -val
 
     def sizeHint(self):
-        return QtCore.QSize(200,150)
+        return QC.QSize(200,150)
 
     @property
     def points(self):
@@ -400,12 +400,12 @@ class HistogramPlot(QW.QWidget):
     def make_points(self, data):
         points = []
         #skip the first point of the histogram because it will be all black values and will make the histogram unreadable unless in log scale.
-        points.append(QtCore.QPointF(data[1][1], 0))
+        points.append(QC.QPointF(data[1][1], 0))
         logmin = max(1/n.log(data[0][1:]+1e-12))
         for x,y in zip(data[1][1:],data[0][1:]):
-            point = QtCore.QPointF(x, self.scale_y(y,logmin = logmin))
+            point = QC.QPointF(x, self.scale_y(y,logmin = logmin))
             points.append(point)
-        points.append(QtCore.QPointF(data[1][-2], 0))
+        points.append(QC.QPointF(data[1][-2], 0))
         return points
 
 class HistogramScene(QW.QGraphicsScene):

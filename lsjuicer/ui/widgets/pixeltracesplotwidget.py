@@ -1,7 +1,7 @@
 import numpy
 
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -78,7 +78,7 @@ class PixelTracesPlotWidget(QW.QWidget):
             self.plot_widget.updatePlot('fit %i'%(plot_number), fit, \
                    time_4_fit, hold_update=True)
             #self.plot_widget.fitView()
-            QtCore.QTimer.singleShot(5, self.plot_widget.updatePlots)
+            QC.QTimer.singleShot(5, self.plot_widget.updatePlots)
             self.events_model.set_events(res)
         else:
             self.plot_traces()

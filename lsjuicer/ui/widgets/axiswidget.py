@@ -49,7 +49,7 @@ class AxisWidget(QW.QWidget):
 
 
     def painterStyle(self, painter):
-        bigpen = QG.QPen(QG.QBrush(QtCore.Qt.black), 1)
+        bigpen = QG.QPen(QG.QBrush(QC.Qt.black), 1)
         painter.setPen(bigpen)
         painter.setRenderHint(QG.QPainter.HighQualityAntialiasing)
 
@@ -129,21 +129,21 @@ class HorizontalAxisWidget(AxisWidget):
         self.calculate_ticks_for_range()
 
     def maximumSizeHint(self):
-        return QtCore.QSize(self.hmax, self.min_limit)
+        return QC.QSize(self.hmax, self.min_limit)
 
     def minimumSizeHint(self):
-        return QtCore.QSize(self.min_limit*2, self.min_limit + self.label_space)
+        return QC.QSize(self.min_limit*2, self.min_limit + self.label_space)
 
     def paintEvent(self, event=None):
         self.calculate_ticks()
         if self.tick_positions:
             p = QG.QPainter(self)
-            p.fillRect(QtCore.QRect(0, 0, self.width(), 20 + self.label_space),
+            p.fillRect(QC.QRect(0, 0, self.width(), 20 + self.label_space),
                        self.palette().brush(QG.QPalette.Base))
             self.painterStyle(p)
-            p.drawLine(QtCore.QLineF(0, 0, self.width(), 0))
+            p.drawLine(QC.QLineF(0, 0, self.width(), 0))
             for pos, label in zip(self.tick_positions, self.tick_labels):
-                p.drawLine(QtCore.QLineF(pos, 1, pos, 10))
+                p.drawLine(QC.QLineF(pos, 1, pos, 10))
                 p.drawText(pos+5, 15, label)
             if self.label:
                 font = p.font()
@@ -174,7 +174,7 @@ class VerticalAxisWidget(AxisWidget):
             return self.height()
 
     def minimumSizeHint(self):
-        return QtCore.QSize(self.min_limit*2+self.label_space, self.min_limit)
+        return QC.QSize(self.min_limit*2+self.label_space, self.min_limit)
 
     def my_init(self):
         self.min_tick_distance = 70.0  # pixels
@@ -186,16 +186,16 @@ class VerticalAxisWidget(AxisWidget):
         self.calculate_ticks()
         if self.tick_positions:
             p = QG.QPainter(self)
-            p.fillRect(QtCore.QRect(0, 0, 40+self.label_space, self.height()),
-                       # QtCore.Qt.magenta)
-                       # p.fillRect(QtCore.QRect(0, 0, self.width(), 20),
+            p.fillRect(QC.QRect(0, 0, 40+self.label_space, self.height()),
+                       # QC.Qt.magenta)
+                       # p.fillRect(QC.QRect(0, 0, self.width(), 20),
                        # QG.QBrush(QG.QColor('yellow')))
                        self.palette().brush(QG.QPalette.Base))
             self.painterStyle(p)
-            p.drawLine(QtCore.QLineF(39+self.label_space, 0, 39+self.label_space, self.height()))
+            p.drawLine(QC.QLineF(39+self.label_space, 0, 39+self.label_space, self.height()))
             count = 0
             for pos, label in zip(self.tick_positions, self.tick_labels):
-                p.drawLine(QtCore.QLineF(39+self.label_space, pos, 30+self.label_space, pos))
+                p.drawLine(QC.QLineF(39+self.label_space, pos, 30+self.label_space, pos))
                 if count == 0:
                     p.drawText(self.label_space, pos + 15, label)
                 else:

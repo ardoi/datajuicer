@@ -37,7 +37,7 @@ class SplitPixmap:
         for i in range(len(dxs)-1):
             for j in range(len(dys)-1):
                 cut = [dxs[i], dxs[i+1] - 1, dys[j], dys[j+1] - 1]
-                rec = QtCore.QRect(QtCore.QPoint(cut[0],cut[2]),QtCore.QPoint(cut[1],cut[3]))
+                rec = QC.QRect(QC.QPoint(cut[0],cut[2]),QC.QPoint(cut[1],cut[3]))
                 copyp = self.pixmap.copy(rec)
                 self.splits.append(OffsetPixmap(copyp, dxs[i], dys[j]))
         return self.splits

@@ -32,22 +32,22 @@ class SparkDataDialog(QW.QDialog):
         digits = 5
         temporal_F_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.temporal_smooth_data.tolist(),digits)+"]")
-        temporal_F_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        temporal_F_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         temporal_t_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.temporal_x_phys.tolist(),digits)+"]")
-        temporal_t_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        temporal_t_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         temporal_fit_field = QW.QPlainTextEdit(
                 dic2str(spark.transient.params))
-        temporal_fit_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        temporal_fit_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         spatial_F_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.spatial_smooth_data.tolist(),digits)+"]")
-        spatial_F_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_F_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         spatial_y_field = QW.QPlainTextEdit(
                 "["+helpers.list_2_str(spark.spatial_axis_data.tolist(),digits)+"]")
-        spatial_y_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_y_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         spatial_fit_field = QW.QPlainTextEdit(
                 dic2str(spark.spatial_profile.params))
-        spatial_fit_field.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        spatial_fit_field.setTextInteractionFlags(QC.Qt.TextSelectableByMouse)
         layout.addRow("Temporal:: F", temporal_F_field)
         layout.addRow("Temporal:: time:", temporal_t_field)
         layout.addRow("Temporal:: fit:", temporal_fit_field)
@@ -149,8 +149,8 @@ class SparkROIGraphicItem(object):
         self.fscene.addItem(group)
         #self.ROI_rect = self.plot.makeRect(rect)
         #c = self.makeCircle(loc_x, loc_y)
-        hr = QtCore.QRectF(rect.left(), loc_y - v_span, rect.width(), v_span*2+1)
-        vr = QtCore.QRectF(loc_x - h_span,rect.top(), h_span*2+1,rect.height())
+        hr = QC.QRectF(rect.left(), loc_y - v_span, rect.width(), v_span*2+1)
+        vr = QC.QRectF(loc_x - h_span,rect.top(), h_span*2+1,rect.height())
         self.ROI_hrect = self.plot.makeRect(hr)
         self.ROI_vrect = self.plot.makeRect(vr)
         #group.addToGroup(self.ROI_rect)
@@ -254,7 +254,7 @@ class SparkDetectTab(QW.QTabWidget):
         self.setup_ui()
         self.force_new_pixmap()
         print "\n\n\n\n", self.size()
-        #QtCore.QTimer.singleShot(250,lambda :self.find_sparks())
+        #QC.QTimer.singleShot(250,lambda :self.find_sparks())
 
     @helpers.timeIt
     def find_sparks(self):
@@ -302,7 +302,7 @@ class SparkDetectTab(QW.QTabWidget):
             b = spark_coords[spark_no]['bottom']
 
             roi = [l,r,b,t]
-            rect = QtCore.QRectF(l, b, r-l, t-b)
+            rect = QC.QRectF(l, b, r-l, t-b)
 
             #separate roi for finding the maximum of the spark
             #this is needed in cases where a dim spark is close to
@@ -314,7 +314,7 @@ class SparkDetectTab(QW.QTabWidget):
             mb = spark_max_area_coords[spark_no]['bottom']
 
             mroi = [ml,mr,mb,mt]
-            mrect = QtCore.QRectF(ml,mb, mr-ml, mt-mb)
+            mrect = QC.QRectF(ml,mb, mr-ml, mt-mb)
             print l,r,t,b
             print 'ROI', roi, rect
             print ml,mr,mt,mb
@@ -835,19 +835,19 @@ class SparkDetectTab(QW.QTabWidget):
     def make_new_pixmap(self, settings = {}, force = False):
         print 'making new pix', force
         pixmaker = self.pixmaker
-        QtCore.QTimer.singleShot(100,lambda :
+        QC.QTimer.singleShot(100,lambda :
                 pixmaker.makeImage(image_settings = settings, force = force))
         if self.image_shown:
-            QtCore.QTimer.singleShot(150,lambda :
+            QC.QTimer.singleShot(150,lambda :
                     self.sparksplot.replacePixmap(pixmaker.pixmap))
         else:
             print 'showing image with tstamps'
-            QtCore.QTimer.singleShot(200,lambda :
+            QC.QTimer.singleShot(200,lambda :
                     self.sparksplot.addPixmap(pixmaker.pixmap,
                         self.xvals, self.yvals)
                     )
             self.image_shown = True
-        QtCore.QTimer.singleShot(250,lambda :self.sparksplot.fitView(0))
+        QC.QTimer.singleShot(250,lambda :self.sparksplot.fitView(0))
     def fit_sparkregion_plot(self):
         self.sparksplot.fitView(0)
 

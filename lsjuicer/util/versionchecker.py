@@ -6,13 +6,13 @@ from PyQt5 import QtCore, QtWidgets
 
 import PyQt5.QtNetwork as QN
 
-class VersionChecker(QtCore.QObject):
+class VersionChecker(QC.QObject):
     def __init__(self,version):
         self.version = version
     
     def checkVersion(self):
-        self.url = QtCore.QUrl("http://lsjuicer.googlecode.com/files/version")
-        self.buffer = QtCore.QBuffer()
+        self.url = QC.QUrl("http://lsjuicer.googlecode.com/files/version")
+        self.buffer = QC.QBuffer()
         self.http = QN.QHttp()
         self.http.done[bool].connect(self.done)
         self.http.setHost(self.url.host())
@@ -47,7 +47,7 @@ class VersionChecker(QtCore.QObject):
 
             te = QW.QTextBrowser()
             te.setOpenExternalLinks(True)
-            te.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+            te.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
             te.setHtml(versiontxt.replace('\n','<br>'))
             
             infoL = QW.QHBoxLayout()

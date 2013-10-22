@@ -156,7 +156,7 @@ class Worker(Process):
         return
 
 
-class Threader(QtCore.QObject):
+class Threader(QC.QObject):
     threads_done = QC.pyqtSignal()
     progress_update = QC.pyqtSignal(int, int, int, int)
     time_stats = QC.pyqtSignal(float, float, float)
@@ -325,7 +325,7 @@ class Threader(QtCore.QObject):
                 (total_time, computational_time, average_comp_time)
             print job_run_times.mean(), job_run_times.min(), job_run_times.max()
             # print "RESULTS ",self.out_data
-            # qc=QtCore.QCoreApplication.instance()
+            # qc=QC.QCoreApplication.instance()
             # qc.exit()
             self.threads_done.emit()
         session.commit()
@@ -338,7 +338,7 @@ class Threader(QtCore.QObject):
         return selection
 
     def __init__(self, parent=None):
-        QtCore.QObject.__init__(self, parent)
+        QC.QObject.__init__(self, parent)
         self.waiting_workers = []
         self.running_workers = []
         self.finished_workers = []
@@ -380,7 +380,7 @@ class FitDialog(QW.QDialog):
         self.d = Threader(self)
         self.d.do(parameters, settings)
 
-        self.timer = QtCore.QTimer(self)
+        self.timer = QC.QTimer(self)
         self.timer.timeout.connect(self.d.update)
 
         self.d.threads_done.connect(self.timer.stop)

@@ -19,16 +19,16 @@ class CheckBoxDelegate(QW.QItemDelegate):
         return box
 
     def setEditorData(self, editor, index):
-        state  = index.model().data(index, QtCore.Qt.DisplayRole)
+        state  = index.model().data(index, QC.Qt.DisplayRole)
         print 'edit',state
         editor.setChecked(state)
 
     def setModelData(self, editor, model, index):
         state = editor.isChecked()
         print 'set',state
-        model.setData(index, state, QtCore.Qt.DisplayRole)
+        model.setData(index, state, QC.Qt.DisplayRole)
 
-class TransientDataModel(QtCore.QAbstractTableModel):
+class TransientDataModel(QC.QAbstractTableModel):
     def __init__(self, parent = None):
         super(TransientDataModel, self).__init__(parent)
         self.visual_transient_collection = None
@@ -94,8 +94,8 @@ class TransientDataModel(QtCore.QAbstractTableModel):
         return self.columns
 
     def headerData(self, section, orientation, role):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QC.Qt.DisplayRole:
+            if orientation == QC.Qt.Horizontal:
                 if section == 1:
                     return "Start"
                 elif section == 2:
@@ -117,12 +117,12 @@ class TransientDataModel(QtCore.QAbstractTableModel):
                 #elif section == 9:
                 #    return 'V'
                 else:
-                    return QtCore.QVariant()
+                    return QC.QVariant()
             else:
 #                return 'Transient %i'%(section+1)
-                QtCore.QVariant()
+                QC.QVariant()
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def data(self, index, role):
         if self.visual_transient_collection:
@@ -135,9 +135,9 @@ class TransientDataModel(QtCore.QAbstractTableModel):
                 tr = vtr.transient_rect.transient
             except KeyError:
                 print 'error', key
-                return QtCore.QVariant()
+                return QC.QVariant()
 #            tr = self.vis_transients.ts.transients[key]
-            if role == QtCore.Qt.DisplayRole:
+            if role == QC.Qt.DisplayRole:
                     if col == 0:
                         return "%i"%(row + 1)
                     elif col==1:
@@ -159,12 +159,12 @@ class TransientDataModel(QtCore.QAbstractTableModel):
                     #elif col==9:
                     #    return vtr.visible
                     else:
-                        return QtCore.QVariant()
+                        return QC.QVariant()
 
-            elif role==QtCore.Qt.TextAlignmentRole:
-                return QtCore.Qt.AlignCenter
+            elif role==QC.Qt.TextAlignmentRole:
+                return QC.Qt.AlignCenter
 
-            elif role == QtCore.Qt.DecorationRole:
+            elif role == QC.Qt.DecorationRole:
                 if col==0:
                     pix = QG.QPixmap(20,20)
                     pix.fill(vtr.color)
@@ -173,30 +173,30 @@ class TransientDataModel(QtCore.QAbstractTableModel):
                     if vtr.group_color:
                         painter.setBrush(QG.QBrush(vtr.group_color))
                         painter.setPen(QG.QPen(vtr.group_color))
-                        painter.drawEllipse(QtCore.QPointF(10.,10.),5.,5.)
+                        painter.drawEllipse(QC.QPointF(10.,10.),5.,5.)
                     return pix
-            #elif role == QtCore.Qt.CheckStateRole:
+            #elif role == QC.Qt.CheckStateRole:
             #    if col == 9:
             #        #print 'col 9'
             #        if vtr.visible:
             #            #print 'check'
-            #            return QtCore.Qt.Checked
+            #            return QC.Qt.Checked
             #        else:
             #            #print 'ucheck'
-            #            return QtCore.Qt.Unchecked
+            #            return QC.Qt.Unchecked
             #    else:
-            #        return QtCore.QVariant()
+            #        return QC.QVariant()
             else:
-                return QtCore.QVariant()
+                return QC.QVariant()
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
     #def flags(self, index):
         #selection = self.filePath(index)
         #if os.path.isdir(selection):
         #if index.column()==9:
-    #    return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsUserCheckable | QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsSelectable
+    #    return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsUserCheckable | QC.Qt.ItemIsEditable | QC.Qt.ItemIsSelectable
         #else:
-        #    return QtCore.Qt.ItemIsEnabled
+        #    return QC.Qt.ItemIsEnabled
 
 class MyProxyModel(QG.QSortFilterProxyModel):
     """
@@ -252,9 +252,9 @@ class MyFileSystemModel(QW.QFileSystemModel):
         print 'ftype', ftype
         if ftype=="oib":
             self.ftype="oib,oif"
-            self.setNameFilters(QtCore.QStringList([QtCore.QString("*.oib"),QtCore.QString("*.oif")]))
+            self.setNameFilters(QC.QStringList([QC.QString("*.oib"),QC.QString("*.oif")]))
         else:
-            self.setNameFilters(QtCore.QStringList([QtCore.QString("*.%s"%ftype)]))
+            self.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
 
     def setTarget(self, target):
         self.target = target
@@ -284,12 +284,12 @@ class MyFileSystemModel(QW.QFileSystemModel):
     def flags(self, index):
         selection = self.filePath(index)
         if os.path.isdir(selection):
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
         else:
-            return QtCore.Qt.ItemIsEnabled
+            return QC.Qt.ItemIsEnabled
 
 
-class RandomDataModel(QtCore.QAbstractTableModel):
+class RandomDataModel(QC.QAbstractTableModel):
     """DataModel to display data from image file in a directory"""
     conversion_finished = QC.pyqtSignal()
     switchToFileSelection = QC.pyqtSignal(str)
@@ -421,7 +421,7 @@ class RandomDataModel(QtCore.QAbstractTableModel):
 
     def convert(self):
         print 'singleshot'
-        #return QtCore.QTimer.singleShot(500,lambda :self.omexml_maker.convert_all())
+        #return QC.QTimer.singleShot(500,lambda :self.omexml_maker.convert_all())
         self.convert_progress_visible.emit(True)
         self.convert_pb_visible.emit(False)
 #        self.emit(QC.SIGNAL('filesRead(int)'),0)
@@ -429,8 +429,8 @@ class RandomDataModel(QtCore.QAbstractTableModel):
         #self.emit(QC.SIGNAL('progressVisible(bool)'),False)
 
     def headerData(self, section, orientation, role):
-        if role == QtCore.Qt.DisplayRole:
-            if orientation == QtCore.Qt.Horizontal:
+        if role == QC.Qt.DisplayRole:
+            if orientation == QC.Qt.Horizontal:
                 if section == 0:
                     return "Filename"
                 elif section == 1:
@@ -466,14 +466,14 @@ class RandomDataModel(QtCore.QAbstractTableModel):
             else:
                 return section+1
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def flags(self, index):
         f = self.dirdatas[index.row()]
         if f.state in [ImageStates.CONVERSION_FAILED, ImageStates.NOT_CONVERTED]:
-            return QtCore.Qt.ItemIsEnabled
+            return QC.Qt.ItemIsEnabled
         else:
-            return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable
+            return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
 
     def recheck_images(self):
         #d = self.dirdatas
@@ -487,7 +487,7 @@ class RandomDataModel(QtCore.QAbstractTableModel):
 
 
     def data(self, index, role):
-        if role == QtCore.Qt.DisplayRole:
+        if role == QC.Qt.DisplayRole:
             f = self.dirdatas[index.row()]
             col = index.column()
             exp_info = f.exp_info
@@ -529,12 +529,12 @@ class RandomDataModel(QtCore.QAbstractTableModel):
                 if f.record_date:
                     return f.record_date.strftime(fmt)
                 else:
-                    return QtCore.QVariant()
+                    return QC.QVariant()
             elif col==7:
                 if f.file_hash:
                     return f.file_hash
                 else:
-                    return QtCore.QVariant()
+                    return QC.QVariant()
             elif col==8:
                 return ifname(exp_info.project)
             elif col==9:
@@ -557,7 +557,7 @@ class RandomDataModel(QtCore.QAbstractTableModel):
                 return " | ".join([ifattr("comment"), dd])
                 #return d[f].description
 
-        elif role == QtCore.Qt.DecorationRole:
+        elif role == QC.Qt.DecorationRole:
             f = self.dirdatas[index.row()]
             col = index.column()
             if col==0:
@@ -573,15 +573,15 @@ class RandomDataModel(QtCore.QAbstractTableModel):
                 elif state==ImageStates.CONVERSION_FAILED:
                     return QG.QColor('black')
             else:
-                return QtCore.QVariant()
-        elif role==QtCore.Qt.TextAlignmentRole:
+                return QC.QVariant()
+        elif role==QC.Qt.TextAlignmentRole:
             col = index.column()
             if col not in [0,8]:
-                return QtCore.Qt.AlignCenter
+                return QC.Qt.AlignCenter
             else:
-                return QtCore.QVariant()
+                return QC.QVariant()
         else:
-            return QtCore.QVariant()
+            return QC.QVariant()
 
     def setDir(self, dirname):
         #if dirname != self.dirname:

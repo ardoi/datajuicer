@@ -21,14 +21,14 @@ from lsjuicer.ui.widgets.fileinfowidget import ExpInfoWidget, ReferencePlot, Ana
 
 class MainUI(QW.QMainWindow):
 
-    newsignal = QC.pyqtSignal(QtCore.QModelIndex)
+    newsignal = QC.pyqtSignal(QC.QModelIndex)
 
     def __init__(self, parent=None):
         super(MainUI, self).__init__(parent)
         self.version = 0.2
         #ch.start(8080)
         self.mode = Constants.SPARK_TYPE
-        #self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+        #self.setAttribute(QC.Qt.WA_DeleteOnClose)
         self.setupUi()
         #self.mode = None
         #versionCheck = VersionChecker(self.version)
@@ -87,12 +87,12 @@ class MainUI(QW.QMainWindow):
         fileToolbar.setMovable(False)
         focusToolbar.setMovable(False)
         confToolbar.setMovable(False)
-        focusToolbar.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
-        fileToolbar.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
-        analysisToolbar.setContextMenuPolicy(QtCore.Qt.PreventContextMenu)
+        focusToolbar.setContextMenuPolicy(QC.Qt.PreventContextMenu)
+        fileToolbar.setContextMenuPolicy(QC.Qt.PreventContextMenu)
+        analysisToolbar.setContextMenuPolicy(QC.Qt.PreventContextMenu)
 
-        analysisToolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
-        fileToolbar.setToolButtonStyle(QtCore.Qt.ToolButtonTextBesideIcon)
+        analysisToolbar.setToolButtonStyle(QC.Qt.ToolButtonTextBesideIcon)
+        fileToolbar.setToolButtonStyle(QC.Qt.ToolButtonTextBesideIcon)
 
         #fileToolbar.addAction(self.actionNew)
 
@@ -220,14 +220,14 @@ class MainUI(QW.QMainWindow):
         frame.setFrameShadow(QW.QFrame.Sunken)
         inspect_layout.addWidget(frame)
         self.inspect_pb = QW.QPushButton('Inspect')
-        inspect_layout.setAlignment(self.inspect_pb, QtCore.Qt.AlignCenter)
+        inspect_layout.setAlignment(self.inspect_pb, QC.Qt.AlignCenter)
         self.inspect_pb.setSizePolicy(QW.QSizePolicy.Maximum,QW.QSizePolicy.Maximum)
         self.inspect_pb.setEnabled(False)
         inspect_layout.addWidget(self.inspect_pb)
         inspect_layout.addStretch()
         if 1:
             self.inspect_progressbar = QW.QProgressBar()
-            self.inspect_progressbar.setFormat(QtCore.QString("%p% - %v out of %m files done"))
+            self.inspect_progressbar.setFormat(QC.QString("%p% - %v out of %m files done"))
             self.inspect_progressbar.setVisible(False)
             inspect_layout.addWidget(self.inspect_progressbar)
 
@@ -238,7 +238,7 @@ class MainUI(QW.QMainWindow):
 
         #
         #file pick
-        #splitter = QG.QSplitter(QtCore.Qt.Vertical)
+        #splitter = QG.QSplitter(QC.Qt.Vertical)
         file_pick_widget = QW.QWidget()
         file_pick_layout = QW.QVBoxLayout()
         #file_pick_layout.setContentsMargins(0,0,0,0)
@@ -250,7 +250,7 @@ class MainUI(QW.QMainWindow):
         convert_progress_layout.setContentsMargins(0,0,0,0)
         convert_progress_widget.setLayout(convert_progress_layout)
         self.convert_progressbar = QW.QProgressBar()
-        self.convert_progressbar.setFormat(QtCore.QString("%p% - %v out of %m files done"))
+        self.convert_progressbar.setFormat(QC.QString("%p% - %v out of %m files done"))
         self.convert_progressbar.setMinimum(0)
         busy_bar = QW.QProgressBar()
         busy_bar.setMinimum(0)
@@ -275,7 +275,7 @@ class MainUI(QW.QMainWindow):
         recheck_pb.clicked.connect(self.recheck_from_files)
         pb_widget.setSizePolicy(QW.QSizePolicy.Maximum,QW.QSizePolicy.Maximum)
         file_action_layout.addWidget(pb_widget)
-        file_action_layout.setAlignment(pb_widget, QtCore.Qt.AlignCenter)
+        file_action_layout.setAlignment(pb_widget, QC.Qt.AlignCenter)
 
         location_layout = QW.QHBoxLayout()
         location_layout.setContentsMargins(0,0,0,0)
@@ -298,18 +298,18 @@ class MainUI(QW.QMainWindow):
         #    rootdir = "C:"
         rootdir = os.getenv('HOME')
         self.fmodel.setRootPath(rootdir)
-        #fmodel.setNameFilters(QtCore.QStringList([QtCore.QString("*.lsm"),QtCore.QString("*.ome")]))
-        #self.fmodel.setNameFilters(QtCore.QStringList([QtCore.QString("*.lsm")]))
+        #fmodel.setNameFilters(QC.QStringList([QC.QString("*.lsm"),QC.QString("*.ome")]))
+        #self.fmodel.setNameFilters(QC.QStringList([QC.QString("*.lsm")]))
         #ftype = Config.get_property('filetype')
         ftype ="tif"
         print 'ftype is %s'%ftype
         self.change_filetype(ftype)
-        #self.fmodel.setNameFilters(QtCore.QStringList([QtCore.QString("*.%s"%ftype)]))
-#        fmodel.setNameFilters(QtCore.QString("*.lsm *.ome"))
+        #self.fmodel.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
+#        fmodel.setNameFilters(QC.QString("*.lsm *.ome"))
         self.fmodel.setNameFilterDisables(False)
         self.fview.setRootIndex(self.fmodel.index(rootdir))
-        #fmodel.setFilter(QtCore.QDir.Dirs | QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
-        #fmodel.setFilter(QtCore.QDir.NoDotAndDotDot | QtCore.QDir.AllDirs)
+        #fmodel.setFilter(QC.QDir.Dirs | QC.QDir.NoDotAndDotDot | QC.QDir.AllDirs)
+        #fmodel.setFilter(QC.QDir.NoDotAndDotDot | QC.QDir.AllDirs)
         #fview.setAnimated(True)
         #fview.header().hideSection(1)
         #fview.setSortingEnabled(True)
@@ -418,7 +418,7 @@ class MainUI(QW.QMainWindow):
     def switch_to_folder_content(self, folder_name):
         self.filePickerTab.setCurrentIndex(1)
         self.location_label.setText('Location: <b>%s</b>'%folder_name)
-        QtCore.QTimer.singleShot(0,self.dosort)
+        QC.QTimer.singleShot(0,self.dosort)
 
     def expinfo_pb_clicked(self):
         expinfo_widget = ExpInfoWidget(self)
@@ -445,8 +445,8 @@ class MainUI(QW.QMainWindow):
     def db_data_update(self):
         selected = self.tview.selectedIndexes()
         row = selected[0].row()
-        topleft = self.proxymodel.index(row,0, QtCore.QModelIndex())
-        bottomright =  self.proxymodel.index(row,15, QtCore.QModelIndex())
+        topleft = self.proxymodel.index(row,0, QC.QModelIndex())
+        bottomright =  self.proxymodel.index(row,15, QC.QModelIndex())
         self.rmodel.data_update(topleft, bottomright)
 
     def tview_selection_changed(self):
@@ -463,8 +463,8 @@ class MainUI(QW.QMainWindow):
             return None
 
     def dosort(self):
-        self.tview.sortByColumn(6,QtCore.Qt.AscendingOrder)
-        self.tview.horizontalHeader().setSortIndicator(6, QtCore.Qt.AscendingOrder)
+        self.tview.sortByColumn(6,QC.Qt.AscendingOrder)
+        self.tview.horizontalHeader().setSortIndicator(6, QC.Qt.AscendingOrder)
 
     def enable_display_pb(self, index):
         pass
@@ -535,7 +535,7 @@ class MainUI(QW.QMainWindow):
 
     def on_actionInfo_triggered(self):
         self.tb = QW.QTextEdit()
-        self.tb.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.tb.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         self.tb.setText(self.mainStack.widget(1).data.info.replace('\n','<br>'))
         self.infoL = QW.QHBoxLayout()
         self.infoL.addWidget(self.tb)
@@ -559,7 +559,7 @@ class MainUI(QW.QMainWindow):
     def on_actionLog_triggered(self):
         tb = QW.QTextEdit(self)
         tb.setReadOnly(True)
-        #tb.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        #tb.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         log_filename = self.getLogfileName()
         if log_filename:
             text = "Log file: <b>%s</b><br/><br/>"%log_filename
@@ -591,7 +591,7 @@ class MainUI(QW.QMainWindow):
     def on_actionHelp_triggered(self):
         tb = QW.QTextBrowser(self)
         tb.setOpenExternalLinks(True)
-        tb.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        tb.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         text = 'You are using version <b>%.3f</b> of the LSJuicer program<br><br>Read the tutorial on <b>LSJuicer</b> <a href="http://code.google.com/p/lsjuicer/wiki/GettingStarted?tm=6">website</a> to get started'%self.version
         tb.setHtml(text)
 
@@ -651,7 +651,7 @@ class MainUI(QW.QMainWindow):
             b = self.qmb.buttons()
             self.qmb.removeButton(b[0])
             self.qmb.show()
-            QtCore.QTimer.singleShot(50, lambda :self.load_file(imfiles))
+            QC.QTimer.singleShot(50, lambda :self.load_file(imfiles))
 
 
     #def on_actionNew_triggered(self):
@@ -722,8 +722,8 @@ class MainUI(QW.QMainWindow):
 
     #def saveViewToImage(self,view,filename):
     #    rec=view.sceneRect()
-    #    x0= QtCore.QPoint(view.mapFromScene(rec.x(),rec.y()))
-    #    x1= QtCore.QPoint(view.mapFromScene(rec.width(),rec.height()))
+    #    x0= QC.QPoint(view.mapFromScene(rec.x(),rec.y()))
+    #    x1= QC.QPoint(view.mapFromScene(rec.width(),rec.height()))
     #    #width = x1.x()-x0.x()
     #    #height = x1.y() - x0.y()
     #    rec = view.viewport().rect()
@@ -733,7 +733,7 @@ class MainUI(QW.QMainWindow):
     #    self.painter = QG.QPainter(self.paint_dev)
     #    self.painter.setRenderHint(QG.QPainter.Antialiasing)
     #    self.painter.setRenderHint(QG.QPainter.HighQualityAntialiasing)
-    #    view.render(self.painter,QtCore.QRectF(0,0,0,0),view.viewport().rect())
+    #    view.render(self.painter,QC.QRectF(0,0,0,0),view.viewport().rect())
     #    status=self.paint_dev.save(filename)
     #    view.scene().setBackgroundBrush(brush)
     #    del(self.painter)

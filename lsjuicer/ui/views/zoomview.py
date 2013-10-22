@@ -14,7 +14,7 @@ class ZoomView(QW.QGraphicsView):
     v_axis_param = QC.pyqtSignal(int, int)
     #scaleSignal = QC.pyqtSignal(float)
     #centerSignal = QC.pyqtSignal(float)
-    #visibleRectSignal = QC.pyqtSignal(QtCore.QRectF)
+    #visibleRectSignal = QC.pyqtSignal(QC.QRectF)
     def __init__(self, parent=None, locked = True):
         super(ZoomView, self).__init__(parent)
         #full_view is False if the scene does not take up the entire view.
@@ -98,10 +98,10 @@ class ZoomView(QW.QGraphicsView):
         ver_factor = 1.0
         self.zooming_ver = False
         self.zooming_hor = False
-        if event.modifiers() & QtCore.Qt.ShiftModifier:
+        if event.modifiers() & QC.Qt.ShiftModifier:
             #zoom in y
             self.zooming_ver = True
-        elif event.modifiers() & QtCore.Qt.ControlModifier:
+        elif event.modifiers() & QC.Qt.ControlModifier:
             self.zooming_hor = True
         else:
             self.zooming_hor = True
@@ -197,12 +197,12 @@ class ZoomView(QW.QGraphicsView):
     #def mousePressEvent(self, event):
     #    """Overridden to catch right click and reset original zoom"""
     #    #pass
-    #    #if event.button() == QtCore.Qt.RightButton:
+    #    #if event.button() == QC.Qt.RightButton:
     #    #    factor = self.transform().m11()
     #    #    self.scale(self.originalZoom/factor,1)
     #    #    self.scaleSignal.emit(self.originalZoom/factor)
     #    #    #print factor
-    #    #elif event.button() == QtCore.Qt.LeftButton:
+    #    #elif event.button() == QC.Qt.LeftButton:
     #    #    self.dragging = True
     #    #    #print 'dragging',self.dragging
 

@@ -1,6 +1,6 @@
 from collections import defaultdict
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -103,9 +103,9 @@ class EventClickTree(QW.QWidget):
         print 'toggle',name
         name = str(name)
         if state:
-            sstate = QtCore.Qt.Checked
+            sstate = QC.Qt.Checked
         else:
-            sstate = QtCore.Qt.Unchecked
+            sstate = QC.Qt.Unchecked
         if name in self.items_by_name:
             items = self.items_by_name[name]
             for item in items:
@@ -170,9 +170,9 @@ class ClickTree(QW.QWidget):
         name = str(name)
         #print [type(el) for el in self.items_by_name], type(name)
         if state:
-            sstate = QtCore.Qt.Checked
+            sstate = QC.Qt.Checked
         else:
-            sstate = QtCore.Qt.Unchecked
+            sstate = QC.Qt.Unchecked
         if name in self.items_by_name:
             item = self.items_by_name[name]
             item.setCheckState(sstate)
@@ -199,7 +199,7 @@ class ControlWidget(QW.QWidget):
     def  __init__(self, panels, parent = None):
         super(ControlWidget, self).__init__(parent)
         layout = QW.QHBoxLayout()
-        layout.setAlignment(QtCore.Qt.AlignLeft)
+        layout.setAlignment(QC.Qt.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self.groupboxes = {}
@@ -291,14 +291,14 @@ class AnalysisImageTab(QW.QWidget):
         channel = self.active_channel
         frame = self.active_frame
         pixmaker = self.pixmaker
-        QtCore.QTimer.singleShot(0,lambda:
+        QC.QTimer.singleShot(0,lambda:
                 pixmaker.makeImage(channel=channel,frame = frame, image_settings=settings, force=force))
                 #self.data.makeImage(saturate/100.,cmap_name,0))
         if self.image_shown:
-            QtCore.QTimer.singleShot(0,lambda:
+            QC.QTimer.singleShot(0,lambda:
                     self.image_plot.replacePixmap(pixmaker.pixmap))
         else:
-            QtCore.QTimer.singleShot(0,lambda:
+            QC.QTimer.singleShot(0,lambda:
                     self.image_plot.addPixmap(pixmaker.pixmap,
                         self.imagedata.xvals, self.imagedata.yvals))
         self.image_shown = True
@@ -335,7 +335,7 @@ class AnalysisImageTab(QW.QWidget):
         self.frame_widget.channel_changed.connect(self.change_channel)
         self.frame_widget.channel_changed.connect(self.vis_widget.channel_change)
         #make sure other widgets are drawn before making pixmap
-        QtCore.QTimer.singleShot(0,lambda: self.make_new_pixmap())
+        QC.QTimer.singleShot(0,lambda: self.make_new_pixmap())
 
     def change_channel(self, channel):
         self.force_new_pixmap()

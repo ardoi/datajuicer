@@ -1,5 +1,5 @@
-from PyQt5 import QtGui as QG as QG
-from PyQt5 import QtWidgets as QW as QW
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
 
@@ -13,7 +13,7 @@ class BoundaryItem(QW.QGraphicsRectItem):
 
     def __init__(self, selection_type, boundary, parent=None):
         super(BoundaryItem, self).__init__(parent)
-        # QtCore.QObject.__init__(self)
+        # QC.QObject.__init__(self)
         # QG.QGraphicsRectItem.__init__(self)
         print 'parent', parent, boundary
         self.sender = SenderObject()
@@ -86,16 +86,16 @@ class BoundaryItem(QW.QGraphicsRectItem):
         # pos  = event.pos()
         # d = (pos - self.rect().bottomRight()).manhattanLength()
         # if d < 20:
-        #    self.setCursor(QtCore.Qt.SizeFDiagCursor)
+        #    self.setCursor(QC.Qt.SizeFDiagCursor)
         # self.setFlag(QGraphicsItem.ItemIsMovable,False)
         # else:
-        #    self.setCursor(QtCore.Qt.SizeAllCursor)
+        #    self.setCursor(QC.Qt.SizeAllCursor)
         return QW.QGraphicsRectItem.hoverMoveEvent(self, event)
 
     def hoverLeaveEvent(self, event):
         self.hovering = False
         # if self.initialized:
-        # self.pen.setStyle(QtCore.Qt.SolidLine)
+        # self.pen.setStyle(QC.Qt.SolidLine)
         #    self.setPen(self.pen)
         self.make_look_active(False)
         self.unsetCursor()
@@ -111,13 +111,13 @@ class BoundaryItem(QW.QGraphicsRectItem):
                 d_r = abs(pos.x() - self.rect().right())
                 d_l = abs(pos.x() - self.rect().left())
                 if d_r < self.resizeDistance():
-                    self.setCursor(QtCore.Qt.SizeHorCursor)
+                    self.setCursor(QC.Qt.SizeHorCursor)
                     self.state = Constants.resize_r
                 elif d_l < self.resizeDistance():
-                    self.setCursor(QtCore.Qt.SizeHorCursor)
+                    self.setCursor(QC.Qt.SizeHorCursor)
                     self.state = Constants.resize_l
                 else:
-                    self.setCursor(QtCore.Qt.SizeAllCursor)
+                    self.setCursor(QC.Qt.SizeAllCursor)
                     self.state = Constants.move
                 self.make_look_active(True)
         self.counter += 1

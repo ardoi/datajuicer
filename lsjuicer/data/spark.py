@@ -9,7 +9,7 @@ import scipy.optimize as so
 from lsjuicer.util import helpers
 from lsjuicer.data.transient import SparkTransient, SparkSpatialProfile
 
-class SparkData(QtCore.QObject):
+class SparkData(QC.QObject):
 
     def _temporal_smoothing_set(self, value):
         self._temporal_smoothing = int(value)
@@ -364,7 +364,7 @@ def spark_from_sparkresult(sparkresult):
     d=sparkresult.data
     #sparkdata = SpDa(d[' ')
 
-class Spark(QtCore.QObject):
+class Spark(QC.QObject):
 
     result_update = QC.pyqtSignal()
     def set_number(self,  number):

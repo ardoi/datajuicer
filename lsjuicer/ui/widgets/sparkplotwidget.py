@@ -25,10 +25,10 @@ class SparkFluorescencePlotWidget(PixmapPlotWidget):
             self.FDHM_line_right.setLine(
                 end_loc, -FDHM_val, end_loc, self.ymin)
         else:
-            self.FDHM_line_left = self.fscene.addLine(QtCore.QLineF(
+            self.FDHM_line_left = self.fscene.addLine(QC.QLineF(
                 start_loc, -max_val, start_loc, self.ymin))
             self.FDHM_line_right = self.fscene.addLine(
-                QtCore.QLineF(end_loc, -FDHM_val, end_loc, self.ymin))
+                QC.QLineF(end_loc, -FDHM_val, end_loc, self.ymin))
 
     def plot_FWHM(self, spark):
         left_loc = spark.FWHM_left_location
@@ -45,12 +45,12 @@ class SparkFluorescencePlotWidget(PixmapPlotWidget):
             self.FWHM_line_center.setLine(
                 max_loc, -max_val, max_loc, self.ymin)
         else:
-            self.FWHM_line_left = self.fscene.addLine(QtCore.QLineF(
+            self.FWHM_line_left = self.fscene.addLine(QC.QLineF(
                 left_loc, -FWHM_left_val, left_loc, self.ymin))
-            self.FWHM_line_right = self.fscene.addLine(QtCore.QLineF(
+            self.FWHM_line_right = self.fscene.addLine(QC.QLineF(
                 right_loc, -FWHM_right_val, right_loc, self.ymin))
             self.FWHM_line_center = self.fscene.addLine(
-                QtCore.QLineF(max_loc, -max_val, max_loc, self.ymin))
+                QC.QLineF(max_loc, -max_val, max_loc, self.ymin))
 
     def fitView(self, value=None):
         r = self.fscene.sceneRect()
@@ -117,8 +117,8 @@ class PlotWidget(QW.QWidget):
         self.setLayout(layout)
         self.fV = QW.QGraphicsView(self)
         self.fV.setRenderHint(QG.QPainter.Antialiasing)
-        self.fV.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        # self.fV.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.fV.setVerticalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
+        # self.fV.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         self.fV.setFrameStyle(QW.QFrame.NoFrame)
         self.fV.setViewportUpdateMode(0)
         layout.addWidget(self.fV)
@@ -162,20 +162,20 @@ class PlotWidget(QW.QWidget):
         v_brush_color_a = QG.QColor('magenta')
         v_brush_color_a.setAlphaF(0.15)
         v_brush_a = QG.QBrush(v_brush_color_a)
-        top_left = QtCore.QPointF(self.h_loc - self.h_span, self.pixmap.height())
-        bottom_right = QtCore.QPointF(self.h_loc + self.h_span+1, 0)
-        rect = QtCore.QRectF(top_left, bottom_right)
+        top_left = QC.QPointF(self.h_loc - self.h_span, self.pixmap.height())
+        bottom_right = QC.QPointF(self.h_loc + self.h_span+1, 0)
+        rect = QC.QRectF(top_left, bottom_right)
         self.v_box = self.fscene.addRect(rect, v_pen, v_brush_a)
 
         v_brush_color = QG.QColor('magenta')
         v_brush_color.setAlphaF(0.5)
         v_brush = QG.QBrush(v_brush_color)
-        top_left = QtCore.QPointF(self.h_loc, self.pixmap.height())
-        bottom_right = QtCore.QPointF(self.h_loc + 1, 0)
-        rect = QtCore.QRectF(top_left, bottom_right)
+        top_left = QC.QPointF(self.h_loc, self.pixmap.height())
+        bottom_right = QC.QPointF(self.h_loc + 1, 0)
+        rect = QC.QRectF(top_left, bottom_right)
         # self.vline = self.fscene.addRect(rect, v_pen,
-        # QG.QBrush(QtCore.Qt.NoBrush))
-        self.vline = self.fscene.addRect(rect, QG.QPen(QtCore.Qt.NoPen), v_brush)
+        # QG.QBrush(QC.Qt.NoBrush))
+        self.vline = self.fscene.addRect(rect, QG.QPen(QC.Qt.NoPen), v_brush)
 
         # self.hline = self.fscene.addLine(0,self.v_loc,
         #        pixmap.width(),self.v_loc,h_pen)
@@ -183,23 +183,23 @@ class PlotWidget(QW.QWidget):
         h_brush_color_a = QG.QColor('cyan')
         h_brush_color_a.setAlphaF(0.15)
         h_brush_a = QG.QBrush(h_brush_color_a)
-        top_left = QtCore.QPointF(0.0, self.v_loc-self.v_span)
-        bottom_right = QtCore.QPointF(
+        top_left = QC.QPointF(0.0, self.v_loc-self.v_span)
+        bottom_right = QC.QPointF(
             self.pixmap.width(), self.v_loc + 1+self.v_span)
-        rect = QtCore.QRectF(top_left, bottom_right)
+        rect = QC.QRectF(top_left, bottom_right)
         self.h_box = self.fscene.addRect(rect, h_pen, h_brush_a)
 
         h_brush_color = QG.QColor('cyan')
         h_brush_color.setAlphaF(0.5)
         h_brush = QG.QBrush(h_brush_color)
-        top_left = QtCore.QPointF(0.0, self.v_loc)
-        bottom_right = QtCore.QPointF(self.pixmap.width(), self.v_loc + 1)
-        rect = QtCore.QRectF(top_left, bottom_right)
-        self.hline = self.fscene.addRect(rect, QG.QPen(QtCore.Qt.NoPen), h_brush)
+        top_left = QC.QPointF(0.0, self.v_loc)
+        bottom_right = QC.QPointF(self.pixmap.width(), self.v_loc + 1)
+        rect = QC.QRectF(top_left, bottom_right)
+        self.hline = self.fscene.addRect(rect, QG.QPen(QC.Qt.NoPen), h_brush)
         # self.hline = self.fscene.addRect(rect,
-        # h_pen,QG.QBrush(QtCore.Qt.NoBrush))
+        # h_pen,QG.QBrush(QC.Qt.NoBrush))
 
-#        self.fV.fitInView(ggroup, QtCore.Qt.IgnoreAspectRatio)
+#        self.fV.fitInView(ggroup, QC.Qt.IgnoreAspectRatio)
         self.fitView(0)
         self.fscene.mouseclicked.connect(self.click_on_scene)
         print 'size pix', self.size()
@@ -221,9 +221,9 @@ class PlotWidget(QW.QWidget):
         if right is not None:
             self.F0_right = right
         if self.F0_left is not None and self.F0_right is not None:
-            top_left = QtCore.QPointF(self.F0_left, 0)
-            bottom_right = QtCore.QPointF(self.F0_right, self.pixmap.height())
-            rect = QtCore.QRectF(top_left, bottom_right)
+            top_left = QC.QPointF(self.F0_left, 0)
+            bottom_right = QC.QPointF(self.F0_right, self.pixmap.height())
+            rect = QC.QRectF(top_left, bottom_right)
             if self.F0_box:
                 self.F0_box.setRect(rect)
             else:
@@ -233,27 +233,27 @@ class PlotWidget(QW.QWidget):
     def move_hbox(self, span):
         # print 'move h',span
         self.v_span = span
-        top_left = QtCore.QPointF(0.0, self.pixmap.height()-self.v_loc-span)
-        bottom_right = QtCore.QPointF(self.pixmap.width(),
+        top_left = QC.QPointF(0.0, self.pixmap.height()-self.v_loc-span)
+        bottom_right = QC.QPointF(self.pixmap.width(),
                                   self.pixmap.height()-self.v_loc + 1.0+span)
         # print top_left,bottom_right
-        rect = QtCore.QRectF(top_left, bottom_right)
+        rect = QC.QRectF(top_left, bottom_right)
         self.h_box.setRect(rect)
 
     def move_vbox(self, span):
         # print 'move v',span
         self.h_span = span
-        top_left = QtCore.QPointF(self.h_loc-span, self.pixmap.height())
-        bottom_right = QtCore.QPointF(self.h_loc + 1.0+span, 0)
-        rect = QtCore.QRectF(top_left, bottom_right)
+        top_left = QC.QPointF(self.h_loc-span, self.pixmap.height())
+        bottom_right = QC.QPointF(self.h_loc + 1.0+span, 0)
+        rect = QC.QRectF(top_left, bottom_right)
         self.v_box.setRect(rect)
 
     def move_vline(self, loc):
         if self.pixmap:
             self.h_loc = loc
-            top_left = QtCore.QPointF(self.h_loc, self.pixmap.height())
-            bottom_right = QtCore.QPointF(self.h_loc + 1.0, 0)
-            rect = QtCore.QRectF(top_left, bottom_right)
+            top_left = QC.QPointF(self.h_loc, self.pixmap.height())
+            bottom_right = QC.QPointF(self.h_loc + 1.0, 0)
+            rect = QC.QRectF(top_left, bottom_right)
             self.vline.setRect(rect)
             self.move_vbox(self.h_span)
             # self.fV.repaint()
@@ -262,10 +262,10 @@ class PlotWidget(QW.QWidget):
     def move_hline(self, loc):
         if self.pixmap:
             self.v_loc = loc
-            top_left = QtCore.QPointF(0.0, self.pixmap.height()-self.v_loc)
-            bottom_right = QtCore.QPointF(self.pixmap.width(),
+            top_left = QC.QPointF(0.0, self.pixmap.height()-self.v_loc)
+            bottom_right = QC.QPointF(self.pixmap.width(),
                                       self.pixmap.height() - self.v_loc + 1.0)
-            rect = QtCore.QRectF(top_left, bottom_right)
+            rect = QC.QRectF(top_left, bottom_right)
             self.hline.setRect(rect)
             self.move_hbox(self.v_span)
             # self.fV.repaint()
