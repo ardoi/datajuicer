@@ -5,7 +5,7 @@ import random
 import time
 import traceback
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore as QC
 
 from PyQt5 import QtWidgets as QW
 

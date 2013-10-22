@@ -2,7 +2,7 @@ import pickle
 
 from PyQt5 import QtWidgets as QW
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore as QC
 
 import PyQt5.QtNetwork as QN
 

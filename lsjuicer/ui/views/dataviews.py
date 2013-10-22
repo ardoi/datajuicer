@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets as QW
 
-from PyQt5 import QtCore, QtWidgets
+from PyQt5 import QtCore as QC
 
 
 
