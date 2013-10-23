@@ -41,7 +41,7 @@ class CopyTableView(QW.QTableView):
         return
 
     def keyPressEvent(self, event):
-        if (event.modifiers() & QC.Qt.ControlModifier) and event.key() == QC.Qt.Key_C:
+        if bool(event.modifiers() & QC.Qt.ControlModifier) and event.key() == QC.Qt.Key_C:
             self.copy()
             return
         else:

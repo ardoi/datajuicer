@@ -120,7 +120,7 @@ def timeIt(f):
         t0 = time.time()
         print '\n>>>%s Executing %s' % ('\t'*(timeIt.active-1)+'#', f.__name__)
         res = f(*args, **kwargs)
-        print '>>>%s Function %s execution time: %.2f seconds\n' %\
+        print '>>>%s Function %s execution time: %.3f seconds\n' %\
             ('\t'*(timeIt.active-1)+'#', f.__name__, time.time()-t0)
         timeIt.active -= 1
         return res

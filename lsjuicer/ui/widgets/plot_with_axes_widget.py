@@ -630,31 +630,28 @@ class FunctionItem(QW.QGraphicsItem):
         ydata = [p.y() for p in points]
         self.set_data(xdata, ydata)
 
+    @timeIt
     def paint(self, painter, option, widget):
         """First, the area displayed in the GraphicsView is determined. Based on that limits are set to avoid drawing
-        outside of the visible area.  Further optimization is provided by skip_factor which sets the gap left between
-        datapoints used in plotting. This gap ensures that no more than 1 point is plotted in 1 screen pixel"""
+        outside of the visible area. """
         """Two options for determining update area:
             First the clumsy one: viewport is mapped to the scene and borders taken from there
             Second, option.exposedRect gives the newly exposed area after each view change"""
-        viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).y()))
-        viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).y()))
+        #viewed_left = int(max(self.xmin, painter.device().parent().mapToScene(painter.viewport().topLeft()).x()))
+        #viewed_right = int(min(self.xmax, painter.device().parent().mapToScene(painter.viewport().topRight()).x()))
         #print 'lod',option.levelOfDetail, viewed_left, viewed_right
         exp_rect = option.exposedRect
         viewed_left = exp_rect.left()
         viewed_right = viewed_left + max(10, exp_rect.width())
-        h_space = float(widget.width())/2.
-        skip_factor = max(1, (viewed_right-viewed_left+1) / h_space)
+        #h_space = float(widget.width())
+        #skip_factor = max(1, (viewed_right-viewed_left) / h_space)
+        #print h_space, viewed_left-viewed_right
         if hasattr(self,'pen'):
             painter.setPen(self.pen)
-            self.pen.setWidth(0)
-            #self.pen.setCosmetic(False)
-        #if hasattr(self,'brush'):
-            #painter.setBrush(self.brush)
-        #plot_indices = n.arange(viewed_left,viewed_right,skip_factor).astype(int)
-        plot_indices = n.linspace(viewed_left, viewed_right, h_space - 1).astype(int)
+        #points = min(h_space, viewed_right - viewed_left)
+        #plot_indices = n.linspace(viewed_left, viewed_right, points).astype(int)
+        plot_indices = n.arange(viewed_left, viewed_right).astype(int)
         #print plot_indices
-        #print 'skip',skip_factor, plot_indices.size, h_space
         for i in range(plot_indices.size):
             if i == 0:
                 continue

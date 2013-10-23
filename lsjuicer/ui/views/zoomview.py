@@ -1,4 +1,5 @@
 from PyQt5 import QtCore as QC
+from PyQt5 import QtGui as QG
 
 from PyQt5 import QtWidgets as QW
 
@@ -85,23 +86,100 @@ class ZoomView(QW.QGraphicsView):
         self.alert_vertical_zoom_change()
         self.setDragMode(QW.QGraphicsView.NoDrag)
 
+    def mouseReleaseEvent(self,event):
+        """TEMP FIX FOR OSX SCROLLING PROBLEM IN qt5.1.1
+        Overridden to catch mouse scroll events and apply appropriate zoom transform"""
+        hor_factor = 1.0
+        ver_factor = 1.0
+        self.zooming_ver = False
+        self.zooming_hor = False
+        if bool(event.modifiers() & QC.Qt.ShiftModifier):
+            print 'zoom shift'
+            #zoom in y
+            self.zooming_hor = True
+        elif bool(event.modifiers() & QC.Qt.ControlModifier):
+            print 'zoom ctrl'
+            self.zooming_ver = True
+        elif bool(event.modifiers() & QC.Qt.AltModifier):
+            self.zooming_hor = True
+            self.zooming_ver = True
+
+
+        #print 'zoom',self.zoom_count_hor, self.zoom_count_ver
+        #print self.zooming_hor, self.zooming_ver
+        if event.button() == QC.Qt.LeftButton :
+            if self.zooming_hor:
+                self.zoom_count_hor += 1
+                hor_factor = 1.25
+            if self.zooming_ver:
+                self.zoom_count_ver += 1
+                ver_factor = 1.25
+
+        elif event.button()==QC.Qt.RightButton:
+            ret = False
+            if self.zooming_hor:
+                if self.zoom_count_hor > 0:
+                    self.zoom_count_hor -= 1
+                    hor_factor= 1./1.25
+                else:
+                    ret = True
+
+            if self.zooming_ver:
+                if self.zoom_count_ver > 0:
+                    self.zoom_count_ver -= 1
+                    ver_factor= 1./1.25
+                else:
+                    ret = True
+            if ret:
+                return
+
+
+        self.scale_view(hor_factor, ver_factor)
+        if self.full_view and (self.zoom_count_hor > 0 or self.zoom_count_ver > 0):
+            self.setDragMode(QW.QGraphicsView.ScrollHandDrag)
+        else:
+            self.setDragMode(QW.QGraphicsView.NoDrag)
+        if self.locked:
+            self.alert_horizontal_zoom_change()
+            self.alert_vertical_zoom_change()
+        else:
+            if self.zooming_hor:
+                self.alert_horizontal_zoom_change()
+            elif self.zooming_ver:
+                self.alert_vertical_zoom_change()
+
+
     @timeIt
     def wheelEvent(self,event):
+        return
         """Overridden to catch mouse scroll events and apply appropriate zoom transform"""
         #if not hasattr(self, 'originalZoom'):
         #    self.resetZoom()
         #    #print 'original',self.originalZoom
-        event.ignore()
+        #event.ignore()
 #        rect = self.mapToScene(self.viewport().geometry()).boundingRect()
 #        print 'before',rect
         hor_factor = 1.0
         ver_factor = 1.0
         self.zooming_ver = False
         self.zooming_hor = False
-        if event.modifiers() & QC.Qt.ShiftModifier:
+        print event.modifiers()
+
+        print dir(event.modifiers())
+        print str(event.modifiers())
+        print 'shift',bool(event.modifiers() & QC.Qt.ShiftModifier)
+        print 'no',bool(event.modifiers() & QC.Qt.NoModifier)
+        print 'ctrl',bool(event.modifiers() & QC.Qt.ControlModifier)
+        print int(event.modifiers())
+        print 'qa',QG.QGuiApplication.keyboardModifiers()
+        print 'qai',int(QG.QGuiApplication.keyboardModifiers())
+        print QC.Qt.ShiftModifier
+        if bool(event.modifiers() & QC.Qt.ShiftModifier):
+            print 'zoom shift'
             #zoom in y
             self.zooming_ver = True
-        elif event.modifiers() & QC.Qt.ControlModifier:
+        elif bool(event.modifiers() & QC.Qt.ControlModifier):
+            print 'zoom ctrl'
             self.zooming_hor = True
         else:
             self.zooming_hor = True
