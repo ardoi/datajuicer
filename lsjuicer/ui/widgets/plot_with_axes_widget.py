@@ -596,18 +596,7 @@ class PlotWithAxesWidget(QW.QWidget):
                             y=c.rect().center().y()
                             c.setTransform(QG.QTransform().translate(x, y).
                                     scale(1/(plotd.base_size[0]/xsize),1/( plotd.base_size[1]/ysize)).translate(-x, -y))
-                            #old_x = c.rect().center().x()
-                            #old_y = c.rect().center().y()
-                            #new_width = plotd.base_size[0]/h_scale
-                            #new_height = plotd.base_size[1]/v_scale
 
-                            #new_x = old_x - new_width/2.
-                            #new_y = old_y - new_height/2.
-                            #new_x = old_x - xsize/2.
-                            #new_y = old_y - ysize/2.
-                            #c.setRect(new_x, new_y, new_width, new_height)
-
-                            #c.setRect(new_x, new_y, xsize, ysize)
 
 class FunctionItem(QW.QGraphicsItem):
     def set_pen(self, pen):
@@ -630,7 +619,6 @@ class FunctionItem(QW.QGraphicsItem):
         ydata = [p.y() for p in points]
         self.set_data(xdata, ydata)
 
-    @timeIt
     def paint(self, painter, option, widget):
         """First, the area displayed in the GraphicsView is determined. Based on that limits are set to avoid drawing
         outside of the visible area. """

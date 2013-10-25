@@ -149,7 +149,6 @@ class ZoomView(QW.QGraphicsView):
                 self.alert_vertical_zoom_change()
 
 
-    @timeIt
     def wheelEvent(self,event):
         return
         """Overridden to catch mouse scroll events and apply appropriate zoom transform"""
@@ -264,7 +263,7 @@ class ZoomView(QW.QGraphicsView):
             self.full_view = False
         v_axis_height = min(widget_height, scene_rect.height())
         self.v_axis_param.emit(v_axis_start_loc, v_axis_height)
-    @timeIt
+
     def scale_view(self, hor_scale_factor, ver_scale_factor ):
         self.scale( hor_scale_factor, ver_scale_factor)
         self.determine_axes_span()
@@ -301,7 +300,4 @@ class ZoomView(QW.QGraphicsView):
    # def resizeEvent(self, event):
    #     QG.QGraphicsView.resizeEvent(self,event)
    #     self.fitInView(self.scene().itemsBoundingRect())
-    @timeIt
-    def paintEvent(self,*args):
-        QW.QGraphicsView.paintEvent(self, *args)
 

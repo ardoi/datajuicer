@@ -529,6 +529,31 @@ def ff5(arg, tau2, d, d2, m2, s, A, B, C):
     return res
 
 def ff6(arg, tau2, d, d2, m2, s, A):
+
+
+    m = m2-d
+    tt=arg
+    t2=tau2
+    E = n.exp(1.0)
+    sqrt2 = n.sqrt(2.0)
+    s_2 = n.power(s, 2.0)
+    d_2 = n.power(d, 2.0)
+    t2_2 = n.power(t2, 2.0)
+    E_2 = n.power(E, 2.0)
+
+    m_tt = m - tt
+    d_m_tt = d + m_tt
+
+    res  = (A*(n.power(E,(2.0*(s_2+d*(m_tt)))/d_2)*
+               (ss.erf((2.0*s_2+d*(m_tt))/(sqrt2*d*s))-
+                ss.erf((2.0*s_2+d*(d_m_tt))/(sqrt2*d*s)))-
+               ss.erf((m_tt)/(sqrt2*s))+ss.erf((d_m_tt)/(sqrt2*s))))/2.0+\
+    ((-A+A*E_2)*(-ss.erf((d_m_tt)/(sqrt2*s))+ss.erf((d2+d_m_tt)/(sqrt2*s)))
+     )/(2.0*E_2)+(n.power(E,(s_2+2.0*t2*(d+d2+m-2.0*t2-tt))/
+            (2.0*t2_2))*(-A+A*E_2)*ss.erfc((s_2+t2*(d2+d_m_tt))/(sqrt2*s*t2)))/2.0
+    return res
+
+def ff6old(arg, tau2, d, d2, m2, s, A):
     """convolution of gaussian(0,s) with f5 without baseline
 
     Args:
@@ -549,14 +574,6 @@ def ff6(arg, tau2, d, d2, m2, s, A):
     m = m2 - d
 
     t = arg
-
-    #t=t/1000.
-    #d=d/1000.
-    #d2=d2/1000.
-    #m2=m2/1000.
-    #s=s/1000.
-    #tau2=tau2/1000.
-    #m=m/1000.
 
     E = n.exp(1.0)
     sqrt2 = n.sqrt(2.0)
