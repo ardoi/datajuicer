@@ -474,64 +474,64 @@ def ff50(arg, tau2, d, m2, A, B, C):
     s = 1.0
     return ff5(arg, tau2, d, d2, m2, s, A, B, C)
 
-#def ff5old(arg, tau2, d, d2, m2, s, A, B, C):
-#    """convolution of gaussian(0,s) with f5
-#
-#    Args:
-#        arg: time vector
-#        tau2: decay time of transient decrease
-#        d: duration of transient increase (exp increase time d/2)
-#        d2: duration of plateau phase
-#        #m: start of transient
-#        m2: start of plateau phase
-#        s: width of the gaussian
-#        A: Amplitude of transient
-#        B: Baseline
-#        C: Initial baseline offset from B
-#
-#    Returns:
-#        Function values for all arg values
-#    """
-#    #frame = inspect.currentframe()
-#    #print 'call', inspect.getargvalues(frame)
-#    m = m2 - d
-#
-#    t = arg
-#    E = n.exp(1.0)
-#    sqrt2 = n.sqrt(2.0)
-#    E2 = n.power(E, 2.0)
-#    s2 = n.power(s, 2.0)
-#    tau22 = n.power(tau2, 2.0)
-#
-#    a1e = -2. - (2.*t)/d - t/tau2
-#
-#    a2e = t/tau2
-#
-#    a31e = (2.*(d*(d + m) + s2))/n.power(d,2)
-#    a32 = ss.erf((2.*s2 + d*(m - t))/(sqrt2*d*s)) - \
-#            ss.erf((2*s2 + d*(d + m - t))/(sqrt2*d*s))
-#
-#    a33e = 2.*t/d
-#    a34 = (2.*B + C)*E2 - A*E2*ss.erf((m - t)/(sqrt2*s)) +\
-#            A*ss.erf((d + m - t)/(sqrt2*s)) + (-A + (A + C)*E2)*\
-#            ss.erf((d + d2 + m - t)/(sqrt2*s))
-#
-#    a4e = (4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
-#    a5 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
-#
-#    a1a4 = n.power(E,a4e+a1e)
-#    a1a2a31 = n.power(E,a1e+a2e+a31e)
-#    a1a2a33 = n.power(E,a1e+a2e+a33e)
-#    mask = a32==0.0
-#    a1a2a31[mask]=0
-#    res = A*a1a2a31*a32 + a1a2a33*a34 + a1a4*(-A + (A + C)*E2)*a5
-#    res = res/2.
-#    return res
+def ff5o(arg, tau2, d, d2, m2, s, A, B, C):
+    """convolution of gaussian(0,s) with f5
+
+    Args:
+        arg: time vector
+        tau2: decay time of transient decrease
+        d: duration of transient increase (exp increase time d/2)
+        d2: duration of plateau phase
+        #m: start of transient
+        m2: start of plateau phase
+        s: width of the gaussian
+        A: Amplitude of transient
+        B: Baseline
+        C: Initial baseline offset from B
+
+    Returns:
+        Function values for all arg values
+    """
+    #frame = inspect.currentframe()
+    #print 'call', inspect.getargvalues(frame)
+    m = m2 - d
+
+    t = arg
+    E = n.exp(1.0)
+    sqrt2 = n.sqrt(2.0)
+    E2 = n.power(E, 2.0)
+    s2 = n.power(s, 2.0)
+    tau22 = n.power(tau2, 2.0)
+
+    a1e = -2. - (2.*t)/d - t/tau2
+
+    a2e = t/tau2
+
+    a31e = (2.*(d*(d + m) + s2))/n.power(d,2)
+    a32 = ss.erf((2.*s2 + d*(m - t))/(sqrt2*d*s)) - \
+            ss.erf((2*s2 + d*(d + m - t))/(sqrt2*d*s))
+
+    a33e = 2.*t/d
+    a34 = (2.*B + C)*E2 - A*E2*ss.erf((m - t)/(sqrt2*s)) +\
+            A*ss.erf((d + m - t)/(sqrt2*s)) + (-A + (A + C)*E2)*\
+            ss.erf((d + d2 + m - t)/(sqrt2*s))
+
+    a4e = (4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
+    a5 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
+
+    a1a4 = n.power(E,a4e+a1e)
+    a1a2a31 = n.power(E,a1e+a2e+a31e)
+    a1a2a33 = n.power(E,a1e+a2e+a33e)
+    mask = a32==0.0
+    a1a2a31[mask]=0
+    res = A*a1a2a31*a32 + a1a2a33*a34 + a1a4*(-A + (A + C)*E2)*a5
+    res = res/2.
+    return res
 
 def ff6(arg, tau2, d, d2, m2, s, A):
     return ff5(arg, tau2, d, d2, m2, s, A, 0.0, 0.0)
 
-def ff5(arg, tau2, d, d2, m2, s, A, B, Cc):
+def ff5(arg, tau2, d, d2, m2, s, A, B, C):
 
 
     m = m2-d
@@ -546,104 +546,106 @@ def ff5(arg, tau2, d, d2, m2, s, A, B, Cc):
 
     m_tt = m - tt
     d_m_tt = d + m_tt
-
-    res = B+(Cc*(1+ss.erf((d_m_tt)/(sqrt2*s))))/2.0+\
+    res = B+(C*(1+ss.erf((d_m_tt)/(sqrt2*s))))/2.0+\
             (A*(n.power(E,(2.0*(s_2+d*(m_tt)))/d_2)*\
                 (ss.erf((2.0*s_2+d*(m_tt))/(sqrt2*d*s))-\
                  ss.erf((2.0*s_2+d*(d_m_tt))/(sqrt2*d*s)))-\
                 ss.erf((m_tt)/(sqrt2*s))+ss.erf((d_m_tt)/(sqrt2*s))))/2.0+\
-            ((-A+(A+Cc)*E_2)*(-ss.erf((d_m_tt)/(sqrt2*s))+\
+            ((-A+(A+C)*E_2)*(-ss.erf((d_m_tt)/(sqrt2*s))+\
             ss.erf((d2+d_m_tt)/(sqrt2*s))))/(2.0*E_2)+\
             (n.power(E,(s_2+2.0*t2*(d2+d_m_tt-2.0*t2))/\
-            (2.0*t2_2))*(-A+(A+Cc)*E_2)*ss.erfc((s_2+t2*(d2+d_m_tt))/(sqrt2*s*t2)))/2.0
+            (2.0*t2_2))*(-A+(A+C)*E_2)*ss.erfc((s_2+t2*(d2+d_m_tt))/(sqrt2*s*t2)))/2.0
+    resmask = n.logical_or(n.isnan(res),n.isinf(res))
+    res[resmask]=0.0
     return res
 
-#def ff6old(arg, tau2, d, d2, m2, s, A):
-#    """convolution of gaussian(0,s) with f5 without baseline
-#
-#    Args:
-#        arg: time vector
-#        tau2: decay time of transient decrease
-#        d: duration of transient increase (exp increase time d/2)
-#        d2: duration of plateau phase
-#        #m: start of transient
-#        m2: start of plateau phase
-#        s: width of the gaussian
-#        A: Amplitude of transient
-#
-#    Returns:
-#        Function values for all arg values
-#    """
-#    #frame = inspect.currentframe()
-#    #print 'call', inspect.getargvalues(frame)
-#    m = m2 - d
-#
-#    t = arg
-#
-#    E = n.exp(1.0)
-#    sqrt2 = n.sqrt(2.0)
-#    E2 = n.power(E, 2.0)
-#    s2 = n.power(s, 2.0)
-#    tau22 = n.power(tau2, 2.0)
-#
-#    a1e = -2. - (2.*t)/d - t/tau2
-#
-#    a22=ss.erf((2.*s2 + d*(m - t))/(sqrt2*d*s)) - \
-#            ss.erf((2*s2 + d*(d + m - t))/(sqrt2*d*s))
-#    a23=- A*E2*ss.erf((m - t)/(sqrt2*s)) +\
-#            A*ss.erf((d + m - t)/(sqrt2*s)) + (-A + A*E2)*\
-#            ss.erf((d + d2 + m - t)/(sqrt2*s))
-#
-#    a3e=(4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
-#    a4 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
-#    a4mask=a4==0.0
-#    #a1e[a4mask]=0.0
-#    #a3e[a4mask]=0.0
-#    a5e = t/tau2
-#    #a5 = n.power(E,t/tau2)
-#    a1a3 = n.power(E,a1e+a3e)
-#    a21e = (2.*(d*(d + m) + s2))/n.power(d,2)
-#    a1a21a5 = A*n.power(E,a1e+a21e+a5e)
-#    mask=a22==0.0
-#    a1a21a5[mask]=0
-#
-#    a1a2a5 = a1a21a5*a22 +  n.power(E,(2.*t)/d+a1e+a5e)*a23
-#    res = a1a2a5 +  a1a3*(-A + A *E2)*a4
-#    res = res / 2.
-#    resmask = n.logical_or(n.isnan(res),n.isinf(res))
-#    res[resmask]=0.0
-#
-#    if n.any(n.isnan(res)):
-#        print 'nan'
-#        print a1a21a5, n.isnan(a1a21a5).sum()
-#        print a1a3, n.isnan(a1a3).sum(),n.isinf(a1a3).sum()
-#        print a4, n.isnan(a4).sum()
-#
-#        print a1e
-#        print a3e
-#
-#
-#        print 'call', tau2, d, d2, m2, s, A,res
-#    if n.any(n.isinf(res)):
-#        print 'inf'
-#        print 'call', tau2, d, d2, m2, s, A,res
-#    #    print n.any(n.isinf(a1))
-#    #    print n.any(n.isinf(a2))
-#    #    print n.any(n.isinf(a3))
-#    #    print n.any(n.isinf(a4))
-#    #    print n.any(n.isinf(a5))
-#    #    print n.any(n.isinf(res))
-#    #    print n.any(n.isinf(a1*(a5*a2 + a3*(-A + A *E2)*a4)))
-#    #    print n.any(n.isinf(a3*(-A + A *E2)*a4))
-#    #    print n.any(n.isinf(a3*a4))
-#    #    #print a3[-3:-1], a4[-3:-1],a3[0],a4[0]
-#    #    print (4.*t[-3:-1]*tau22)/(2.*d*tau22) , d*(s2 + 2.*(d + d2 +
-#    #        m)*tau2)/(2.*d*tau22)
-#    #    print -2. - (2.*t[-3:-1])/d - t[-3:-1]/tau2
-#    #    #print t.tolist()
-#    #    #print res.tolist()
-#    #    print 'call', tau2, d, d2, m2, s, A, B, C, sum(res)
-#    return res
+def ff6o(arg, tau2, d, d2, m2, s, A):
+    """convolution of gaussian(0,s) with f5 without baseline
+
+    Args:
+        arg: time vector
+        tau2: decay time of transient decrease
+        d: duration of transient increase (exp increase time d/2)
+        d2: duration of plateau phase
+        #m: start of transient
+        m2: start of plateau phase
+        s: width of the gaussian
+        A: Amplitude of transient
+
+    Returns:
+        Function values for all arg values
+    """
+    #frame = inspect.currentframe()
+    #print 'call', inspect.getargvalues(frame)
+    m = m2 - d
+
+    t = arg
+
+    E = n.exp(1.0)
+    sqrt2 = n.sqrt(2.0)
+    E2 = n.power(E, 2.0)
+    s2 = n.power(s, 2.0)
+    tau22 = n.power(tau2, 2.0)
+
+    a1e = -2. - (2.*t)/d - t/tau2
+
+    a22=ss.erf((2.*s2 + d*(m - t))/(sqrt2*d*s)) - \
+            ss.erf((2*s2 + d*(d + m - t))/(sqrt2*d*s))
+    a23=- A*E2*ss.erf((m - t)/(sqrt2*s)) +\
+            A*ss.erf((d + m - t)/(sqrt2*s)) + (-A + A*E2)*\
+            ss.erf((d + d2 + m - t)/(sqrt2*s))
+
+    a3e=(4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
+    a4 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
+    a4mask=a4==0.0
+    #a1e[a4mask]=0.0
+    #a3e[a4mask]=0.0
+    a5e = t/tau2
+    #a5 = n.power(E,t/tau2)
+    a1a3 = n.power(E,a1e+a3e)
+    a21e = (2.*(d*(d + m) + s2))/n.power(d,2)
+    a1a21a5 = A*n.power(E,a1e+a21e+a5e)
+    mask=a22==0.0
+    a1a21a5[mask]=0
+
+    a1a2a5 = a1a21a5*a22 +  n.power(E,(2.*t)/d+a1e+a5e)*a23
+    res = a1a2a5 +  a1a3*(-A + A *E2)*a4
+    res = res / 2.
+    resmask = n.logical_or(n.isnan(res),n.isinf(res))
+    res[resmask]=0.0
+    if resmask.any():
+        print tau2, d, d2, m2, s, A
+    if n.any(n.isnan(res)):
+        print 'nan'
+        print a1a21a5, n.isnan(a1a21a5).sum()
+        print a1a3, n.isnan(a1a3).sum(),n.isinf(a1a3).sum()
+        print a4, n.isnan(a4).sum()
+
+        print a1e
+        print a3e
+
+
+        print 'call', tau2, d, d2, m2, s, A,res
+    if n.any(n.isinf(res)):
+        print 'inf'
+        print 'call', tau2, d, d2, m2, s, A,res
+    #    print n.any(n.isinf(a1))
+    #    print n.any(n.isinf(a2))
+    #    print n.any(n.isinf(a3))
+    #    print n.any(n.isinf(a4))
+    #    print n.any(n.isinf(a5))
+    #    print n.any(n.isinf(res))
+    #    print n.any(n.isinf(a1*(a5*a2 + a3*(-A + A *E2)*a4)))
+    #    print n.any(n.isinf(a3*(-A + A *E2)*a4))
+    #    print n.any(n.isinf(a3*a4))
+    #    #print a3[-3:-1], a4[-3:-1],a3[0],a4[0]
+    #    print (4.*t[-3:-1]*tau22)/(2.*d*tau22) , d*(s2 + 2.*(d + d2 +
+    #        m)*tau2)/(2.*d*tau22)
+    #    print -2. - (2.*t[-3:-1])/d - t[-3:-1]/tau2
+    #    #print t.tolist()
+    #    #print res.tolist()
+    #    print 'call', tau2, d, d2, m2, s, A, B, C, sum(res)
+    return res
 
 def linear(arg, a, b):
     return a*arg + b
