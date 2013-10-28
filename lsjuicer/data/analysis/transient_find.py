@@ -22,7 +22,6 @@ class Region(object):
     minimum_size = 30
     #maximum distance the left and right sides can be from the maximum
     max_dist_from_max = 250
-    right_min_amp_ratio = 0.0001
 
     @property
     def size(self):
@@ -102,15 +101,13 @@ class Region(object):
     def check(self):
         """Checks the validity of the region, first by looking for simple criteria and then by fitting the region with a transient function and line. If the line has a lower AICc score than the transient function then the region is considered not to contain an event"""
         try:
-            assert (self.left < self.right) and (self.left < self.maximum) and (self.right > self.maximum), "Assert failed: %s"%self
-            assert self.size > self.minimum_size, "Assert failed: Size is %i, minimum size is %i"%(self.size, self.minimum_size)
+            assert (self.left < self.right) and (self.left < self.maximum) \
+                    and (self.right > self.maximum), "Assert failed: %s"%self
+            assert self.size > self.minimum_size, "Assert failed: Size is %i, \
+                minimum size is %i"%(self.size, self.minimum_size)
         except AssertionError:
-            #print '0'
             self.bad=True
             return
-        #oo.show_parameters()
-        #print oo.solutions
-        #print '\n',self
         logger = get_logger(__name__)
         logger.debug("\nregion:%s"%self)
         oo = self.fit_curve()
@@ -123,17 +120,12 @@ class Region(object):
         new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
         if new_right < self.right:
             self._right = new_right
-            #print 'new right', self
             oo=self.fit_curve()
             if not oo:
                 self.bad = True
                 return
             aicc_curve = oo.aicc()
-           # print "AICc curve2",aicc_curve
             logger.debug("AICc curve %f"%aicc_curve)
-
-        #aicc_curve = oo.aicc()
-        #eprint "AICc curve",aicc_curve
 
         #fit the line
         oo2 = fitfun.Optimizer(self.time_data, self.data)
@@ -160,12 +152,11 @@ class Region(object):
                 self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
 def clean_min_max(minima, maxima, smooth_data):
-    """Clean up the minima, maxima lists. First only the highest maxima between minima are taken. Then, then only the lowest minimum between maxima is used"""
+    """Clean up the minima, maxima lists. First only the highest maxima between minima are taken.
+       Then, then only the lowest minimum between maxima is used"""
     logger=get_logger(__name__)
     logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
     logger.debug('start: %s'%min_max_string(minima,maxima))
-    #new_min = []
-    #new_max = []
     #take only the biggest max in between minima
     ma_remove = []
     for i in range(len(minima)-1):
@@ -193,7 +184,6 @@ def clean_min_max(minima, maxima, smooth_data):
         temp_max.insert(0,0)
     if maxima[-1] < minima[-1]:
         temp_max.append(len(smooth_data)+1)
-    #print temp_max
     for i in range(len(temp_max)-1):
         ma1 = temp_max[i]
         ma2 = temp_max[i+1]
@@ -204,33 +194,16 @@ def clean_min_max(minima, maxima, smooth_data):
                     minima_between.append((mi, mi))
                 elif i==len(temp_max)-2:
                     minima_between.append((mi, len(smooth_data) - mi ))
-                #else:
-                #    minima_between.append((mi,abs(ma1 - mi) * abs(ma2 - mi)))
                 else:
                     minima_between.append((mi,smooth_data[mi]))
-        #print i, minima_between
-        #lenm = len(minima_between)
         if minima_between:
             minima_between.sort(key=lambda x: x[1], reverse=False)
             for mi in minima_between[1:]:
                 mi_remove.append(mi[0])
-            #if lenm%2 == 1:
-            #    minima_between.remove(minima_between[lenm/2])
-            #else:
-            #    keep1 = minima_between[lenm/2-1]
-            #    keep2 = minima_between[lenm/2+1]
-            #    minima_between.remove(keep1)
-            #    minima_between.remove(keep2)
-            #print minima_between
-            #mi_remove.extend(minima_between)
-    #print mi_remove
     for mi in mi_remove:
-        #print mi
         minima.remove(mi)
     logger.debug('end: %s'%min_max_string(minima,maxima))
     logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
-    #print min_max_string(minima,maxima)
-    #print minima,maxima
 
 
 def min_max_string(minima, maxima):
