@@ -6,16 +6,18 @@ from scipy import ndimage as nd
 import numpy as n
 
 from lsjuicer.data.analysis import fitfun
+from lsjuicer.data.analysis import regionfinder as rf
 
 def get_logger(name):
     logger = logging.getLogger(__name__)
     if not logger.root.handlers and not logger.handlers:
     #if not logger.handlers:
-        hh = logging.StreamHandler(sys.stdout)
+        #hh = logging.StreamHandler(sys.stdout)
+        hh = logging.FileHandler("log.log")
         log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
         hh.setFormatter(logging.Formatter(log_format))
         logger.addHandler(hh)
-        logger.setLevel(logging.INFO)
+        logger.setLevel(logging.DEBUG)
     return logger
 
 class Region(object):
@@ -69,12 +71,13 @@ class Region(object):
         oo.set_function(fitfun.ff50)
         b_init = (f0r+f0l)/2.
         oo.set_parameter_range('B',b_init*0.75,b_init*1.25,b_init)
-        if fu[self.maximum]-b_init < 250:
-            #print 'A'
-            #print f0r,f0l,b_init, fu[self.maximum]
+        min_amp = 250.0
+        if fu[self.maximum]-b_init < min_amp:
+            print 'A'
+            print f0r,f0l,b_init, fu[self.maximum]
+            print ri,le
             #print fu[self.maximum]-b_init
             #self.bad=True
-
             return None
         oo.set_parameter_range('tau2',2,100.,30.)
         mu_est = self.maximum
@@ -83,8 +86,10 @@ class Region(object):
         try:
             oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
         except AssertionError:
+            print 'B'
             return None
-        oo.set_parameter_range('A',250, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
+        oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
+        oo.set_parameter_range('d2',.1,100,2)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
@@ -92,9 +97,15 @@ class Region(object):
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
+            print 'C'
+            print  self.data.tolist()
+            print self.time_data.tolist()
+            for p in oo.parameters:
+                print p, oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
             return None
         #skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
+            print 'D'
             return None
         return oo
 
@@ -106,12 +117,14 @@ class Region(object):
             assert self.size > self.minimum_size, "Assert failed: Size is %i, \
                 minimum size is %i"%(self.size, self.minimum_size)
         except AssertionError:
+            print 'a0'
             self.bad=True
             return
         logger = get_logger(__name__)
         logger.debug("\nregion:%s"%self)
         oo = self.fit_curve()
         if not oo:
+            print 'a'
             self.bad = True
             return
         aicc_curve = oo.aicc()
@@ -123,6 +136,7 @@ class Region(object):
             oo=self.fit_curve()
             if not oo:
                 self.bad = True
+                print 'aa'
                 return
             aicc_curve = oo.aicc()
             logger.debug("AICc curve %f"%aicc_curve)
@@ -145,6 +159,7 @@ class Region(object):
 
         else:
             self.bad = True
+            print 'aaa'
         logger.debug("bad: %s"%str(self.bad))
 
     def __repr__(self):
@@ -158,6 +173,7 @@ def clean_min_max(minima, maxima, smooth_data):
     logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
     logger.debug('start: %s'%min_max_string(minima,maxima))
     #take only the biggest max in between minima
+
     ma_remove = []
     for i in range(len(minima)-1):
         mi1 = minima[i]
@@ -224,11 +240,22 @@ def min_max_string(minima, maxima):
             break
     return out
 
-
+def find_transient_boundaries2(data,baseline=None, plot=False):
+    smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),10)
+    time_data = n.arange(data.size)
+    regions = []
+    peaks = rf.get_peaks(data)
+    print peaks
+    for maxval, margins in peaks.iteritems():
+        left = margins[0]
+        right = margins[1]
+        reg = Region(left, right, maxval, data, smooth_data, time_data)
+        regions.append(reg)
+    return regions
 
 def find_transient_boundaries(data, baseline = None, plot=False):
     f = data
-    fu = nd.uniform_filter(f, 3)
+    #fu = nd.uniform_filter(f, 3)
     time_data = n.arange(len(data))
     smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),10)
     d1f = n.diff(smooth_data) - 0
@@ -236,6 +263,7 @@ def find_transient_boundaries(data, baseline = None, plot=False):
     d2f = n.diff(smooth_d1)
     fu = smooth_data
 
+    plot=False
 
     #start looking from the start of d1f for zero crossings where d2f is < 0
     maxima = []
@@ -313,8 +341,8 @@ def find_transient_boundaries(data, baseline = None, plot=False):
                         regions.append(reg)
                     except AssertionError,e:
                         pass
-                        #print e.message
-                        #print traceback.print_exc()
+                        print e.message
+                        print traceback.print_exc()
                         #print 'skip',mi1,mi2
                 else:
                     pass
@@ -334,12 +362,14 @@ def find_transient_boundaries(data, baseline = None, plot=False):
         else:
             for r in remove:
                 maxima.remove(r.maximum)
-        if plot:
-            for r in regions:
-                fmin=f.min()
-                fmax=f.max()
-                ax.add_patch(p.Rectangle((r.left,fmin),r.size,fmax-fmin,facecolor="blue",alpha=0.1))
         count+=1
+    if plot:
+        for r in regions:
+            fmin=f.min()
+            fmax=f.max()
+            ax.add_patch(p.Rectangle((r.left,fmin),r.size,fmax-fmin,facecolor="red",alpha=0.1))
+    print "count is {}".format(count)
+    print regions
     return regions
 
 def fit_regs(f, plot=False , baseline = None):
@@ -369,6 +399,7 @@ def fit_regs(f, plot=False , baseline = None):
         transient_t = time[le:ri]
         if plot:
             ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="blue",alpha=0.1))
+        print r
         oo = r.fit_res[-1]
         if not oo.solutions:
             r.bad=True
@@ -400,8 +431,9 @@ def fit_regs(f, plot=False , baseline = None):
             r.bad = True
             continue
         #oo.set_parameter_range('m2',le,ri,(ri-le)/2. )
-
-        oo.set_parameter_range('d2',.1,100,2)
+        val_d2 = sol['d2']
+        #print 'got d2',val_d2
+        oo.set_parameter_range('d2',val_d2*0.5,val_d2*2,val_d2)
         #oo.set_parameter_range('s',.5,3.,2.1)
         #oo.set_parameter_range('s',1.0,1.1,1.05)
         oo.set_parameter_range('s',.1,.11,.105)

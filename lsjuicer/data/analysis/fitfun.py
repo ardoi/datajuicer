@@ -152,7 +152,7 @@ class Optimizer(ScaledOperation):
         parameter_names = self.parameters.keys()
         amount=0.2
         min_error = None
-        best_p=None
+        #best_p=None
         for p in permutations:
             scaled_initial_conditions = []
             ics=[]
@@ -175,17 +175,17 @@ class Optimizer(ScaledOperation):
             if min_error is None:
                 min_error = error
                 scaled_solutions = sol4p
-                best_p = p
+                #best_p = p
                 continue
             if error<min_error:
                 min_error = error
                 scaled_solutions = sol4p
-                best_p = p
+                #best_p = p
                 continue
 
         #print parameter_names
         #print min_error, scaled_solutions, best_p
-        status = res[1]
+        #status = res[1]
         self.solutions = {}
         for i, ssol in enumerate(scaled_solutions):
             parameter_name = parameter_names[i]
@@ -237,9 +237,9 @@ class Optimizer(ScaledOperation):
             except AttributeError:
                 pass
         except:
-            #print 'exception in optimize'
-            #import traceback
-            #traceback.print_exc()
+            print 'exception in optimize'
+            import traceback
+            traceback.print_exc()
             self.solutions = {}
         #print 'sol=',self.solutions
 
@@ -300,7 +300,7 @@ class Optimizer(ScaledOperation):
     def jiggle_rec(self, params):
         return params
         old = params.copy()
-        start_error = self.param_error(old)
+        #start_error = self.param_error(old)
         steps = 0
         max_steps = 100
         while steps<max_steps:#old != new:
@@ -310,7 +310,7 @@ class Optimizer(ScaledOperation):
                 break
             else:
                 old = new
-        end_error = self.param_error(new)
+        #end_error = self.param_error(new)
         #print 'jiggle res',steps, start_error, end_error
         #print params, new
         return new
@@ -452,7 +452,7 @@ def ff5_bl(arg, tau2, m2,d2, d,s,A,B,C):
     t=arg
     return C*n.exp(-(t-mm2)/tau2)*(t>mm2)+B+C*(t<=mm2)
 
-def ff50(arg, tau2, d, m2, A, B, C):
+def ff50(arg, tau2, d,d2, m2, A, B, C):
     """same as ff5 but with s and d2 fixed
 
     Args:
@@ -470,8 +470,8 @@ def ff50(arg, tau2, d, m2, A, B, C):
     Returns:
         Function values for all arg values
     """
-    d2 = 0.0
-    s = 1.0
+    #d2 = 0.0
+    s = 0.10
     return ff5(arg, tau2, d, d2, m2, s, A, B, C)
 
 def ff5o(arg, tau2, d, d2, m2, s, A, B, C):
@@ -597,7 +597,7 @@ def ff6o(arg, tau2, d, d2, m2, s, A):
 
     a3e=(4.*t*tau22 + d*(s2 + 2.*(d + d2 + m)*tau2))/(2.*d*tau22)
     a4 = ss.erfc((s2 + (d + d2 + m - t)*tau2)/(sqrt2*s*tau2))
-    a4mask=a4==0.0
+    #a4mask=a4==0.0
     #a1e[a4mask]=0.0
     #a3e[a4mask]=0.0
     a5e = t/tau2
