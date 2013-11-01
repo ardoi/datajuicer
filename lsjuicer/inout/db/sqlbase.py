@@ -37,6 +37,7 @@ class DBMaster(object):
             self.tables_created = True
 
     def get_session(self):
+        print 'open sess'
         if self.session:
             return self.session
         else:

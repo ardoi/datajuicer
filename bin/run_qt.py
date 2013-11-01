@@ -19,11 +19,11 @@ def java_check(parent):
     p = Popen(java_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     retcode = p.wait()
     if retcode:
-        QtGui.QMessageBox.warning(parent, 'Java missing', """It appears you do not
+        QtWidgets.QMessageBox.warning(parent, 'Java missing', """<html>It appears you do not
         have Java installed.  It is needed to convert files into a readable
         format. Please download it from here: <a
         href="http://java.com/en/download/index.jsp">http://java.com</a>,
-        install it and restart this program""")
+        install it and restart this program</html>""")
         return False
     return True
 
@@ -103,8 +103,10 @@ if __name__ == "__main__":
     ret = java_check(gui)
 
     if not ret:
-        sys.exit(0)
-    gui.show()
-    gui.showMaximized()
-    gui.raise_()
-    app.exec_()
+        gui.close()
+        app.exit()
+    else:
+        gui.show()
+        gui.showMaximized()
+        gui.raise_()
+        app.exec_()
