@@ -1,4 +1,3 @@
-import sys
 import traceback
 import logging
 
@@ -71,11 +70,11 @@ class Region(object):
         oo.set_function(fitfun.ff50)
         b_init = (f0r+f0l)/2.
         oo.set_parameter_range('B',b_init*0.75,b_init*1.25,b_init)
-        min_amp = 250.0
+        min_amp = 50.0
         if fu[self.maximum]-b_init < min_amp:
-            print 'A'
-            print f0r,f0l,b_init, fu[self.maximum]
-            print ri,le
+            #print 'A'
+            #print f0r,f0l,b_init, fu[self.maximum]
+            #print ri,le
             #print fu[self.maximum]-b_init
             #self.bad=True
             return None
@@ -86,7 +85,7 @@ class Region(object):
         try:
             oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
         except AssertionError:
-            print 'B'
+            #print 'B'
             return None
         oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
         oo.set_parameter_range('d2',.1,100,2)
@@ -97,15 +96,15 @@ class Region(object):
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
-            print 'C'
-            print  self.data.tolist()
-            print self.time_data.tolist()
-            for p in oo.parameters:
-                print p, oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
+            #print 'C'
+            #print  self.data.tolist()
+            #print self.time_data.tolist()
+            #for p in oo.parameters:
+            #    print p, oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
             return None
         #skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
-            print 'D'
+            #print 'D'
             return None
         return oo
 
@@ -117,14 +116,14 @@ class Region(object):
             assert self.size > self.minimum_size, "Assert failed: Size is %i, \
                 minimum size is %i"%(self.size, self.minimum_size)
         except AssertionError:
-            print 'a0'
+            #print 'a0'
             self.bad=True
             return
         logger = get_logger(__name__)
         logger.debug("\nregion:%s"%self)
         oo = self.fit_curve()
         if not oo:
-            print 'a'
+            #print 'a'
             self.bad = True
             return
         aicc_curve = oo.aicc()
@@ -136,7 +135,7 @@ class Region(object):
             oo=self.fit_curve()
             if not oo:
                 self.bad = True
-                print 'aa'
+                #print 'aa'
                 return
             aicc_curve = oo.aicc()
             logger.debug("AICc curve %f"%aicc_curve)
@@ -159,7 +158,7 @@ class Region(object):
 
         else:
             self.bad = True
-            print 'aaa'
+            #print 'aaa'
         logger.debug("bad: %s"%str(self.bad))
 
     def __repr__(self):
@@ -373,7 +372,7 @@ def find_transient_boundaries(data, baseline = None, plot=False):
     return regions
 
 def fit_regs(f, plot=False , baseline = None):
-    regs  = find_transient_boundaries(f, baseline, plot)
+    regs  = find_transient_boundaries2(f, baseline, plot)
     fmin=f.min()
     fmax=f.max()
     time = n.arange(len(f))
@@ -391,78 +390,79 @@ def fit_regs(f, plot=False , baseline = None):
         p.xlim(0, len(f))
         ax=p.gca()
     for i,r in enumerate(regs):
+        if r.bad:
+            continue
         le = r.left
         ri = r.right
-        fit_res = []#defaultdict(dict)
+        #fit_res = []#defaultdict(dict)
 
-        transient_f = f[le:ri]
+        #transient_f = f[le:ri]
         transient_t = time[le:ri]
         if plot:
-            ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="blue",alpha=0.1))
-        print r
+            ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="orange",alpha=0.1))
         oo = r.fit_res[-1]
         if not oo.solutions:
             r.bad=True
             continue
-        fit_res.append(oo)
+        #fit_res.append(oo)
         if plot:
             p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
-        if plot:
-            p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='magenta')
+        #if plot:
+        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='magenta')
         #make second fit with convolved function using first fit paramaters as initial conditions
-        sol = oo.solutions
-        oo = fitfun.Optimizer(transient_t, transient_f)
-        oo.set_function(fitfun.ff5)
-        delta = 0.25
-        val = sol['tau2']
+        #sol = oo.solutions
+        #oo = fitfun.Optimizer(transient_t, transient_f)
+        #oo.set_function(fitfun.ff5)
+        #delta = 0.25
+        #val = sol['tau2']
 
-        oo.set_parameter_range('tau2',2, 100, max(2, val*.9))
-        val = sol['m2']
+        #oo.set_parameter_range('tau2',2, 100, max(2, val*.9))
+        #val = sol['m2']
         #dont take events with very close peaks to edge
-        if val - le < 1.0:
-            r.bad = True
-            continue
-        oo.set_parameter_range('m2', val*.5, val*2, val)
-        val_d= sol['d']
-        #limit d so that it wont go before the left boundary
-        try:
-            oo.set_parameter_range('d', 1, val - le, min(0.95*(val-le),val_d))
-        except AssertionError:
-            r.bad = True
-            continue
-        #oo.set_parameter_range('m2',le,ri,(ri-le)/2. )
-        val_d2 = sol['d2']
-        #print 'got d2',val_d2
-        oo.set_parameter_range('d2',val_d2*0.5,val_d2*2,val_d2)
-        #oo.set_parameter_range('s',.5,3.,2.1)
-        #oo.set_parameter_range('s',1.0,1.1,1.05)
-        oo.set_parameter_range('s',.1,.11,.105)
-        val = sol['A']
-        oo.set_parameter_range('A',val*0.5,val*2, val)
-        val = sol['B']
-        oo.set_parameter_range('B',val*(1-delta),val*(1+delta), val)
-        val = sol['C']
-        if val == 0.0:
-            oo.set_parameter_range('C',-100,100, val)
-        else:
-            oo.set_parameter_range('C',val*(1-delta*n.sign(val)),val*(1+delta*n.sign(val)), val)
-        oo.optimize()
-        #print "\nAIC curve2", oo.aic()
-        #print "AICc curve2", oo.aicc()
-        if not oo.solutions:
-            #print 'bad 3'
-            r.bad = True
-            continue
-        if plot:
-            p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=3,color='black')
+        #if val - le < 1.0:
+        #    r.bad = True
+        #    continue
+        #oo.set_parameter_range('m2', val*.5, val*2, val)
+        #val_d= sol['d']
+        ##limit d so that it wont go before the left boundary
+        #try:
+        #    oo.set_parameter_range('d', 1, val - le, min(0.95*(val-le),val_d))
+        #except AssertionError:
+        #    r.bad = True
+        #    continue
+        ##oo.set_parameter_range('m2',le,ri,(ri-le)/2. )
+        #val_d2 = sol['d2']
+        ##print 'got d2',val_d2
+        #oo.set_parameter_range('d2',val_d2*0.5,val_d2*2,val_d2)
+        ##oo.set_parameter_range('s',.5,3.,2.1)
+        ##oo.set_parameter_range('s',1.0,1.1,1.05)
+        #oo.set_parameter_range('s',.1,.11,.105)
+        #val = sol['A']
+        #oo.set_parameter_range('A',val*0.5,val*2, val)
+        #val = sol['B']
+        #oo.set_parameter_range('B',val*(1-delta),val*(1+delta), val)
+        #val = sol['C']
+        #if val == 0.0:
+        #    oo.set_parameter_range('C',-100,100, val)
+        #else:
+        #    oo.set_parameter_range('C',val*(1-delta*n.sign(val)),val*(1+delta*n.sign(val)), val)
+        #oo.optimize()
+        ##print "\nAIC curve2", oo.aic()
+        ##print "AICc curve2", oo.aicc()
+        #if not oo.solutions:
+        #    #print 'bad 3'
+        #    r.bad = True
+        #    continue
+        #if plot:
+        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=3,color='black')
         #if oo.solutions:
         #    oo.solutions = oo.jiggle_rec(oo.solutions)
-        if plot:
-            p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='orange')
+        #if plot:
+        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='orange')
 
-        fit_vals = oo.function(transient_t, **oo.solutions)
-        fit_res.append(oo)
-        r.fit_res=fit_res
+        #fit_vals = oo.function(transient_t, **oo.solutions)
+        #fit_res.append(oo)
+        #r.fit_res=fit_res
         good_regions.append(r)
 
     i=0
@@ -474,10 +474,10 @@ def fit_regs(f, plot=False , baseline = None):
         transient_t = time[le:ri]
         sol = r.fit_res[-1].solutions
         #fit_vals = oo.function(transient_t, **sol)
-        fit_vals = fitfun.ff5(transient_t, **sol)
+        #sol['s']=0.105
+        fit_vals = fitfun.ff50(transient_t, **sol)
 
         transient_t = time[le:ri]
-
         z[le:ri] = 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
         bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
         #bl += fitfun.ff5_bl(arg=time, **sol)*sol['A']
@@ -516,6 +516,7 @@ def fit_regs(f, plot=False , baseline = None):
     do_last_fit = True
     added_index = 0
     for i,r in enumerate(good_regions):
+        #print '\n',i
         if plot:
             p.figure(3)
             p.subplot(rows, cols, i+1)
@@ -540,12 +541,16 @@ def fit_regs(f, plot=False , baseline = None):
         if plot:
             p.plot(time_new, fff,'-o',ms=4,mec='None',alpha=.5)
         oo = fitfun.Optimizer(time_new, fff)
-        oo.set_function(fitfun.ff6)
+        oo.set_function(fitfun.ff60)
+        #print oo.parameters
         #copy fit parameter ranges from previous fit
         oo.parameters = dict(r.fit_res[-1].parameters)
+        #print oo.parameters
         #remove B and C since we have already corrected the baseline
         del(oo.parameters['C'])
         del(oo.parameters['B'])
+        #oo.parameters['s'] = {}
+        #oo.set_parameter_range('s',0.1,0.11,0.105)
         #oo.shift_parameter('m2', le)
         #oo.show_parameters()
         oo.optimize()
@@ -580,8 +585,8 @@ def fit_regs(f, plot=False , baseline = None):
     if plot:
         p.figure(5)
         #p.plot(time, baseline)
-        p.plot(time, fullres,color='blue')
         p.plot(time,f, 'o',ms=4,mec='None',alpha=.5)
+        p.plot(time, fullres,color='red',lw=2)
 
     #last stage
     #estimate baseline again
