@@ -14,7 +14,7 @@ class CopyTableView(QW.QTableView):
         for s in selected:
             if s.row() not in out.keys():
                 out[s.row()]={}
-            out[s.row()].update({s.column():str(s.data().toString())})
+            out[s.row()].update({s.column():str(s.data())})
         keys = out.keys()
         print keys
         keys.sort()
@@ -32,7 +32,7 @@ class CopyTableView(QW.QTableView):
             column_names = []
             column_count = header_model.columnCount(selected[0])
             for i in range(column_count):
-                column_names.append(str(header_model.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole).toString()))
+                column_names.append(str(header_model.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole)))
             copyLines.insert(0, ', '.join(column_names))
         outTxt = '\n'.join(copyLines)
         #print outTxt

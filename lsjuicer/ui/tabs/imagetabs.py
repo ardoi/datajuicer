@@ -115,12 +115,12 @@ class EventClickTree(QW.QWidget):
         print '\nccc'
         row = modelindex.row()
         parent = modelindex.parent()
-        event_type = str(parent.data().toString())
-        state = modelindex.data(10).toBool()
-        print row,event_type,state, str(modelindex.data().toString())
+        event_type = str(parent.data())#.toString())
+        state = bool(modelindex.data(10))
+        #print row,event_type,state, str(modelindex.data().toString())
         if not event_type:
             #Toggle all events if the eventype has been toggled
-            itemname = str(modelindex.data().toString())
+            itemname = str(modelindex.data())#.toString())
             print itemname, self.items_by_name.keys()
             if itemname in self.items_by_name:
                 self.events.change(itemname, None, state)
@@ -179,10 +179,10 @@ class ClickTree(QW.QWidget):
 
     def clicked(self, modelindex):
         print '\nccc'
-        print modelindex.row(), modelindex.column(),modelindex.data().toString(),modelindex.parent()
+        print modelindex.row(), modelindex.column(),modelindex.data(),modelindex.parent()
         parent = modelindex.parent()
-        name = str(self.model.data(self.model.index(modelindex.row(), 0, parent)).toString())
-        state = modelindex.data(10).toBool()
+        name = str(self.model.data(self.model.index(modelindex.row(), 0, parent)))
+        state = bool(modelindex.data(10))
         print name
         actionpanel = self.panels.get_panel_by_name(name)
         print name,state,actionpanel
