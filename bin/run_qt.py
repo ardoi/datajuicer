@@ -37,8 +37,8 @@ if __name__ == "__main__":
     app = QtWidgets.QApplication(sys.argv)
     # app.setStyle(QtGui.QStyleFactory.create('GTK+'))
     # app.setStyle(QtGui.QStyleFactory.create('Plastique'))
-    # app.setStyle(QtGui.QStyleFactory.create('Cleanlooks'))
-    app.setStyle(QtWidgets.QStyleFactory.create('Macintosh (aqua)'))
+    app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+    #app.setStyle(QtWidgets.QStyleFactory.create('Macintosh (aqua)'))
     #make sure icons are shown in menus
     app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
     print 'Available styles: %s' % (str(" : ".join(QtWidgets.QStyleFactory.keys())))

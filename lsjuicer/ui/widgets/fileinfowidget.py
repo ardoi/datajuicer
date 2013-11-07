@@ -255,7 +255,7 @@ class ResultDataModel(QC.QAbstractTableModel):
 
     def data_update(self):
         self.modelAboutToBeReset.emit()
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.modelReset.emit()
         self.layoutChanged.emit()
 
@@ -396,7 +396,7 @@ class AnalysesDataModel(QC.QAbstractTableModel):
 
     def data_update(self):
         self.modelAboutToBeReset.emit()
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.modelReset.emit()
         self.layoutChanged.emit()
 
