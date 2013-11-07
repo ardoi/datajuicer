@@ -182,9 +182,9 @@ class ImageDataLineScan(ImageData):
         super(ImageDataLineScan, self).__init__(mimage)
         #self.check_for_gaps()
 
-    @property
-    def x_points(self):
-        return 1
+    #@property
+    #def x_points(self):
+    #    return 1
     @property
     def xvals(self):
         return self.timestamps
