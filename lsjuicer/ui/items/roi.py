@@ -17,14 +17,14 @@ class ROIDataModel(QC.QAbstractListModel):
         self.sender = SenderObject()
 
     def updateData(self):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.rois = {}
         for b in self.builders:
             for i,r in enumerate(b.rois):
                 self.rois["%s %i"%(b.name,i+1)] = {'roi':r,'builder':b}
         self.keys = self.rois.keys()
         self.keys.sort()
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def rowCount(self,parent):
         return len(self.rois)

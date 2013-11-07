@@ -87,6 +87,7 @@ def bfconvert_filename_from_runner(runner):
 
 class OMEXMLMaker(QC.QObject):
     conversion_finished = QC.pyqtSignal()
+    conversion_update = QC.pyqtSignal()
     set_file_being_inspected_label = QC.pyqtSignal(str)
     filesConverted = QC.pyqtSignal(int)
 
@@ -199,9 +200,9 @@ class OMEXMLMaker(QC.QObject):
             filename = ""
         print 'signals',self.signals
         if self.signals:
-            self.set_file_being_inspected_label(str(os.path.basename(filename)))
+            self.set_file_being_inspected_label.emit(str(os.path.basename(filename)))
             self.timer = QC.QTimer()
-            self.time.timeout.connect(self.check_progress)
+            self.timer.timeout.connect(self.check_progress)
             self.timer.start(1000)
             self.filesConverted.emit(self.done)
         else:

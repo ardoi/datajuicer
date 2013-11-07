@@ -768,9 +768,9 @@ class PipeModel(QC.QAbstractListModel):
 
     def pipes_updated(self):
         self.modelAboutToBeReset.emit()
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.modelReset.emit()
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
 pipe_classes = {'SelfRatio':SelfRatioPipe,
                 'Shear':ShearPipe, "Blur":BlurPipe,

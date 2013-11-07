@@ -42,16 +42,16 @@ class TransientDataModel(QC.QAbstractTableModel):
             return 4
     rows = property(get_rows)
     def set_visual_transient_collection(self, visual_transient_collection):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.visual_transient_collection = visual_transient_collection
         #self.transients = transients.ts
         #self.rows = len(self.visual_transient_collection)
         #print 'set %i vis transients'%self.rows
         #print 'transients',self.rows
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def remove_transients(self, indexes):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         transients_to_remove = []
         for index in indexes:
             transient_key = self.visual_transient_collection.transient_group.order[index.row()]
@@ -61,13 +61,13 @@ class TransientDataModel(QC.QAbstractTableModel):
         for key in transients_to_remove:
             print 'remove', key
             self.visual_transient_collection.remove_transient(key)
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
 
     def set_transients_state(self, attrib, indexes):
         function = {'visible':'set_visible', 'editable':'set_editable'}
         assert attrib in function
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         transients_to_modify_keys = []
         states = []
         for index in indexes:
@@ -79,7 +79,7 @@ class TransientDataModel(QC.QAbstractTableModel):
         print 'set state', attrib, indexes
         f = getattr(self.visual_transient_collection, function[attrib])
         f(transients_to_modify_keys, states)
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def set_transients_visible(self, indexes):
         self.set_transients_state('visible', indexes)
@@ -302,6 +302,7 @@ class RandomDataModel(QC.QAbstractTableModel):
     conversion_needed = QC.pyqtSignal(int)
     convert_pb_visible = QC.pyqtSignal(bool)
     convert_progress_visible = QC.pyqtSignal(bool)
+    fitColumns=QC.pyqtSignal()
     plotFile = QC.pyqtSignal(object)
     def __init__(self, parent=None):
         super(RandomDataModel, self).__init__(parent)
@@ -314,7 +315,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.ftype = sa.dbmaster.get_config_setting_value('filetype')
         #formats = ["*.lsm","*.ome"]
         self.omexml_maker = OMEXMLMaker()
-        #self.omexml_maker.conversion_update.connect(self.conversion_update)
+        self.omexml_maker.conversion_update.connect(self.conversion_update)
 #        self.connect(self.omexml_maker,QC.SIGNAL('conversion_finished()'),self.conversion_finished)
         self.omexml_maker.conversion_finished.connect(self.ome_conversion_finished)
 
@@ -349,8 +350,8 @@ class RandomDataModel(QC.QAbstractTableModel):
         print 'formats:',self.formats
 
     def conversion_update(self):
-        self.layoutAboutToBeChanged.emit()
-        self.layoutChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
+        self.layoutChanged.emit((),0)
         self.fitColumns.emit()
 
     def rowCount(self, parent):
@@ -599,11 +600,11 @@ class RandomDataModel(QC.QAbstractTableModel):
             self.dirname = str(dirname)
             print 'new dir',str(self.dirname)
             self.modelAboutToBeReset.emit()
-            self.layoutAboutToBeChanged.emit()
+            self.layoutAboutToBeChanged.emit((),0)
             self.updateData()
  #           self.beginResetModel()
             self.modelReset.emit()
-            self.layoutChanged.emit()
+            self.layoutChanged.emit((),0)
             #self.emit(QC.SIGNAL('fitColumns()'))
         else:
             print 'old dir'

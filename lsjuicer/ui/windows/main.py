@@ -350,6 +350,7 @@ class MainUI(QW.QMainWindow):
         self.tview.horizontalHeader().setSectionResizeMode(QW.QHeaderView.ResizeToContents)
         self.tview.horizontalHeader().setSectionResizeMode(15, QW.QHeaderView.Stretch)
         #self.connect(rmodel,QC.SIGNAL('fitColumns()'),self.tview.resizeRowsToContents)
+        rmodel.fitColumns.connect(self.tview.resizeRowsToContents)
         file_table_and_reference_layout = QW.QHBoxLayout()
         file_pick_layout.addLayout(file_table_and_reference_layout)
         file_table_and_reference_layout.addWidget(self.tview)

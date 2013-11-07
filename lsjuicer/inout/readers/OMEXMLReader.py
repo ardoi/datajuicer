@@ -1,4 +1,5 @@
-from xml.etree.ElementTree import ElementTree
+#from xml.etree.ElementTree import ElementTree, ParseError
+import xml.etree.ElementTree as ElementTree
 import base64
 import StringIO
 import zlib
@@ -86,10 +87,26 @@ class OMEXMLReader(AbstractReader):
             #image_description_tag = 270
             #self.et = xmle.fromstring(self.pil_image.tag[image_description_tag])
         else:
-            self.et = ElementTree()
-            self.et.parse(self.filename)
-        self.fulltags = {}
+            try:
+                self.et = ElementTree.ElementTree()
+                self.et.parse(self.filename)
+            except ElementTree.ParseError:
+                print 'bad characters'
+                with open(self.filename,'r') as f:
+                    lines = f.readlines()
+                    bad = {'&':"_and_"}
+                    for i,line in enumerate(lines):
+                        change = True in [bad_char in line for bad_char in bad.keys()]
+                        if change:
+                            data = line.replace("&","_and_")
+                            lines[i] = data
+                            print data
+                    self.et=ElementTree.fromstringlist(lines)
+                print self.et
+                
 
+        self.fulltags = {}
+        print self.et
         self._make_tags()
         self._get_image_attributes()
         self.metadata_loaded = True
@@ -122,9 +139,7 @@ class OMEXMLReader(AbstractReader):
         self.image_attrs = {"Pixels": {}, "Reference": {}}
         images = {"Pixels": None, "Reference": None}
         image_elements = self.et.findall(self.fulltags["Image"])
-        #print self.image_elements, self.fulltags["Image"]
         for im_n, image_element in enumerate(image_elements):
-            #print 'im',im_n,image_element
             pixels = image_element.findall(self.fulltags["Pixels"])
             #channel_dict = {}
             tiffdata_dict = {}

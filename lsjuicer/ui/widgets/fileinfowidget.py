@@ -257,7 +257,7 @@ class ResultDataModel(QC.QAbstractTableModel):
         self.modelAboutToBeReset.emit()
         self.layoutAboutToBeChanged.emit((),0)
         self.modelReset.emit()
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def rowCount(self, parent):
         if self.results:
@@ -398,7 +398,7 @@ class AnalysesDataModel(QC.QAbstractTableModel):
         self.modelAboutToBeReset.emit()
         self.layoutAboutToBeChanged.emit((),0)
         self.modelReset.emit()
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def get_selected(self, indexlist):
         ind = indexlist[0]

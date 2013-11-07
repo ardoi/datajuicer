@@ -22,7 +22,7 @@ class SparkDataModel(QC.QAbstractTableModel):
     def columnCount(self, parent):
         return self.columns
     def setData(self, model_data):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.modelAboutToBeReset.emit()
         self.model_data = []
         for spark_roi in model_data:
@@ -36,7 +36,7 @@ class SparkDataModel(QC.QAbstractTableModel):
 
         self.rows = len(self.model_data)
         print 'new rows', self.rows
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
         self.modelReset.emit()
     def headerData(self, section, orientation, role):
         if role == QC.Qt.DisplayRole:

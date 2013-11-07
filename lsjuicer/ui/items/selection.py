@@ -787,12 +787,12 @@ class SelectionDataModel(QC.QAbstractListModel):
         else:
             return 0
     def removeRows(self, index):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selection_manager.selections
         for i in index:
             q=selections[i.row()]
             self.selection_manager.remove_selection(q)
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def set_selection_manager(self, selection_manager):
         self.modelAboutToBeReset.emit()

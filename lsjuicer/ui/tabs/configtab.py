@@ -218,18 +218,18 @@ class ExperimentTypeDataModel(QC.QAbstractListModel):
         return rows
 
     def removeRows(self, index):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         ets = self.experimenttypes
         ets.remove(ets[index[0].row()])
         self.experimenttypes = ets
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def add_new(self, et):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         ets = self.experimenttypes
         ets.append(et)
         self.experimenttypes = ets
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def data(self, index, role):
         ets = self.experimenttypes
@@ -281,19 +281,19 @@ class BoundaryDataModel(QC.QAbstractListModel):
         return rows
 
     def removeRows(self, index):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selectiontypes
         print 'remove row',index[0].row()
         selections.remove(selections[index[0].row()])
         self.selectiontypes = selections
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
     def add_new(self, selection):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selectiontypes
         selections.append(selection)
         self.selectiontypes = selections
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
 
 
     def data(self, index, role):
