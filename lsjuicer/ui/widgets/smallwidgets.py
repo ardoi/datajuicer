@@ -373,20 +373,16 @@ class HistogramPlot(QW.QWidget):
                     inters = path.intersected(sl)
                     if inters.elementCount() > 1:
                         el=inters.elementAt(0)
-                        #print el.x, el.y
                         y_last = el.y
-                        #print 'intersect'
                     else:
                         y_last = p.y()
-                        #print 'no intersect'
-                    #print 'yl=',y_last
                     path_fill.lineTo(cut_max, y_last)
                     path_fill.lineTo(cut_max, start.y())
                     break
             path_fill.closeSubpath()
             if self.gpath_fill:
                 self.scene.removeItem(self.gpath_fill)
-            self.gpath_fill = self.scene.addPath(path_fill,
+            self.gpath_fill = self.scene.addPath(path_fill,pen=QG.QPen(QC.Qt.NoPen),
                     brush=QG.QBrush(QG.QColor('cornflowerblue')))
             self.gpath_fill.setZValue(1)
             self.saturation_gline.setZValue(3)
@@ -394,12 +390,15 @@ class HistogramPlot(QW.QWidget):
 
     def fit_view(self):
         if self.gpath:
-            self.view.fitInView(self.gpath)
+            #rect has to be adjusted because QT adds .5 pixels to each side
+            rect = self.gpath.itemsBoundingRect().adjusted(0.5,0.5,-0.5,-0.5)
+            self.view.fitInView(rect)
 
     #@helpers.timeIt
     def make_points(self, data):
         points = []
-        #skip the first point of the histogram because it will be all black values and will make the histogram unreadable unless in log scale.
+        #skip the first point of the histogram because it will be all black values and
+        #will make the histogram unreadable unless in log scale.
         points.append(QC.QPointF(data[1][1], 0))
         logmin = max(1/n.log(data[0][1:]+1e-12))
         for x,y in zip(data[1][1:],data[0][1:]):
@@ -418,4 +417,5 @@ class RefitView(QW.QGraphicsView):
     """GraphicsView extension that fits in view at every resize event"""
     def resizeEvent(self, event):
         QW.QGraphicsView.resizeEvent(self,event)
-        self.fitInView(self.scene().itemsBoundingRect())
+        rect = self.scene().itemsBoundingRect().adjusted(0.5,0.5,-0.5,-0.5)
+        self.fitInView(rect)
