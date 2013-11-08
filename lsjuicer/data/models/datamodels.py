@@ -12,6 +12,7 @@ from lsjuicer.static.constants import Constants
 from lsjuicer.inout.db.sqla import ImageMaker
 import lsjuicer.inout.db.sqla as sa
 from lsjuicer.static.constants import ImageStates
+from lsjuicer.util.helpers import timeIt
 
 class CheckBoxDelegate(QW.QItemDelegate):
     def createEditor(self, parent, styleoption, modelindex):
@@ -381,8 +382,11 @@ class RandomDataModel(QC.QAbstractTableModel):
     def rows(self):
         return len(self.dirdatas)
 
+    @timeIt
     def updateData(self):
         print '\n\n\n\ndata update'
+        import time
+        t0=time.time()
         self.dirdatas = []
         self.progressVisible.emit(True)
         files = []
@@ -397,10 +401,10 @@ class RandomDataModel(QC.QAbstractTableModel):
             new_files = True
             im = ImageMaker.check_in_database(f, self.session)
             self.dirdatas.append(im)
-            analyses = im.analyses
-            fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
-                    join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\
-                    join(sa.MicroscopeImage).filter(sa.MicroscopeImage.id == im.id).all()
+            #analyses = im.analyses
+            #fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
+            #        join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\
+            #        join(sa.MicroscopeImage).filter(sa.MicroscopeImage.id == im.id).all()
             #for result in fit_results:
             #    syn_im = sa.PixelFittedSyntheticImage(result)
             #    self.dirdatas.append(syn_im)
@@ -428,7 +432,6 @@ class RandomDataModel(QC.QAbstractTableModel):
             self.switchToFileSelection.emit(self.dirname)
         print self.dirdatas
         self.session.commit()
-        #self.session.close()
 
     def convert(self):
         print 'singleshot'
