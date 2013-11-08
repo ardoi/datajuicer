@@ -27,6 +27,7 @@ class ImageDataMaker(object):
         #imagedata.timestamps = timestamps
         #imagedata.event_times = event_times
         ImageDataMaker._data_from_mimage_data(mimage_data, imagedata)
+        print 'dims: x={} y={}'.format(imagedata.x_points,imagedata.y_points)
         return imagedata
 
     @staticmethod
@@ -159,8 +160,30 @@ class ImageData(object):
         print "\n\n\n\nGetting pixel data"
         print self.mimage.get_pixel_size("Pixels")
         return self.mimage.get_pixel_size("Pixels")
+    @property
+    def all_image_data(self):
+        return self._all_image_data
 
-
+    @all_image_data.setter
+    def all_image_data(self, data):
+        print 'setting image data', data.shape
+        self._all_image_data = None
+        if  data.shape[3] < data.shape[2]:
+            #have to transpose frames because we want the ImageData frame to be longer in the
+            #horizontal axis than in vertical (for display purposes)
+            print 'Transposing'
+            channels = data.shape[0]
+            frames = data.shape[1]
+            width = data.shape[2]
+            height = data.shape[3]
+            self._all_image_data = n.zeros_like(data)
+            self._all_image_data.shape = (channels, frames, height, width)
+            print 'old shape {}\t new shape {}'.format(data.shape, self._all_image_data.shape)
+            for channel in range(channels):
+                for frame in range(frames):
+                    self._all_image_data[channel][frame]=data[channel][frame].transpose()
+        else:
+            self._all_image_data = data
 
     def __init__(self, mimage):
         self.mimage = mimage
@@ -168,7 +191,7 @@ class ImageData(object):
         self.event_times = None
         self.space_origin = 0.0
         self.time_origin = 0.0
-        self.all_image_data = None
+        self._all_image_data = None
         self._delta_time = None
 
     def replace_channels(self, new_image):

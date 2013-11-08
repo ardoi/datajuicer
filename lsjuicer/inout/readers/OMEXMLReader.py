@@ -102,11 +102,7 @@ class OMEXMLReader(AbstractReader):
                             lines[i] = data
                             print data
                     self.et=ElementTree.fromstringlist(lines)
-                print self.et
-                
-
         self.fulltags = {}
-        print self.et
         self._make_tags()
         self._get_image_attributes()
         self.metadata_loaded = True
@@ -167,8 +163,8 @@ class OMEXMLReader(AbstractReader):
             images[image_type] = image_stuff
             self.active_type = image_type
             pix_attr = images[image_type]["PixelAttributes"]
-            self.image_width = int(pix_attr['SizeY'])
-            self.image_height = int(pix_attr['SizeX'])
+            self.image_width = int(pix_attr['SizeX'])
+            self.image_height = int(pix_attr['SizeY'])
             self.channels = int(pix_attr['SizeC'])
             self.frames = int(pix_attr['SizeT'])
             self.data_type = pix_attr["Type"]
@@ -217,9 +213,9 @@ class OMEXMLReader(AbstractReader):
     def _get_image_data(self, image_type):
         #print "reading data for type %s"%self.active_type
         tiffdata_elements = self.images[image_type]["BinDatas"]
-        #data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
-        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_width, self.image_height),
+        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
                 dtype=self.data_type)
+        print 'zero data', data_array.shape
         #print data_array.shape
         self.images[image_type]["ImageData"] = data_array
         for tiffdata_element_key in tiffdata_elements:
@@ -260,10 +256,11 @@ class OMEXMLReader(AbstractReader):
                 self.pil_image.seek(ifd)
                 image_data = numpy.array(self.pil_image.getdata(),'float')
             #Need to read image dimension from PixelAttribute as they are different for different image types
-            image_width = int(self.images[image_type]["PixelAttributes"]["SizeY"])
-            image_height = int(self.images[image_type]["PixelAttributes"]["SizeX"])
-            image_data.shape = (image_width, image_height)
-            #print "Image dimensions", image_data.shape
+            image_width = int(self.images[image_type]["PixelAttributes"]["SizeX"])
+            image_height = int(self.images[image_type]["PixelAttributes"]["SizeY"])
+            print "original_shape", image_data.shape
+            image_data.shape = (image_height, image_width)
+            print "Image dimensions", image_data.shape
             #print "channel: %i of %i , frame: %i of %i"%(channel+1, self.channels,frame+1, self.frames)
             #self.images[image_type]["ImageData"][channel][frame] = image_data.transpose()
             #data_array[channel][frame] = image_data.transpose()

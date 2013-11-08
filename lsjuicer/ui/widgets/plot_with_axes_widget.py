@@ -253,7 +253,6 @@ class PlotWithAxesWidget(QW.QWidget):
         self.fscene.setLocation.connect(self.updateCoords)
         QW.QApplication.processEvents()
 
-    @timeIt
     def zoom_level_changed(self, h_zoom, v_zoom):
         #t= self.fV.transform()
         #print 'transform', t.m11(), t.m12(), t.m13(),t.m21(),t.m22(),t.m23(),t.m31(),t.m32(),t.m33()
@@ -264,7 +263,6 @@ class PlotWithAxesWidget(QW.QWidget):
         self.zoom_v_label.setText('%.1f' % v_zoom)
         self.scale_aspect(h_zoom, v_zoom)
 
-    @timeIt
     def ranges_changed(self):
         # call this so that haxis is initialized to the right left/right values
         self.h_scroll_changed()
@@ -348,7 +346,6 @@ class PlotWithAxesWidget(QW.QWidget):
         line.setZValue(1000.)
         return line
 
-    @timeIt
     def reframe(self):
         #QG.QApplication.processEvents()
         print 'setting scene rect', self.scene_rect
@@ -358,7 +355,6 @@ class PlotWithAxesWidget(QW.QWidget):
         self.ranges_changed()
         #QG.QApplication.processEvents()
 
-    @timeIt
     def updatePlots(self):
         if self.updating:
             return
@@ -435,7 +431,6 @@ class PlotWithAxesWidget(QW.QWidget):
         #Stupid hack to make make sure that vertical scrollbar does not emit weird numbers
         self.ranges_changed()
 
-    @timeIt
     def addPlot(self, name, x_vals, y_vals, plotstyle, hold_update=False):
         print '\naddplot', name
         if name in self.plot_datas.keys():
@@ -449,20 +444,17 @@ class PlotWithAxesWidget(QW.QWidget):
             self.updatePlots()
         return pd
 
-    @timeIt
     def removePlotByName(self, name):
         for pd_name in self.plot_datas:
             if pd_name == name:
                 self.removePlotData(self.plot_datas[pd_name])
 
-    @timeIt
     def removePlotData(self, plotd):
         if hasattr(plotd, 'group'):
             self.removeItem(plotd.group)
         else:
             self.removeItem(plotd.gpath)
 
-    @timeIt
     def updatePlot(self, name, data, x_vals, only_grow=False, hold_update=False):
         print '\n\n\n\nupdate', name
         plotd = self.plot_datas[name]
@@ -474,7 +466,6 @@ class PlotWithAxesWidget(QW.QWidget):
         if not hold_update:
             self.updatePlots()
 
-    @timeIt
     def redraw(self, plotd):
         #print '\nredraw', plotd,  plotd.graphic_item
         self.removeItem(plotd.graphic_item)
@@ -505,7 +496,6 @@ class PlotWithAxesWidget(QW.QWidget):
         r = self.fscene.addRect(qrect)
         return r
 
-    @timeIt
     def makePath(self, plotd):
         QW.QApplication.processEvents()
         #plot_data = self.convert_data(plotd)
@@ -567,7 +557,6 @@ class PlotWithAxesWidget(QW.QWidget):
 
 
 
-    @timeIt
     def scale_aspect(self, h_scale, v_scale):
         """Scale any circle plots so that they would look like
         circles under any scaling"""
