@@ -17,6 +17,9 @@ def round_point(point):
     point.setX(int(round(point.x())))
     point.setY(int(round(point.y())))
 
+def floor_point_x(point):
+    point.setX(int(point.x()))
+    point.setY(int(round(point.y())))
 
 class shiftList:
 

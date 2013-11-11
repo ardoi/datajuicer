@@ -6,7 +6,7 @@ from PyQt5 import QtCore as QC
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
-from lsjuicer.util.helpers import round_point
+from lsjuicer.util.helpers import floor_point_x
 
 class SnapROIItem(QW.QGraphicsRectItem):
 
@@ -74,7 +74,6 @@ class SnapROIItem(QW.QGraphicsRectItem):
         if self.editable:
             r = self.rect()
             pos  = event.scenePos()
-            round_point(pos)
             if self.resizable:
                 if self.state == Constants.resize_br or not self.initialized:
                     r.setBottomRight(pos)
@@ -86,20 +85,22 @@ class SnapROIItem(QW.QGraphicsRectItem):
                     r.setTopLeft(pos)
                 else:
                     new_pos = pos-event.lastScenePos()
-                    round_point(new_pos)
+                    floor_point_x(new_pos)
                     r.translate(new_pos)
             else:
                 new_pos = pos - event.lastScenePos()
-                round_point(new_pos)
+                floor_point_x(new_pos)
                 r.translate(new_pos)
             rn = r.normalized()
-            if self.rect() != rn:
-                self.emit = True
-            else:
-                self.emit = False
-            self.setRect(rn)
-            if self.emit and not self.update_on_release:
-                self.sender.selection_changed.emit()
+
+            if self.scene().sceneRect().contains(rn):
+                if self.rect() != rn:
+                    self.emit = True
+                else:
+                    self.emit = False
+                self.setRect(rn)
+                if self.emit and not self.update_on_release:
+                    self.sender.selection_changed.emit()
 
         QW.QGraphicsRectItem.mouseMoveEvent(self,event)
 
@@ -167,7 +168,6 @@ class SnapROIItem(QW.QGraphicsRectItem):
 
 
     def hoverEnterEvent(self, event):
-        print 'hover in'
         self.counter = 0
         self.cursorPositionBasedStyling(event)
         #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())

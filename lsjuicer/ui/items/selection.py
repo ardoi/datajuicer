@@ -11,7 +11,7 @@ from boundary import BoundaryItem
 from line import LineItem
 from snaproi import SnapROIItem
 
-from lsjuicer.util.helpers import round_point
+from lsjuicer.util.helpers import round_point, floor_point_x
 
 class PickledSelection:
     def __init__(self, name, color):
@@ -609,7 +609,7 @@ class FixedSizeSnapROI(Selection):
         if not start_point:
             self.rectf = scene_rect
         else:
-            round_point(start_point)
+            floor_point_x(start_point)
             end_point = start_point + QC.QPointF(size, size)
             self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
