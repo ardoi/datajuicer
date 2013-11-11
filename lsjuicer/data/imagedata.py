@@ -82,9 +82,8 @@ class ImageDataMaker(object):
 
     @staticmethod
     def _data_from_imagedata(imagedata, existing, cut = ()):
-        imagedata.all_image_data = {}
-        #FIXME
         if cut:
+            raise NotImplementedError
             l,r,b,t = cut
             for c in existing.channels:
                 imagedata.all_image_data.update({c:existing.all_image_data[c][b:t, l:r]})

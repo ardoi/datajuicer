@@ -5,7 +5,7 @@ class EventFitParametersDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):
         super(EventFitParametersDataModel, self).__init__(parent)
         self.rows = 0
-        self.keys = ['A','d','tau2','s','m2','d2']
+        self.keys = ['A','d','tau2','m2','d2']
         self.columns = len(self.keys)
         self.events = []
 

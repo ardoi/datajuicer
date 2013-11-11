@@ -634,7 +634,8 @@ class FunctionItem(QW.QGraphicsItem):
                 continue
             in1 = plot_indices[i]
             in0 = plot_indices[i-1]
-            painter.drawLine(self.xdata[in0], self.ydata[in0], self.xdata[in1], self.ydata[in1])
+            painter.drawLine(QC.QPointF(self.xdata[in0], self.ydata[in0]),
+                    QC.QPointF(self.xdata[in1], self.ydata[in1]))
 
     def boundingRect(self):
         return self.b_rect

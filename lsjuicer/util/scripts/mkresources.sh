@@ -3,8 +3,8 @@
 python2 makeqrc.py
 cd ../../../lib
 #generate resources.py
-pyrcc4 -o resources.py resources.qrc
+pyrcc5 -o resources.py resources.qrc
 cd ..
 #move generated resources.py to resources folder
-rm lsjuicer/resources/resources.py*
-mv lib/resources.py lsjuicer/resources/
+rm lsjuicer/ui/resources/resources.py*
+mv lib/resources.py lsjuicer/ui/resources/
