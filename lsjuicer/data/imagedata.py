@@ -166,7 +166,6 @@ class ImageData(object):
 
     @all_image_data.setter
     def all_image_data(self, data):
-        print 'setting image data', data.shape
         self._all_image_data = None
         if  data.shape[3] < data.shape[2]:
             #have to transpose frames because we want the ImageData frame to be longer in the

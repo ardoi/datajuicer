@@ -795,11 +795,13 @@ class SelectionDataModel(QC.QAbstractListModel):
         self.layoutChanged.emit((),0)
 
     def set_selection_manager(self, selection_manager):
-        self.modelAboutToBeReset.emit()
+        #self.modelAboutToBeReset.emit()
+        self.beginResetModel()
         self.selection_manager = selection_manager
-        #self.selection_manager.selection_added.connect(self.layoutChanged)
-        #self.selection_manager.selection_update.connect(self.layoutChanged)
-        self.modelReset.emit()
+        self.selection_manager.selection_added.connect(self.modelReset)
+        self.selection_manager.selection_update.connect(self.modelReset)
+        self.endResetModel()
+        #self.modelReset.emit()
 
     def active_look(self, index):
         print 'active look', self, index

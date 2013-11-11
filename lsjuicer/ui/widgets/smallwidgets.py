@@ -391,7 +391,7 @@ class HistogramPlot(QW.QWidget):
     def fit_view(self):
         if self.gpath:
             #rect has to be adjusted because QT adds .5 pixels to each side
-            rect = self.gpath.itemsBoundingRect().adjusted(0.5,0.5,-0.5,-0.5)
+            rect = self.scene.itemsBoundingRect().adjusted(0.5,0.5,-0.5,-0.5)
             self.view.fitInView(rect)
 
     #@helpers.timeIt
