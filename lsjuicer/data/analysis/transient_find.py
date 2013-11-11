@@ -781,7 +781,7 @@ class SyntheticData(object):
                 #skip pixelevents that are not part of any event
                 if not t.event_id in self.filter:
                     continue
-            res = fitfun.ff6(self.times, **t.parameters)
+            res = fitfun.ff60(self.times, **t.parameters)
             if True not in n.isnan(res):
                 f+=res
             else:
@@ -865,7 +865,7 @@ def fitted_pixel_ff0(pixel, event = 0):
     #FIXME probably has to be changed to actual time
     times = n.arange(0, region.end_frame-region.start_frame,1.0)
     param = pixel.pixel_events[event].parameters
-    f_vals = fitfun.ff6(times, **param)
+    f_vals = fitfun.ff60(times, **param)
     baseline_f = n.poly1d(pixel.baseline)
     baseline = baseline_f(times)
     return f_vals/baseline + 1

@@ -119,8 +119,8 @@ class Optimizer(ScaledOperation):
         self.sigmas = None
         #print 'optimizer',self.arg_vals.tolist()
         #print self.func0_vals.tolist()
-        self.ftol = 1.49e-8
-        self.xtol = 1.49e-8
+        self.ftol = 1.49e-7
+        self.xtol = 1.49e-7
         super(Optimizer,self).__init__(scaled=scaled)
 
     def additional_parameters(self, param_names):
