@@ -244,7 +244,6 @@ def find_transient_boundaries2(data,baseline=None, plot=False):
     time_data = n.arange(data.size)
     regions = []
     peaks = rf.get_peaks(data)
-    print peaks
     for maxval, margins in peaks.iteritems():
         left = margins[0]
         right = margins[1]
@@ -545,6 +544,8 @@ def fit_regs(f, plot=False , baseline = None):
         #print oo.parameters
         #copy fit parameter ranges from previous fit
         oo.parameters = dict(r.fit_res[-1].parameters)
+        previous_sol = r.fit_res[-1].solutions
+        oo.rerange_parameters(previous_sol)
         #print oo.parameters
         #remove B and C since we have already corrected the baseline
         del(oo.parameters['C'])
@@ -743,7 +744,6 @@ def make_raw(res):
 
 class SyntheticData(object):
     def __init__(self, results):
-        print 'starting sd', results
         if results:
             self.results = results
             if results['frames']==1:

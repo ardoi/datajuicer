@@ -27,7 +27,7 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
         #snr = abs(cwt[line[0][0], line[1][0]] / noises[line[1][0]])
 
         snr = -cwt[line[0][-1]/2, line[1][0]] / noises[line[1][0]]
-        line.append(['snr=',snr,cwt[line[0][-1], line[1][0]] , noises[line[1][0]]] )
+        #line.append(['snr=',snr,cwt[line[0][-1], line[1][0]] , noises[line[1][0]]] )
         if snr < min_snr:
             return False
         return True
