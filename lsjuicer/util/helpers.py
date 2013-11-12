@@ -21,6 +21,14 @@ def floor_point_x(point):
     point.setX(int(point.x()))
     point.setY(int(round(point.y())))
 
+def floor_rect_x(rect):
+    tl = rect.topLeft()
+    br = rect.bottomRight()
+    floor_point_x(tl)
+    floor_point_x(br)
+    rect.setTopLeft(tl)
+    rect.setBottomRight(br)
+
 class shiftList:
 
     """Helper class for data that is shifted by some amount. For example

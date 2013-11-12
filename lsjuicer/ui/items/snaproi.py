@@ -6,7 +6,7 @@ from PyQt5 import QtCore as QC
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
-from lsjuicer.util.helpers import floor_point_x
+from lsjuicer.util.helpers import floor_point_x,floor_rect_x
 
 class SnapROIItem(QW.QGraphicsRectItem):
 
@@ -74,6 +74,7 @@ class SnapROIItem(QW.QGraphicsRectItem):
         if self.editable:
             r = self.rect()
             pos  = event.scenePos()
+            floor_point_x(pos)
             if self.resizable:
                 if self.state == Constants.resize_br or not self.initialized:
                     r.setBottomRight(pos)
@@ -85,7 +86,6 @@ class SnapROIItem(QW.QGraphicsRectItem):
                     r.setTopLeft(pos)
                 else:
                     new_pos = pos-event.lastScenePos()
-                    floor_point_x(new_pos)
                     r.translate(new_pos)
             else:
                 new_pos = pos - event.lastScenePos()
@@ -102,7 +102,7 @@ class SnapROIItem(QW.QGraphicsRectItem):
                 if self.emit and not self.update_on_release:
                     self.sender.selection_changed.emit()
 
-        QW.QGraphicsRectItem.mouseMoveEvent(self,event)
+        #QW.QGraphicsRectItem.mouseMoveEvent(self,event)
 
     def hoverMoveEvent(self, event):
         self.cursorPositionBasedStyling(event)

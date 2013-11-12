@@ -23,6 +23,16 @@ class ScaledOperation(object):
             assert minval <= initial and maxval >= initial and maxval>minval, "%s = %f, %f, %f"%(name,minval, maxval, initial)
             self.parameters[name]={'min':float(minval), 'max':float(maxval), 'init':float(initial)}
 
+    def rerange_parameters(self, previous_sol,amount = 0.5):
+        """Try to increase allowed ranges of parameters for fitting plus/minus
+        amount*100 percent from the 'initial' value
+
+        """
+        for param, p_range in self.parameters.iteritems():
+            p_range['init'] = previous_sol[param]
+            p_range['min'] = min(p_range['min'], p_range['init']*amount)
+            p_range['max'] = max(p_range['max'], p_range['init']*(1+amount))
+
     def shift_parameter(self, name, shift):
         self.parameters[name]['min']+=shift
         self.parameters[name]['max']+=shift
