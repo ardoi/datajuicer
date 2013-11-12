@@ -67,19 +67,19 @@ class EventPanel(ActionPanel):
 
     @timeIt
     def set_data(self):
-        results = {}
-        if self.region.width == 1:
-            results['width'] = self.region.frames
-            results['frames'] = 1
-            new_shape = (1, self.imagedata.y_points, self.region.frames)
-        else:
-            results['width'] = self.imagedata.x_points
-            results['frames'] = self.imagedata.frames
-            new_shape = (self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points)
-        new = n.zeros(new_shape,dtype='float')
-        results['height'] = self.imagedata.y_points
-        results['fits']= self.result.pixels
-        sdata = SyntheticData(results)
+        #results = {}
+        #if self.region.width == 1:
+        #    results['width'] = self.region.frames
+        #    results['frames'] = 1
+        #    new_shape = (1, self.imagedata.y_points, self.region.frames)
+        #else:
+        #    results['width'] = self.imagedata.x_points
+        #    results['frames'] = self.imagedata.frames
+        #    new_shape = (self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points)
+        #new = n.zeros(new_shape,dtype='float')
+        #results['height'] = self.imagedata.y_points
+        #results['fits']= self.result.pixels
+        sdata = SyntheticData(self.result)
         events_to_show = []
         for event_type in self.events.event_dict:
             for i, event in enumerate(self.events.event_dict[event_type]):

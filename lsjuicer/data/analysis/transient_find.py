@@ -743,27 +743,29 @@ def make_raw(res):
 
 
 class SyntheticData(object):
-    def __init__(self, results):
-        if results:
-            self.results = results
-            if results['frames']==1:
-                self.times = n.arange(results['width'])
+    def __init__(self, result):
+        if result:
+            self.result = result
+            self.region = result.region
+            self.times = n.arange(self.region.frames)
+            if self.region.width==1:
                 self.linescan = True
             else:
-                self.times = n.arange(results['frames'])
                 self.linescan = False
         self.func = None
         self.filter = None
 
     def _zeros(self):
-        out = n.zeros((self.results['frames'], self.results['height'],
-            self.results['width']),dtype='float')
+        if self.linescan:
+            out = n.zeros((1, self.region.height, self.region.frames),dtype='float')
+        else:
+            out = n.zeros((self.region.frames, self.region.height, self.region.width),dtype='float')
         return out
 
 
     def _make_res(self):
         out = self._zeros()
-        for res in self.results['fits']:
+        for res in self.result.pixels:
             x = res.x
             y = res.y
             if not self.linescan:
