@@ -79,7 +79,6 @@ class EventPanel(ActionPanel):
         new = n.zeros(new_shape,dtype='float')
         results['height'] = self.imagedata.y_points
         results['fits']= self.result.pixels
-        print 'set data',new.shape, results
         sdata = SyntheticData(results)
         events_to_show = []
         for event_type in self.events.event_dict:
@@ -88,10 +87,6 @@ class EventPanel(ActionPanel):
                 if status:
                     events_to_show.append(event.id)
         new += sdata.get_events(events_to_show)
-        print events_to_show
-        #print new.shape
-        #mask = new < 1e-3
-        #new[mask]=n.nan
         self.imagedata.replace_channel(new, 2)
 
 

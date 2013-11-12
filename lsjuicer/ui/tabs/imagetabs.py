@@ -54,7 +54,7 @@ class Events(object):
 
     def change(self, event_type, row, status):
         print event_type, row, status, len(self.status_dict[event_type])
-        if row:
+        if row is not None:
             self.status_dict[event_type][row]=status
         else:
             for k in range(len(self.status_dict[event_type])):
@@ -115,19 +115,18 @@ class EventClickTree(QW.QWidget):
         print '\nccc'
         row = modelindex.row()
         parent = modelindex.parent()
-        event_type = str(parent.data())#.toString())
+        event_type = parent.data()#.toString())
         state = bool(modelindex.data(10))
-        #print row,event_type,state, str(modelindex.data().toString())
-        if not event_type:
+        if event_type:
+            print 'e1'
+            self.events.change(event_type, row, state)
+        else:
+            print 'e2'
             #Toggle all events if the eventype has been toggled
             itemname = str(modelindex.data())#.toString())
-            print itemname, self.items_by_name.keys()
             if itemname in self.items_by_name:
                 self.events.change(itemname, None, state)
                 self.toggle(itemname, state)
-
-        if event_type:
-            self.events.change(event_type, row, state)
 
 class ClickTree(QW.QWidget):
     visibility_toggled = QC.pyqtSignal(str, int)
