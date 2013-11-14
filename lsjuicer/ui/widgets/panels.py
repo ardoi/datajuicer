@@ -18,6 +18,7 @@ from lsjuicer.ui.widgets.fileinfowidget import MyFormLikeLayout
 from lsjuicer.data.analysis.transient_find import SyntheticData
 from lsjuicer.util.helpers import timeIt
 from lsjuicer.data.imagedata import ImageDataLineScan
+from lsjuicer.ui.widgets.clicktrees import EventClickTree, Events
 from lsjuicer.ui.widgets.mergewidget import MergeDialog
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
@@ -39,7 +40,6 @@ class EventPanel(ActionPanel):
     __shortname__ = "Events"
     active_events_changed = QC.pyqtSignal()
     def setup_ui(self):
-        from lsjuicer.ui.tabs.imagetabs import EventClickTree
 
         layout = QW.QVBoxLayout()
         combo_layout = MyFormLikeLayout()
@@ -109,7 +109,6 @@ class EventPanel(ActionPanel):
         print "\nResult changed"
         self.result = self.region.results[res_no]
         print res_no, self.result
-        from lsjuicer.ui.tabs.imagetabs import Events
         self.events = Events()
         for ev in self.result.events:
             self.events.add_event(ev)
