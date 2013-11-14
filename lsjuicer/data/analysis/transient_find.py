@@ -743,7 +743,7 @@ def make_raw(res):
 
 
 class SyntheticData(object):
-    def __init__(self, result):
+    def __init__(self, result=None):
         if result:
             self.result = result
             self.region = result.region

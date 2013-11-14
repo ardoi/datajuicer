@@ -4,8 +4,6 @@ from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 
 
-import numpy as n
-
 from collections import defaultdict
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.data.imagedata import ImageDataMaker
@@ -39,8 +37,10 @@ class ActionPanel(QW.QWidget):
 class EventPanel(ActionPanel):
     __doc__ = """Event display panel"""
     __shortname__ = "Events"
-
+    active_events_changed = QC.pyqtSignal()
     def setup_ui(self):
+        from lsjuicer.ui.tabs.imagetabs import EventClickTree
+
         layout = QW.QVBoxLayout()
         combo_layout = MyFormLikeLayout()
         layout.addLayout(combo_layout)
@@ -55,7 +55,6 @@ class EventPanel(ActionPanel):
         combo_layout.add_row("Result:", result_select)
         self.result_select = result_select
         result_select.currentIndexChanged.connect(self.result_changed)
-        from lsjuicer.ui.tabs.imagetabs import EventClickTree
         clicktree = EventClickTree(self)
         self.clicktree = clicktree
         layout.addWidget(clicktree)
@@ -67,18 +66,6 @@ class EventPanel(ActionPanel):
 
     @timeIt
     def set_data(self):
-        #results = {}
-        #if self.region.width == 1:
-        #    results['width'] = self.region.frames
-        #    results['frames'] = 1
-        #    new_shape = (1, self.imagedata.y_points, self.region.frames)
-        #else:
-        #    results['width'] = self.imagedata.x_points
-        #    results['frames'] = self.imagedata.frames
-        #    new_shape = (self.imagedata.frames, self.imagedata.y_points, self.imagedata.x_points)
-        #new = n.zeros(new_shape,dtype='float')
-        #results['height'] = self.imagedata.y_points
-        #results['fits']= self.result.pixels
         sdata = SyntheticData(self.result)
         events_to_show = []
         for event_type in self.events.event_dict:
@@ -86,8 +73,9 @@ class EventPanel(ActionPanel):
                 status = self.events.status_dict[event_type][i]
                 if status:
                     events_to_show.append(event.id)
-        new += sdata.get_events(events_to_show)
+        new = sdata.get_events(events_to_show)
         self.imagedata.replace_channel(new, 2)
+        self.active_events_changed.emit()
 
 
 

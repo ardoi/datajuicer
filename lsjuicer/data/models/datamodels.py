@@ -14,21 +14,6 @@ import lsjuicer.inout.db.sqla as sa
 from lsjuicer.static.constants import ImageStates
 from lsjuicer.util.helpers import timeIt
 
-class CheckBoxDelegate(QW.QItemDelegate):
-    def createEditor(self, parent, styleoption, modelindex):
-        box = QW.QCheckBox(parent)
-        return box
-
-    def setEditorData(self, editor, index):
-        state  = index.model().data(index, QC.Qt.DisplayRole)
-        print 'edit',state
-        editor.setChecked(state)
-
-    def setModelData(self, editor, model, index):
-        state = editor.isChecked()
-        print 'set',state
-        model.setData(index, state, QC.Qt.DisplayRole)
-
 class TransientDataModel(QC.QAbstractTableModel):
     def __init__(self, parent = None):
         super(TransientDataModel, self).__init__(parent)

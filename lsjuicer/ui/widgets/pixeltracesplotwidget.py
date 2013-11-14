@@ -1,6 +1,5 @@
 import numpy
 
-from PyQt5 import QtGui as QG
 from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
@@ -63,7 +62,7 @@ class PixelTracesPlotWidget(QW.QWidget):
         time_4_fit = numpy.arange(len(trace))
         res_4_fit = self.pixpixw.fit_result.get_fitted_pixel(x, y)
         #res_4_fit = self.pixpixw.res['fits'][(int(x)+1, int(y)+1)]
-        syn_data = tf.SyntheticData(results=None)
+        syn_data = tf.SyntheticData()
         syn_data.times = time_4_fit
         fit = syn_data.func_all(res_4_fit)
         #fit = tf.res_all(time_4_fit, res_4_fit)

@@ -11,7 +11,8 @@ from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 
-from lsjuicer.ui.widgets.panels  import PipeChainPanel, VisualizationPanel, FramePanel, AnalysisPanel, EventPanel
+from lsjuicer.ui.widgets.panels  import PipeChainPanel, \
+        VisualizationPanel, FramePanel, AnalysisPanel, EventPanel
 from lsjuicer.ui.widgets.panels  import ActionPanel
 
 import lsjuicer.inout.db.sqla as sa
@@ -325,6 +326,7 @@ class AnalysisImageTab(QW.QWidget):
             if self.analysis.fitregions:
                 self.event_widget = self.control_widget.init_panel(EventPanel,
                         parent = self)
+                self.event_widget.active_events_changed.connect(self.force_new_pixmap)
 
         self.vis_widget.settings_changed.connect(self.make_new_pixmap)
         self.frame_widget.frame_changed.connect(self.change_frame)

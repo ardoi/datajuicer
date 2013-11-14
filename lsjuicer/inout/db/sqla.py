@@ -631,22 +631,23 @@ class PixelFittedSyntheticImage(Image):
         self.file_hash = mimage.file_hash
         self.state = mimage.state
         self.description = ""
+        self.result = pixelfitresult
 
-        results = {}
-        results['width'] = self.image_width
-        results['height'] = self.image_height
-        results['frames'] = self.image_frames
-        results['dx'] = pixelfitresult.fit_settings['padding']
-        results['dy'] = pixelfitresult.fit_settings['padding']
-        results['x0'] = reg.x0
-        results['y0'] = reg.y0
-        results['fits'] = pixelfitresult.pixels
-        self.results = results
+        #results = {}
+        #results['width'] = self.image_width
+        #results['height'] = self.image_height
+        #results['frames'] = self.image_frames
+        #results['dx'] = pixelfitresult.fit_settings['padding']
+        #results['dy'] = pixelfitresult.fit_settings['padding']
+        #results['x0'] = reg.x0
+        #results['y0'] = reg.y0
+        #results['fits'] = pixelfitresult.pixels
+        #self.results = results
 
     @timeIt
     def make_image_data(self):
         print 'Making image data'
-        sd = tf.SyntheticData(self.results)
+        sd = tf.SyntheticData(self.result)
         new_data = sd.get_fit()
         bl = sd.get_baseline()
         ch_data = [new_data, bl]
