@@ -393,9 +393,6 @@ def fit_regs(f, plot=False , baseline = None):
             continue
         le = r.left
         ri = r.right
-        #fit_res = []#defaultdict(dict)
-
-        #transient_f = f[le:ri]
         transient_t = time[le:ri]
         if plot:
             ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="orange",alpha=0.1))
@@ -406,62 +403,6 @@ def fit_regs(f, plot=False , baseline = None):
         #fit_res.append(oo)
         if plot:
             p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
-        #if plot:
-        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='magenta')
-        #make second fit with convolved function using first fit paramaters as initial conditions
-        #sol = oo.solutions
-        #oo = fitfun.Optimizer(transient_t, transient_f)
-        #oo.set_function(fitfun.ff5)
-        #delta = 0.25
-        #val = sol['tau2']
-
-        #oo.set_parameter_range('tau2',2, 100, max(2, val*.9))
-        #val = sol['m2']
-        #dont take events with very close peaks to edge
-        #if val - le < 1.0:
-        #    r.bad = True
-        #    continue
-        #oo.set_parameter_range('m2', val*.5, val*2, val)
-        #val_d= sol['d']
-        ##limit d so that it wont go before the left boundary
-        #try:
-        #    oo.set_parameter_range('d', 1, val - le, min(0.95*(val-le),val_d))
-        #except AssertionError:
-        #    r.bad = True
-        #    continue
-        ##oo.set_parameter_range('m2',le,ri,(ri-le)/2. )
-        #val_d2 = sol['d2']
-        ##print 'got d2',val_d2
-        #oo.set_parameter_range('d2',val_d2*0.5,val_d2*2,val_d2)
-        ##oo.set_parameter_range('s',.5,3.,2.1)
-        ##oo.set_parameter_range('s',1.0,1.1,1.05)
-        #oo.set_parameter_range('s',.1,.11,.105)
-        #val = sol['A']
-        #oo.set_parameter_range('A',val*0.5,val*2, val)
-        #val = sol['B']
-        #oo.set_parameter_range('B',val*(1-delta),val*(1+delta), val)
-        #val = sol['C']
-        #if val == 0.0:
-        #    oo.set_parameter_range('C',-100,100, val)
-        #else:
-        #    oo.set_parameter_range('C',val*(1-delta*n.sign(val)),val*(1+delta*n.sign(val)), val)
-        #oo.optimize()
-        ##print "\nAIC curve2", oo.aic()
-        ##print "AICc curve2", oo.aicc()
-        #if not oo.solutions:
-        #    #print 'bad 3'
-        #    r.bad = True
-        #    continue
-        #if plot:
-        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=3,color='black')
-        #if oo.solutions:
-        #    oo.solutions = oo.jiggle_rec(oo.solutions)
-        #if plot:
-        #    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='orange')
-
-        #fit_vals = oo.function(transient_t, **oo.solutions)
-        #fit_res.append(oo)
-        #r.fit_res=fit_res
         good_regions.append(r)
 
     i=0
@@ -472,31 +413,20 @@ def fit_regs(f, plot=False , baseline = None):
         ri = r.right
         transient_t = time[le:ri]
         sol = r.fit_res[-1].solutions
-        #fit_vals = oo.function(transient_t, **sol)
-        #sol['s']=0.105
         fit_vals = fitfun.ff50(transient_t, **sol)
 
         transient_t = time[le:ri]
         z[le:ri] = 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
         bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
-        #bl += fitfun.ff5_bl(arg=time, **sol)*sol['A']
-        #z += fitfun.ff5(arg=time, **sol)*sol['A']
-        #Asum += sol['A']
         i+=1
-    #bl /=Asum
-    #print 'fit done'
-    #plot baseline with all transients substracted
     if plot:
         p.figure(2)
         p.plot(time, f-z,color='orange',label='signal - fits')
         p.plot(time, f, label='signal')
-        #p.figure(5)
         p.plot(time, z,label='fit - bl')
-        #p.plot(time, f-bl,label='fit - bl')
         p.plot(time, bl,label='bl')
         p.legend()
     f2 = f-z
-    #f2 = bl
     baseline_fit_params = n.polyfit(time, f2, 4)
     pf_fun = n.poly1d(baseline_fit_params)
     baseline = pf_fun(time)
@@ -541,25 +471,17 @@ def fit_regs(f, plot=False , baseline = None):
             p.plot(time_new, fff,'-o',ms=4,mec='None',alpha=.5)
         oo = fitfun.Optimizer(time_new, fff)
         oo.set_function(fitfun.ff60)
-        #print oo.parameters
         #copy fit parameter ranges from previous fit
         oo.parameters = dict(r.fit_res[-1].parameters)
         previous_sol = r.fit_res[-1].solutions
         oo.rerange_parameters(previous_sol)
-        #print oo.parameters
         #remove B and C since we have already corrected the baseline
         del(oo.parameters['C'])
         del(oo.parameters['B'])
-        #oo.parameters['s'] = {}
-        #oo.set_parameter_range('s',0.1,0.11,0.105)
-        #oo.shift_parameter('m2', le)
-        #oo.show_parameters()
         oo.optimize()
         if not oo.solutions:
             r.bad=True
             continue
-        #if not do_last_fit:
-        #oo.solutions=oo.jiggle_rec(oo.solutions)
         peak = oo.solutions['A']*(1-n.exp(-2.0))
         peak_loc = oo.solutions['m2'] + oo.solutions['d']
         baseline_at_peak = pf_fun(peak_loc)
@@ -569,7 +491,6 @@ def fit_regs(f, plot=False , baseline = None):
         min_f_over_f0_max = 0.1
         if f_over_f0_max<min_f_over_f0_max:
             r.bad = True
-            #print r, 'too small', f_over_f0_max
             continue
         final['transients'][added_index] = oo.solutions
         final['peak_fits'][added_index] = r.fit_res[0]
@@ -578,14 +499,10 @@ def fit_regs(f, plot=False , baseline = None):
         if plot:
             p.title("%i"%i)
             p.plot(time_new, oo.function(time_new, **oo.solutions),lw=2,color='brown')
-           # p.plot(time_new, oo2.function(time_new, **oo2.solutions),lw=2,color='orange')
             p.xlim(time_new[0], time_new[-1])
-            #p.figure(4)
-            #p.plot(time, oo.function(time, **oo.solutions))
             fullres += oo.function(time, **oo.solutions)
     if plot:
         p.figure(5)
-        #p.plot(time, baseline)
         p.plot(time,f, 'o',ms=4,mec='None',alpha=.5)
         p.plot(time, fullres,color='red',lw=2)
 
