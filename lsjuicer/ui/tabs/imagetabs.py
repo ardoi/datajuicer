@@ -57,7 +57,6 @@ class ControlWidget(QW.QWidget):
             gb.setVisible(state)
 
 
-
 class AnalysisImageTab(QW.QWidget):
     """Tab containing image to analyze"""
     positionTXT = QC.pyqtSignal(str)

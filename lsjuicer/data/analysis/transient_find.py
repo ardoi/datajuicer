@@ -72,7 +72,7 @@ class Region(object):
         oo.set_parameter_range('B',b_init*0.75,b_init*1.25,b_init)
         min_amp = 50.0
         if fu[self.maximum]-b_init < min_amp:
-            #print 'A'
+            print 'A'
             #print f0r,f0l,b_init, fu[self.maximum]
             #print ri,le
             #print fu[self.maximum]-b_init
@@ -85,7 +85,7 @@ class Region(object):
         try:
             oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
         except AssertionError:
-            #print 'B'
+            print 'B'
             return None
         oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
         oo.set_parameter_range('d2',.1,100,2)
@@ -93,10 +93,11 @@ class Region(object):
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
                 c_init_delta, c_init)
+        print oo.parameters
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
-            #print 'C'
+            print 'C'
             #print  self.data.tolist()
             #print self.time_data.tolist()
             #for p in oo.parameters:
@@ -104,7 +105,7 @@ class Region(object):
             return None
         #skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
-            #print 'D'
+            print 'D'
             return None
         return oo
 
@@ -372,6 +373,7 @@ def find_transient_boundaries(data, baseline = None, plot=False):
 
 def fit_regs(f, plot=False , baseline = None):
     regs  = find_transient_boundaries2(f, baseline, plot)
+    print 'regs are', regs
     fmin=f.min()
     fmax=f.max()
     time = n.arange(len(f))

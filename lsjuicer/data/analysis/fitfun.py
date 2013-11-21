@@ -247,9 +247,9 @@ class Optimizer(ScaledOperation):
             except AttributeError:
                 pass
         except:
-            #print 'exception in optimize'
-            #import traceback
-            #traceback.print_exc()
+            print 'exception in optimize'
+            import traceback
+            traceback.print_exc()
             self.solutions = {}
         #print 'sol=',self.solutions
 

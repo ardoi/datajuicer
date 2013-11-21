@@ -3,6 +3,19 @@ import scipy.signal as ss
 from scipy.stats import scoreatpercentile
 from lsjuicer.util.helpers import timeIt
 
+def pad_data(vector, pad):
+    vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
+    return vec
+
+def pad_data_const(vector, pad):
+    av = 10
+    left_av = vector[:av].mean()
+    right_av=vector[-av:].mean()
+    print vector[:av], vector[-av:]
+    pad_size = vector.size/pad
+    vec = n.hstack((n.ones(pad_size)*left_av, vector,n.ones(pad_size)*right_av ))
+    return vec
+
 def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
                        min_snr=1, noise_perc=10):
 
@@ -39,24 +52,27 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     gap_thresh = n.ceil(widths[0])
     max_distances = widths / 3.0
     wavelet = ss.ricker
-    pad = 32
+    pad = 1
     if pad:
-        vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
+        #vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
+        vec = pad_data_const(vector, pad)
     else:
         vec=vector
-    cwt_dat = ss.cwt(vec, wavelet, widths)
+    cwt_dat_all = ss.cwt(vec, wavelet, widths)
+    cwt_dat = cwt_dat_all[:,vector.size/pad:vector.size/pad+vector.size]
     ridge_lines = ss._peak_finding._identify_ridge_lines(cwt_dat, max_distances, gap_thresh)
     #filtered = ss._peak_finding._filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
     filtered = _filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
-    if pad:
-        good_ones = [x for x in filtered if x[1][0]>vector.size/pad\
-                    and x[1][0]<vector.size+vector.size/pad]
-    else:
-        good_ones = filtered
+    #if pad:
+    #    good_ones = [x for x in filtered if x[1][0]>vector.size/pad\
+    #                and x[1][0]<vector.size+vector.size/pad]
+    #else:
+    good_ones = filtered
     #print '\n\ngood ones'
     #for g in good_ones:
     #    print g
-    adjust = vector.size/pad - 1 if pad else 0
+    #adjust = vector.size/pad - 1 if pad else 0
+    adjust=0
     max_locs = [(max(0,x[1][0] - adjust) ,x[0][-1]) for x in good_ones]
     return n.array(sorted(max_locs, key=lambda x:x[0]))
 
@@ -125,6 +141,7 @@ def get_peaks(data, min_snr=3.0):
     #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
     #regions = find_regions(peaks, cwd)
     regions = find_regions2(peaks_all, widths, data.size)
+    print 'found regions', regions
     return regions
 
 def show_peaks(data, min_snr=5.0, xmin=None, xmax=None):
