@@ -20,6 +20,7 @@ from lsjuicer.util.helpers import timeIt
 from lsjuicer.data.imagedata import ImageDataLineScan
 from lsjuicer.ui.widgets.clicktrees import EventClickTree, Events
 from lsjuicer.ui.widgets.mergewidget import MergeDialog
+from lsjuicer.ui.widgets.deletewidget import DeleteDialog
 
 from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel, SelectionWidget, LineManager, SnapROIManager
 
@@ -64,8 +65,11 @@ class EventPanel(ActionPanel):
         set_data_pb.clicked.connect(self.set_data)
         merge_pb = QW.QPushButton("Merge events")
         merge_pb.clicked.connect(self.merge_events)
+        delete_pb = QW.QPushButton("Delete events")
+        delete_pb.clicked.connect(self.delete_events)
         layout.addWidget(set_data_pb)
         layout.addWidget(merge_pb)
+        layout.addWidget(delete_pb)
 
     def _selected_events(self):
         selected_events = []
@@ -76,7 +80,6 @@ class EventPanel(ActionPanel):
                     selected_events.append(event.id)
         return selected_events
 
-    @timeIt
     def set_data(self):
         events_to_show = self._selected_events()
         sdata = SyntheticData(self.result)
@@ -90,8 +93,18 @@ class EventPanel(ActionPanel):
             QW.QMessageBox.warning(self,'Not enough events',
                     "At least two events have to be selected for merging")
             return
-
         dialog = MergeDialog(events_to_merge,self)
+        res = dialog.exec_()
+        if res:
+            self.result_changed(self.result_select.currentIndex())
+
+    def delete_events(self):
+        events_to_delete = self._selected_events()
+        if len(events_to_delete) < 1:
+            QW.QMessageBox.warning(self,'Not enough events',
+                    "At least one event has to be selected for deletion")
+            return
+        dialog = DeleteDialog(events_to_delete,self)
         res = dialog.exec_()
         if res:
             self.result_changed(self.result_select.currentIndex())

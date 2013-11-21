@@ -34,7 +34,6 @@ class EventClickTree(QW.QWidget):
         view = QW.QTreeView(self)
         model = QG.QStandardItemModel()
         self.model = model
-        self.items_by_name = defaultdict(list)
         view.setIndentation(10)
         #view.header().setSectionResizeMode(0, QW.QHeaderView.ResizeToContents)
         #view.header().setSectionResizeMode(1, QW.QHeaderView.ResizeToContents)
@@ -49,6 +48,7 @@ class EventClickTree(QW.QWidget):
         self.model.clear()
         self.model.setHorizontalHeaderLabels(["Event"])
         self.events = events
+        self.items_by_name = defaultdict(list)
         root = self.model.invisibleRootItem()
         for typename, event_list in events.event_dict.iteritems():
             type_item = QG.QStandardItem(typename)
