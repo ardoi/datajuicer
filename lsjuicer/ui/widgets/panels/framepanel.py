@@ -5,6 +5,7 @@ from actionpanel import ActionPanel
 from lsjuicer.ui.widgets.smallwidgets import FramePlayer
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 import lsjuicer.inout.db.sqla as sa
+from lsjuicer.data.imagedata import ImageDataFrameScan
 
 class FramePanel(ActionPanel):
     __doc__ = """Choose channels and play frames for xyt scans"""
@@ -13,17 +14,51 @@ class FramePanel(ActionPanel):
     channel_changed = QC.pyqtSignal(int)
     frame_changed = QC.pyqtSignal(int)
 
-    def setup_ui(self):
-        self.channel_combobox = QW.QComboBox()
-        self.selection_slider = QW.QSlider(QC.Qt.Horizontal)
-        self.selection_spinbox = QW.QSpinBox()
+    @property
+    def active_frame(self):
+        try:
+            return self.selection_slider.value()
+        except AttributeError:
+            return 0
 
+    @property
+    def active_channel(self):
+        try:
+            return self.channel_combobox.currentIndex()
+        except AttributeError:
+            return 0
+
+    def setup_ui(self):
         vlayout = QW.QVBoxLayout()
         self.setLayout(vlayout)
+        #if self.imagedata.channels > 1:
+        self.setup_channel_ui()
+        if isinstance(self.imagedata, ImageDataFrameScan):
+            self.setup_frame_ui()
+            self.has_frames = True
+        else:
+            self.has_frames = False
+
+
+    def setup_channel_ui(self):
+        vlayout = self.layout()
         layout = QW.QHBoxLayout()
+        self.channel_combobox = QW.QComboBox()
         layout.addWidget(QW.QLabel("Channel:"))
         layout.addWidget(self.channel_combobox)
         vlayout.addLayout(layout)
+        self.channel_combobox.setCurrentIndex(0)
+        self.channel_combobox.currentIndexChanged.connect(self.channel_changed)
+        channel_names = self.imagedata.channel_names
+        for channel, name in channel_names.iteritems():
+            ch_str = 'ch{}: {}'.format(channel, name)
+            print ch_str
+            self.channel_combobox.addItem(ch_str)
+
+    def setup_frame_ui(self):
+        self.selection_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.selection_spinbox = QW.QSpinBox()
+        vlayout = self.layout()
         layout = QW.QHBoxLayout()
         layout.addWidget(QW.QLabel("Frame:"))
         layout.addWidget(self.selection_slider)
@@ -64,20 +99,6 @@ class FramePanel(ActionPanel):
         self.selection_slider.valueChanged.connect(self.selection_spinbox.setValue)
         self.selection_slider.valueChanged.connect(self.update_time_range_label)
 
-        self.channel_combobox.setCurrentIndex(0)
-
-
-        #FIXME
-        #self.channel_combobox.currentIndexChanged.connect(vis_layout.setCurrentIndex)
-
-        self.channel_combobox.currentIndexChanged.connect(self.channel_changed)
-
-        channel_names = self.imagedata.channel_names
-        for channel, name in channel_names.iteritems():
-            ch_str = 'ch{}: {}'.format(channel, name)
-            print ch_str
-            self.channel_combobox.addItem(ch_str)
-
     def set_time_range_start(self):
         self.time_range_start = self.selection_slider.value()
         if self.time_range_start >= self.time_range_end:
@@ -113,15 +134,20 @@ class FramePanel(ActionPanel):
 
     def provide_range(self):
         selection = {}
-        selection[ISTN.TIMERANGE] = {'start':self.time_range_start, 'end':self.time_range_end}
+        try:
+            selection[ISTN.TIMERANGE] = {'start':self.time_range_start, 'end':self.time_range_end}
+        except AttributeError:
+            pass
         return selection
 
     def set_region(self, fitregion):
-        if isinstance(fitregion, sa.PixelByPixelFitRegion):
-            self.selection_slider.setValue(fitregion.start_frame)
-            self.set_time_range_start()
-            self.selection_slider.setValue(fitregion.end_frame)
-            self.set_time_range_end()
+        if self.has_frames:
+            if isinstance(fitregion, sa.PixelByPixelFitRegion):
+                self.selection_slider.setValue(fitregion.start_frame)
+                self.set_time_range_start()
+                self.selection_slider.setValue(fitregion.end_frame)
+                self.set_time_range_end()
+                self.selection_slider.setValue(fitregion.start_frame)
 
 
 

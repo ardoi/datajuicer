@@ -93,10 +93,11 @@ class AnalysisImageTab(QW.QWidget):
 
     @property
     def active_channel(self):
-        return self.frame_widget.channel_combobox.currentIndex()
+        return self.frame_widget.active_channel
+
     @property
     def active_frame(self):
-        return self.frame_widget.selection_slider.value()
+        return self.frame_widget.active_frame
 
     def force_new_pixmap(self, v = None):
         self.make_new_pixmap(force = True)

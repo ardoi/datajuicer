@@ -188,11 +188,11 @@ class PixelByPixelTab(QW.QTabWidget):
         self.coords = roi.graphic_item.rect()
         self.fit = False
         self.analysis  = analysis
-        time_range = selections[ISTN.TIMERANGE]
         if isinstance(imagedata, ImageDataLineScan):
             self.start_frame = self.coords.left()
             self.end_frame=self.coords.right()
         else:
+            time_range = selections[ISTN.TIMERANGE]
             self.start_frame = time_range['start']
             self.end_frame = time_range['end']
         self.acquisitions = self.end_frame - self.start_frame
