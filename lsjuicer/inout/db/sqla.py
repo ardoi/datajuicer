@@ -32,10 +32,11 @@ class ReaderFactory(object):
 
 class ImageMaker(object):
     @staticmethod
+    @timeIt
     def get_hash(filename):
         if os.path.isfile(filename):
             f = open(filename,'r')
-            data = f.read()
+            data = f.read(1024**2)
             fhash = hashlib.sha1(data).hexdigest()[:10]
             f.close()
             return fhash

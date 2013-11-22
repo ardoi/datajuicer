@@ -6,6 +6,7 @@ import numpy as n
 
 from lsjuicer.data.analysis import fitfun
 from lsjuicer.data.analysis import regionfinder as rf
+from lsjuicer.util.helpers import timeIt
 
 def get_logger(name):
     logger = logging.getLogger(__name__)
@@ -576,10 +577,13 @@ def make_data_by_size_and_time(results, key, number ):
             pass
     return out
 
+@timeIt
 def make_data_by_size(results, key, number ):
     """get data for the 'number'th biggest transient"""
     out = n.zeros((results['height'], results['width']),dtype='float')
+    print '\n make data'
     for res in results['fits']:
+        print 'res'
         x = res.x
         y = res.y
         try:

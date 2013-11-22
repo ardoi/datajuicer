@@ -1,26 +1,15 @@
 import os
-from PyQt5 import QtGui as QG
-from PyQt5 import QtWidgets as QW
 
+from PyQt5 import QtWidgets as QW
 from PyQt5 import QtCore as QC
 
 
-from lsjuicer.static.constants import Constants
 from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
 from lsjuicer.ui.tabs.resulttab import ResultTab
 
 class AnalysisWidget(QW.QTabWidget):
     """Widget containing all analysis related stuff (fluorescence view, selection view)"""
     setStatusText = QC.pyqtSignal(str)
-    @property
-    def analysis_type(self):
-        mode = self.imageTab.analysis_mode
-        if mode == "Sparks":
-            return Constants.SPARK_TYPE
-        elif mode == "Transients":
-            return Constants.TRANSIENT_TYPE
-        elif mode == "SparkDetect":
-            return Constants.SPARKDETECT_TYPE
 
     def __init__(self, analysis=None, parent=None):
         super(AnalysisWidget, self).__init__(parent)
@@ -37,12 +26,8 @@ class AnalysisWidget(QW.QTabWidget):
     def emitStatusTXT(self, txt):
         self.setStatusText.emit(txt)
 
-    def getImageTab(self):
-        return self.imageTab
-
     def save_result_data(self):
         resdirname = os.path.join(self.data.filedir,'results')
-        #print 'resdir',resdirname,self.data.filedir
         if not os.path.isdir(resdirname):
             os.mkdir(resdirname)
         datafilename = os.path.join(resdirname, os.path.basename(self.data.name)+".dat")

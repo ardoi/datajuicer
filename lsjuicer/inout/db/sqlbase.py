@@ -12,7 +12,7 @@ class DBMaster(object):
     def __init__(self):
         print "starting DBMaster"
         self.Base = declarative_base()
-        self.engine = create_engine('sqlite:///tables.db', echo=False)
+        self.engine = create_engine('sqlite:///tables.db', echo=True)
         self.Session = sessionmaker(bind=self.engine)
         self.tables_created = False
         self.session = None
@@ -113,7 +113,7 @@ class DBMaster(object):
             setting.name = name
             setting.value = value
             session.add(setting)
-        self.commit_session()
+        #self.commit_session()
 
 
 dbmaster = DBMaster()

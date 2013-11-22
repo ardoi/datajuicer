@@ -5,8 +5,6 @@ import traceback
 from PyQt5 import QtGui as QG
 from PyQt5 import QtWidgets as QW
 
-from PyQt5 import QtCore as QC
-
 
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
@@ -18,6 +16,7 @@ import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
 from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
+from lsjuicer.util.helpers import timeIt
 
 class PixelByPixelTab(QW.QTabWidget):
     @property
@@ -334,6 +333,7 @@ class PixelByPixelTab(QW.QTabWidget):
         self.t_number = t_number
         self.show_res()
 
+    @timeIt
     def show_res(self):
         if self.param == "Events":
             data = tf.data_events(self.res)

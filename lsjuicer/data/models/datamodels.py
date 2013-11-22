@@ -380,12 +380,15 @@ class RandomDataModel(QC.QAbstractTableModel):
             files.extend(glob.glob(os.path.join(str(self.dirname),fmt)))
         self.totalFiles.emit(len(files)-1)
         self.session = sa.dbmaster.get_session()
-
+        import time
+        t0 = time.time()
         for i,f in enumerate(files):
             print '\n\n read',f
             new_files = True
             im = ImageMaker.check_in_database(f, self.session)
             self.dirdatas.append(im)
+            print 't=', time.time()-t0
+            t0=time.time()
             #analyses = im.analyses
             #fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
             #        join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\

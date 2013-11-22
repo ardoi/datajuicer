@@ -10,7 +10,6 @@ import numpy as n
 
 from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.resources import cm
-import lsjuicer.inout.db.sqla as sa
 
 
 class FramePlayer(QW.QWidget):
@@ -252,7 +251,7 @@ class VisualizationOptionsWidget(QW.QWidget):
         settings = {'saturation':saturate, 'colormap':cmap_name,
                 'colormap_reverse':cmap_r, 'blur':blur}
         self.settings_changed.emit(settings)
-        sa.dbmaster.set_config_setting(
+        dbmaster.set_config_setting(
             "visualization_options_reference", settings)
         self.do_histogram()
 
