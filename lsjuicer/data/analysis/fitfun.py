@@ -2,7 +2,7 @@ import numpy as n
 n.seterr(over="ignore")
 from collections import OrderedDict
 import inspect
-import itertools
+#import itertools
 
 import scipy.optimize as so
 import scipy.special as ss
@@ -26,7 +26,6 @@ class ScaledOperation(object):
     def rerange_parameters(self, previous_sol,amount = 0.5):
         """Try to increase allowed ranges of parameters for fitting plus/minus
         amount*100 percent from the 'initial' value
-
         """
         for param, p_range in self.parameters.iteritems():
             p_range['init'] = previous_sol[param]
@@ -42,33 +41,40 @@ class ScaledOperation(object):
         for p in self.parameters:
             print p, self.parameters[p]
 
-    def unscale(self, x, name):
+    def unscale(self, x):
         if not self.scaled:
             return x
-        minval = self.parameters[name]['min']
-        maxval = self.parameters[name]['max']
+        minval = self.minvals
+        maxval = self.maxvals
         return ((n.arctan(x)/n.pi+0.5)*(maxval-minval))+minval
 
 
-    def scale(self, sx, name):
+    def scale(self, sx):
         if not self.scaled:
             return sx
-        minval = self.parameters[name]['min']
-        maxval = self.parameters[name]['max']
+        minval = self.minvals
+        maxval = self.maxvals
         v = n.tan(((sx-minval)/(maxval-minval)-0.5)*n.pi)
         return v
 
+
+    def make_parameter_arrays(self):
+        pc = len(self.parameters)
+        self.minvals = n.zeros(pc)
+        self.maxvals = n.zeros(pc)
+        self.initial_conditions = n.zeros(pc)
+        i=0
+        for p,d in self.parameters.iteritems():
+            self.minvals[i] = d['min']
+            self.maxvals[i] = d['max']
+            self.initial_conditions[i] = d['init']
+            i+=1
+
     def func_for_scaled_values(self, x, *scaled_parameters):
-        kw_args = {}
-        parameter_names = self.parameters.keys()
         if isinstance(scaled_parameters[0], list):
             scaled_parameters = scaled_parameters[0]
-        for i,p in enumerate(scaled_parameters):
-            name = parameter_names[i]
-            sparam_value = scaled_parameters[i]
-            #print sparam_value
-            kw_args[name] = self.unscale(float(sparam_value), name)
-        return self.operation_func(kw_args)
+        args = self.unscale(scaled_parameters)
+        return self.operation_func(args)
 
 class Solver(ScaledOperation):
     def set_function(self, function, f_params, value=0.0):
@@ -105,7 +111,8 @@ class Solver(ScaledOperation):
             sparam_value = scaled_parameters[i]
             #print sparam_value
             kw_args[name] = self.unscale(float(sparam_value), name)
-        return self.operation_func(kw_args)
+        args = self.unscale(scaled_parameters).tolist()
+        return self.operation_func(args)
 
     def operation_func(self,args):
         return self.function(args['arg'])
@@ -138,8 +145,8 @@ class Optimizer(ScaledOperation):
             self.parameters[pn] = {}
 
     def set_function(self, function, only_function=False):
-        #print 'set function',function
         variables = inspect.getargspec(function).args
+        #print 'set func',function, variables
         if 'arg' not in variables:
             error = "argument to function has to be given with arg keyword"
             raise ValueError(error)
@@ -153,99 +160,104 @@ class Optimizer(ScaledOperation):
         #print "Parameters of the function are: %s"%(str(self.parameters.keys()))
 
 
-    def operation_func(self, kwargs):
-        return self.function(arg=self.arg_vals, **kwargs)# - self.func0_vals
+    def operation_func(self, args):
+        #return self.function(arg=self.arg_vals, *args)# - self.func0_vals
+        #print 'args=', args
+        return self.function(self.arg_vals, *args)# - self.func0_vals
+
         #return self.function(arg=self.arg_vals, **kwargs)# - self.func0_vals
 
-    def optimize_with_permutations(self):
-        permutations = itertools.product((-1,0,1), repeat=1)
-        parameter_names = self.parameters.keys()
-        amount=0.2
-        min_error = None
-        #best_p=None
-        for p in permutations:
-            scaled_initial_conditions = []
-            ics=[]
-            ranges=[]
-            for i,parameter_name in enumerate(parameter_names):
-                param = self.parameters[parameter_name]
-                ic = param['init']
-                param_range = param['max']-param['min']
-                ranges.append(param_range)
-                #ic += param_range*amount*p[i]
-                ic += ic*amount*p[i]
-                ics.append(ic)
-                sic = self.scale(ic, parameter_name)
-                scaled_initial_conditions.append(sic)
-            res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions)
-            sol4p = res[0]
-            errors = self.func_for_scaled_values(sol4p)
-            error = n.sqrt((errors**2).mean())
-            #print p,error
-            if min_error is None:
-                min_error = error
-                scaled_solutions = sol4p
-                #best_p = p
-                continue
-            if error<min_error:
-                min_error = error
-                scaled_solutions = sol4p
-                #best_p = p
-                continue
+    #def optimize_with_permutations(self):
+    #    permutations = itertools.product((-1,0,1), repeat=1)
+    #    parameter_names = self.parameters.keys()
+    #    amount=0.2
+    #    min_error = None
+    #    #best_p=None
+    #    for p in permutations:
+    #        scaled_initial_conditions = []
+    #        ics=[]
+    #        ranges=[]
+    #        for i,parameter_name in enumerate(parameter_names):
+    #            param = self.parameters[parameter_name]
+    #            ic = param['init']
+    #            param_range = param['max']-param['min']
+    #            ranges.append(param_range)
+    #            #ic += param_range*amount*p[i]
+    #            ic += ic*amount*p[i]
+    #            ics.append(ic)
+    #            sic = self.scale(ic, parameter_name)
+    #            scaled_initial_conditions.append(sic)
+    #        res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions)
+    #        sol4p = res[0]
+    #        errors = self.func_for_scaled_values(sol4p)
+    #        error = n.sqrt((errors**2).mean())
+    #        #print p,error
+    #        if min_error is None:
+    #            min_error = error
+    #            scaled_solutions = sol4p
+    #            #best_p = p
+    #            continue
+    #        if error<min_error:
+    #            min_error = error
+    #            scaled_solutions = sol4p
+    #            #best_p = p
+    #            continue
 
-        #print parameter_names
-        #print min_error, scaled_solutions, best_p
-        #status = res[1]
-        self.solutions = {}
-        for i, ssol in enumerate(scaled_solutions):
-            parameter_name = parameter_names[i]
-            sol = self.unscale(ssol, parameter_name)
-            self.solutions[parameter_name] = sol
-        #print 'solutions=',self.solutions
-        #print min_error
+    #    #print parameter_names
+    #    #print min_error, scaled_solutions, best_p
+    #    #status = res[1]
+    #    self.solutions = {}
+    #    for i, ssol in enumerate(scaled_solutions):
+    #        parameter_name = parameter_names[i]
+    #        sol = self.unscale(ssol, parameter_name)
+    #        self.solutions[parameter_name] = sol
+    #    #print 'solutions=',self.solutions
+    #    #print min_error
 
     def set_sigmas(self, sigmas):
         self.sigmas = sigmas
 
     def optimize(self, max_fev = 100000):
+        self.make_parameter_arrays()
+        #print '\noptimize'
+        #print self.function
+        #print self.initial_conditions.tolist()
         try:
-            parameter_names = self.parameters.keys()
-            scaled_initial_conditions = []
-            for parameter_name in parameter_names:
-                ic = self.parameters[parameter_name]['init']
-                sic = self.scale(ic, parameter_name)
-                scaled_initial_conditions.append(sic)
-            #res = so.leastsq(self.func_for_scaled_values, scaled_initial_conditions,ftol=1e-12, xtol=1e-12)
+            scaled_initial_conditions = self.scale(self.initial_conditions)
             res = so.curve_fit(self.func_for_scaled_values, self.arg_vals, self.func0_vals,
                     scaled_initial_conditions, sigma=self.sigmas, maxfev=max_fev, factor=.1,
-                    epsfcn=1e-7, ftol=self.ftol, xtol=self.xtol)
+                    epsfcn=1e-5, ftol=self.ftol, xtol=self.xtol)
             scaled_solutions = res[0].tolist()
+            unscaled_solutions = self.unscale(scaled_solutions)
             self.solutions = {}
-            for i, ssol in enumerate(scaled_solutions):
-                parameter_name = parameter_names[i]
-                sol = self.unscale(ssol, parameter_name)
-                self.solutions[parameter_name] = sol
-            try:
-                if res[1].ndim == 2:
-                    variations = res[1].diagonal()
-                else:
-                    variations = res[1]
-            #errors = self.func_for_scaled_values(self.arg_vals, scaled_solutions)
-            #self.error = n.sqrt((errors**2).mean())
-            #status = res[1]
-                self.errors_plus = {}
-                self.errors_minus = {}
-                for i, ssol in enumerate(scaled_solutions):
-                    parameter_name = parameter_names[i]
-                    serror_plus = ssol + variations[i]
-                    serror_minus = ssol - variations[i]
-                    error_plus = self.unscale(serror_plus, parameter_name)
-                    error_minus = self.unscale(serror_minus, parameter_name)
-                    self.errors_plus[parameter_name] = error_plus-sol
-                    self.errors_minus[parameter_name] = sol - error_minus
-                #print self.errors_plus,self.errors_minus
-            except AttributeError:
-                pass
+            for i,p in enumerate(self.parameters.keys()):
+                self.solutions[p] = unscaled_solutions[i]
+
+            #for i, ssol in enumerate(scaled_solutions):
+            #    parameter_name = parameter_names[i]
+            #    sol = self.unscale(ssol, parameter_name)
+            #    self.solutions[parameter_name] = sol
+            #try:
+            #    if res[1].ndim == 2:
+            #        variations = res[1].diagonal()
+            #    else:
+            #        variations = res[1]
+            ##errors = self.func_for_scaled_values(self.arg_vals, scaled_solutions)
+            ##self.error = n.sqrt((errors**2).mean())
+            ##status = res[1]
+            #    self.errors_plus = {}
+            #    self.errors_minus = {}
+            #    for i, ssol in enumerate(scaled_solutions):
+            #        parameter_name = parameter_names[i]
+            #        serror_plus = ssol + variations[i]
+            #        serror_minus = ssol - variations[i]
+            #        error_plus = self.unscale(serror_plus, parameter_name)
+            #        error_minus = self.unscale(serror_minus, parameter_name)
+            #        self.errors_plus[parameter_name] = error_plus-sol
+            #        self.errors_minus[parameter_name] = sol - error_minus
+            #    #print self.errors_plus,self.errors_minus
+            #except :#AttributeError, TypeError:
+            #    pass
         except:
             print 'exception in optimize'
             import traceback
@@ -254,7 +266,7 @@ class Optimizer(ScaledOperation):
         #print 'sol=',self.solutions
 
     def param_error(self, params):
-        errors = self.operation_func(params)-self.func0_vals
+        errors = self.function(self.arg_vals, **params)-self.func0_vals
         error = (errors**2).mean()
         return error
 
@@ -462,6 +474,14 @@ def ff5_bl(arg, tau2, m2,d2, d,A,B,C):
     t=arg
     return C*n.exp(-(t-mm2)/tau2)*(t>mm2)+B+C*(t<=mm2)
 
+def ff6(arg, tau2, d, d2, m2, s, A):
+    return ff5(arg, tau2, d, d2, m2, s, A, 0.0, 0.0)
+
+def ff60(arg, tau2, d,d2,m2,A):
+    s=0.1
+    return ff6(arg, tau2, d, d2, m2, s, A)
+
+
 def ff50(arg, tau2, d,d2, m2, A, B, C):
     """same as ff5 but with s and d2 fixed
 
@@ -538,13 +558,6 @@ def ff5o(arg, tau2, d, d2, m2, s, A, B, C):
     res = res/2.
     return res
 
-
-def ff6(arg, tau2, d, d2, m2, s, A):
-    return ff5(arg, tau2, d, d2, m2, s, A, 0.0, 0.0)
-
-def ff60(arg, tau2, d,d2,m2,A):
-    s=0.1
-    return ff6(arg, tau2, d, d2, m2, s, A)
 
 def ff5(arg, tau2, d, d2, m2, s, A, B, C):
 

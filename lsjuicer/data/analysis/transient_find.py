@@ -93,7 +93,6 @@ class Region(object):
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
                 c_init_delta, c_init)
-        print oo.parameters
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
@@ -440,7 +439,6 @@ def fit_regs(f, plot=False , baseline = None):
     if plot:
         p.figure(3)
         rows = int(n.ceil(n.sqrt(len(good_regions))))
-        #print len(good_regions)
         cols = int(n.ceil(float(len(good_regions))/rows))
         assert rows*cols >= len(good_regions)
     #do_last_fit = False
@@ -474,7 +472,7 @@ def fit_regs(f, plot=False , baseline = None):
         oo = fitfun.Optimizer(time_new, fff)
         oo.set_function(fitfun.ff60)
         #copy fit parameter ranges from previous fit
-        oo.parameters = dict(r.fit_res[-1].parameters)
+        oo.parameters = r.fit_res[-1].parameters.copy()
         previous_sol = r.fit_res[-1].solutions
         oo.rerange_parameters(previous_sol)
         #remove B and C since we have already corrected the baseline
