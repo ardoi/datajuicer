@@ -517,6 +517,7 @@ class MainUI(QW.QMainWindow):
             aw.deleteLater()
             del aw
         analysisWidget = AnalysisWidget(analysis, self)
+        analysisWidget.tabs_closed.connect(self.tasker.filesButton.click)
         analysisWidget.setStatusText[str].connect(self.showMessageplz)
         self.mainStack.insertWidget(1, analysisWidget)
         self.proxymodel.preparePlot()

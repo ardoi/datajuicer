@@ -10,6 +10,7 @@ from lsjuicer.ui.tabs.resulttab import ResultTab
 class AnalysisWidget(QW.QTabWidget):
     """Widget containing all analysis related stuff (fluorescence view, selection view)"""
     setStatusText = QC.pyqtSignal(str)
+    tabs_closed = QC.pyqtSignal()
 
     def __init__(self, analysis=None, parent=None):
         super(AnalysisWidget, self).__init__(parent)
@@ -21,7 +22,18 @@ class AnalysisWidget(QW.QTabWidget):
             alignment: right;
         }
         """)
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.close_tab)
         self.imageTab.positionTXT[str].connect(self.emitStatusTXT)
+
+    def close_tab(self, index):
+        widget = self.widget(index)
+        widget.deleteLater()
+        self.removeTab(index)
+        if self.count()==0:
+            self.tabs_closed.emit()
+
+
 
     def emitStatusTXT(self, txt):
         self.setStatusText.emit(txt)

@@ -583,7 +583,6 @@ def make_data_by_size(results, key, number ):
     out = n.zeros((results['height'], results['width']),dtype='float')
     print '\n make data'
     for res in results['fits']:
-        print 'res'
         x = res.x
         y = res.y
         try:
