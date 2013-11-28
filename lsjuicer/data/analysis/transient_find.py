@@ -133,6 +133,7 @@ class Region(object):
         new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
         if new_right < self.right:
             self._right = new_right
+            self.maximum = oo.solutions['m2']
             oo=self.fit_curve()
             if not oo:
                 self.bad = True

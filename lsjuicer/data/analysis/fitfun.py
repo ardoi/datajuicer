@@ -20,7 +20,9 @@ class ScaledOperation(object):
             error= "%s not a parameter of the function to be optimized"%name
             raise ValueError(error)
         else:
-            assert minval <= initial and maxval >= initial and maxval>minval, "%s = %f, %f, %f"%(name,minval, maxval, initial)
+            assert minval <= initial , "%s = %f, %f"%(name,minval, initial)
+            assert maxval >= initial , "%s = %f, %f"%(name, maxval, initial)
+            assert maxval>minval, "%s = %f, %f"%(name,minval, maxval)
             self.parameters[name]={'min':float(minval), 'max':float(maxval), 'init':float(initial)}
 
     def rerange_parameters(self, previous_sol,amount = 0.5):

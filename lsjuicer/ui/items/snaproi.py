@@ -88,12 +88,14 @@ class SnapROIItem(QW.QGraphicsRectItem):
                     new_pos = pos-event.lastScenePos()
                     r.translate(new_pos)
             else:
-                new_pos = pos - event.lastScenePos()
+                print '\n before floor',pos, event.lastScenePos()
+                new_pos = pos# - event.lastScenePos()
                 floor_point_x(new_pos)
-                r.translate(new_pos)
+                #r.translate(new_pos)
+                r.moveTopLeft(new_pos)
             rn = r.normalized()
 
-            if self.scene().sceneRect().contains(rn):
+            if 1:#self.scene().sceneRect().contains(rn):
                 if self.rect() != rn:
                     self.emit = True
                 else:
