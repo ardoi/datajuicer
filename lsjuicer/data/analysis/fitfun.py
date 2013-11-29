@@ -40,8 +40,12 @@ class ScaledOperation(object):
         self.parameters[name]['init']+=shift
 
     def show_parameters(self):
+        initial = {}
         for p in self.parameters:
             print p, self.parameters[p]
+            initial[p] = self.parameters[p]['init']
+        print 'init=',initial
+
 
     def unscale(self, x):
         if not self.scaled:

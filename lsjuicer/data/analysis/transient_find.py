@@ -94,6 +94,7 @@ class Region(object):
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
                 c_init_delta, c_init)
+        oo.show_parameters()
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
@@ -130,17 +131,17 @@ class Region(object):
         aicc_curve = oo.aicc()
         logger.debug("AICc curve1 %f"%aicc_curve)
 
-        new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
-        if new_right < self.right:
-            self._right = new_right
-            self.maximum = oo.solutions['m2']
-            oo=self.fit_curve()
-            if not oo:
-                self.bad = True
-                #print 'aa'
-                return
-            aicc_curve = oo.aicc()
-            logger.debug("AICc curve %f"%aicc_curve)
+       # new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
+       # if new_right < self.right:
+       #     self._right = new_right
+       #     self.maximum = oo.solutions['m2']
+       #     oo=self.fit_curve()
+       #     if not oo:
+       #         self.bad = True
+       #         #print 'aa'
+       #         return
+       #     aicc_curve = oo.aicc()
+       #     logger.debug("AICc curve %f"%aicc_curve)
 
         #fit the line
         oo2 = fitfun.Optimizer(self.time_data, self.data)
@@ -242,7 +243,8 @@ def min_max_string(minima, maxima):
     return out
 
 def find_transient_boundaries2(data,baseline=None, plot=False):
-    smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),10)
+    smooth_data = nd.uniform_filter(data, 25)
+    #smooth_data = data
     time_data = n.arange(data.size)
     regions = []
     peaks = rf.get_peaks(data)

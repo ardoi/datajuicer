@@ -11,7 +11,7 @@ def pad_data_const(vector, pad):
     av = 10
     left_av = vector[:av].mean()
     right_av=vector[-av:].mean()
-    print vector[:av], vector[-av:]
+    #print vector[:av], vector[-av:]
     pad_size = vector.size/pad
     vec = n.hstack((n.ones(pad_size)*left_av, vector,n.ones(pad_size)*right_av ))
     return vec
@@ -33,6 +33,7 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
         window = n.arange(max([ind - hf_window, 0]), min([ind + hf_window, num_points]))
         window = window.astype(int)
         noises[ind] = scoreatpercentile(row_one[window], per=noise_perc)
+        #noises[ind] = n.std(row_one[window])
 
     def filt_func(line):
         if len(line[0]) < min_length:
@@ -41,7 +42,7 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
         c=line[0][-1]/2
         #snr = -cwt[c, line[1][0]] / noises[line[1][0]]
         snr = cwt[c, line[1][0]] / abs(noises[line[1][0]]) + 1
-        line.append(['snr=',snr,c,cwt[line[0][-1], line[1][0]] , noises[line[1][0]]] )
+        line.append(['snr=',snr,c,cwt[c, line[1][0]] , noises[line[1][0]]] )
         if snr < min_snr:
             return False
         return True
@@ -69,25 +70,56 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    #print '\n\ngood ones'
-    #for g in good_ones:
-    #    print g
+    print '\n\ngood ones'
+    for g in good_ones:
+        print g
     #adjust = vector.size/pad - 1 if pad else 0
-    adjust=0
-    max_locs = [(max(0,x[1][0] - adjust) ,x[0][-1]) for x in good_ones]
+    #find boundaries of region from its half height cwd by looking for local minima around the peak
+    max_locs = []
+    for g in good_ones:
+        loc = g[0][-1]*5/12
+        minima = n.argwhere(ss._peak_finding._boolrelextrema(cwt_dat[loc], n.less)).flatten()
+        x_loc = g[1][2]
+        left_min = 0
+        right_min = len(cwt_dat[loc])
+        for mi in minima:
+            if mi < x_loc and mi > left_min:
+                left_min = mi
+            if mi>x_loc and mi<right_min:
+                right_min = mi
+        max_locs.append((x_loc ,g[0][-1], left_min, right_min,loc))
     return n.array(sorted(max_locs, key=lambda x:x[0]))
 
 def find_regions2(rrr, widths, data_size):
     regions = {}
+    keep_right = False
+    right_new = None
     for ri, r in enumerate(rrr):
         p=int(r[0])
         width = widths[r[1]]
-        if ri<len(rrr)-1:
-            next_p = rrr[ri+1][0]
-            next_w = widths[rrr[ri+1][1]]
-            regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
+        if keep_right:
+            left = right_new
         else:
-            regions[p] = (max(0, p - width/2), min(p+1*width, data_size))
+            left = r[2]
+        keep_right = False
+        right = r[3]
+        print ri,r
+        if ri<len(rrr)-1:
+            next_left = rrr[ri+1][2]
+            #next_p = rrr[ri+1][0]
+            #next_w = widths[rrr[ri+1][1]]
+            #regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
+            if next_left < right:
+                right_new = p+((right-p)+abs(p-next_left))/2
+                regions[p] = ( max(left, p - width), min(right_new, p + 2*width))
+                if regions[p][1]==right_new:
+                    keep_right = True
+            else:
+                regions[p] = (max(left, p - width), min(right, p+2*width))
+        else:
+            regions[p] = (max(left, p - width), min(right, p+2*width))
+            #regions[p] = (left, right)
+            #regions[p] = (max(0, p - width/2), min(p+1*width, data_size))
     return regions
 
 def find_regions(peaks, cwd_data):
@@ -141,6 +173,7 @@ def get_peaks(data, min_snr=3.0):
     #use_size = sizes.min()/2 + 1
     #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
     #regions = find_regions(peaks, cwd)
+    print 'peaks all', peaks_all
     regions = find_regions2(peaks_all, widths, data.size)
     print 'found regions', regions
     return regions

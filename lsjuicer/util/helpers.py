@@ -18,10 +18,8 @@ def round_point(point):
     point.setY(int(round(point.y())))
 
 def floor_point_x(point):
-    print 'floor', point
     point.setX(int(point.x()))
     point.setY(int(round(point.y())))
-    print 'floored', point
 
 def floor_rect_x(rect):
     tl = rect.topLeft()
