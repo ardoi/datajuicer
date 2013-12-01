@@ -670,7 +670,8 @@ class SyntheticData(object):
         if result:
             self.result = result
             self.region = result.region
-            self.times = n.arange(self.region.frames)
+            self.times = n.arange(int(self.region.frames))
+            print 'times shape is',self.times.shape, self.region.frames
             if self.region.width==1:
                 self.linescan = True
             else:
@@ -680,7 +681,8 @@ class SyntheticData(object):
 
     def _zeros(self):
         if self.linescan:
-            out = n.zeros((1, self.region.height, self.region.frames),dtype='float')
+            out = n.zeros((1, self.region.height, int(self.region.frames)),dtype='float')
+            print 'out shape is',out.shape,self.region.frames
         else:
             out = n.zeros((self.region.frames, self.region.height, self.region.width),dtype='float')
         return out
