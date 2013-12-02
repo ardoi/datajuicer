@@ -245,7 +245,7 @@ class Optimizer(ScaledOperation):
 
     def param_error(self, params):
         errors = self.operation_func(params)-self.func0_vals
-        error = (errors**2).mean()
+        error = (errors**2).sum()#.mean()
         return error
 
     def aic(self):
