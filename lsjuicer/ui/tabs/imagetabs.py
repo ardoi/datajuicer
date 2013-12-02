@@ -1,6 +1,6 @@
-from collections import defaultdict
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtWidgets as QW
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.ui.scenes import LSMDisplay
 from lsjuicer.static.constants import Constants
@@ -8,187 +8,36 @@ from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 
-from lsjuicer.ui.widgets.panels  import PipeChainPanel, VisualizationPanel, FramePanel, AnalysisPanel, EventPanel
-from lsjuicer.ui.widgets.panels  import ActionPanel
-
+from lsjuicer.ui.widgets.panels import PipeChainPanel
+from lsjuicer.ui.widgets.panels import VisualizationPanel
+from lsjuicer.ui.widgets.panels import FramePanel
+from lsjuicer.ui.widgets.panels import AnalysisPanel
+from lsjuicer.ui.widgets.panels import EventPanel
 import lsjuicer.inout.db.sqla as sa
 
-class Panels(object):
-    def __init__(self):
-        self.panel_dict = {}
-        self.panels_by_name = {}
-
-    def add_type(self, name):
-        if not name in self.panel_dict:
-            self.panel_dict[name] = []
-        else:
-            raise ValueError("Type {} already exists".format(name))
-
-    def add_panel(self, type_name, panel):
-        if panel.__base__ != ActionPanel:
-            raise ValueError("Panel has to be a subclass of ActionPanel")
-        if not type_name in self.panel_dict:
-            self.add_type(type_name)
-        self.panel_dict[type_name].append(panel)
-        self.panels_by_name[panel.__shortname__] = panel
-
-    def get_panel_by_name(self, name):
-        if name in self.panels_by_name:
-            return self.panels_by_name[name]
-        else:
-            return None
-
-class Events(object):
-    def __init__(self):
-        self.types = []
-        self.event_dict = defaultdict(list)
-        self.status_dict = defaultdict(list)
-
-    def add_event(self, event):
-        event_type = event.category.category_type.name
-        self.event_dict[event_type].append(event)
-        self.status_dict[event_type].append(False)
-
-    def change(self, event_type, row, status):
-        self.status_dict[event_type][row]=status
-        print self.status_dict
-
-class EventClickTree(QG.QWidget):
-    visibility_toggled = QC.pyqtSignal(str, int)
-
-    def __init__(self, parent = None):
-        super(EventClickTree, self).__init__(parent)
-        layout  = QG.QVBoxLayout()
-        self.setLayout(layout)
-        view = QG.QTreeView(self)
-        model = QG.QStandardItemModel()
-        self.model = model
-        self.items_by_name = {}
-        model.setHorizontalHeaderLabels(["Event"])
-        view.setIndentation(10)
-        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
-        view.setModel(model)
-        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
-        view.expanded.connect(lambda: view.resizeColumnToContents(0))
-        view.collapsed.connect(lambda: view.resizeColumnToContents(0))
-        view.clicked.connect(self.clicked)
-        layout.addWidget(view)
-
-    def set_events(self, events):
-        self.events = events
-        root = self.model.invisibleRootItem()
-        for typename, event_list in events.event_dict.iteritems():
-            type_item = QG.QStandardItem(typename)
-            root.appendRow(type_item)
-            for i,ei in enumerate(event_list):
-                event_item = QG.QStandardItem(str(i))
-                event_item.setCheckable(True)
-                type_item.appendRow([event_item] )
-
-    def toggle(self, name, state):
-        print 'toggle',name
-        name = str(name)
-
-        print [type(el) for el in self.items_by_name], type(name)
-        if name in self.items_by_name:
-            item = self.items_by_name[name]
-            print name, item
-            item.setCheckState(QC.Qt.Checked)
-
-    def clicked(self, modelindex):
-        print '\nccc'
-        row = modelindex.row()
-        parent = modelindex.parent()
-        event_type = str(parent.data().toString())
-        state = modelindex.data(10).toBool()
-        print row,event_type,state
-        if event_type:
-            self.events.change(event_type, row, state)
-
-class ClickTree(QG.QWidget):
-    visibility_toggled = QC.pyqtSignal(str, int)
-
-    def __init__(self, panels, parent = None):
-        super(ClickTree, self).__init__(parent)
-        layout  = QG.QVBoxLayout()
-        self.panels = panels
-        self.setLayout(layout)
-        view = QG.QTreeView(self)
-        model = QG.QStandardItemModel()
-        self.model = model
-        self.items_by_name = {}
-        #model.setHorizontalHeaderItem(0, QG.QStandardItem("Name"))
-        #model.setHorizontalHeaderItem(1, QG.QStandardItem("Description"))
-        model.setHorizontalHeaderLabels(["Name", "Info"])
-        root = model.invisibleRootItem()
-        for typename, panel_list in panels.panel_dict.iteritems():
-            type_item = QG.QStandardItem(typename)
-            root.appendRow(type_item)
-            for pi in panel_list:
-                panel_item = QG.QStandardItem(pi.__shortname__)
-                panel_item.setCheckable(True)
-                desc_item = QG.QStandardItem(QG.QIcon(QG.QPixmap(":/information.png")),"Info")
-                type_item.appendRow([panel_item, desc_item] )
-                self.items_by_name[pi.__shortname__] = panel_item
-        #view.setWordWrap(True)
-        view.setIndentation(10)
-        view.header().setResizeMode(0, QG.QHeaderView.ResizeToContents)
-        view.header().setResizeMode(1, QG.QHeaderView.ResizeToContents)
-        view.setModel(model)
-        view.setEditTriggers(QG.QAbstractItemView.NoEditTriggers)
-        view.expanded.connect(lambda: view.resizeColumnToContents(0))
-        view.collapsed.connect(lambda: view.resizeColumnToContents(0))
-        view.clicked.connect(self.clicked)
-        layout.addWidget(view)
-
-    def toggle(self, name, state):
-        print 'toggle',name
-        name = str(name)
-
-        print [type(el) for el in self.items_by_name], type(name)
-        if name in self.items_by_name:
-            item = self.items_by_name[name]
-            print name, item
-            item.setCheckState(QC.Qt.Checked)
-
-    def clicked(self, modelindex):
-        print '\nccc'
-        print modelindex.row(), modelindex.column(),modelindex.data().toString(),modelindex.parent()
-        parent = modelindex.parent()
-        name = str(self.model.data(self.model.index(modelindex.row(), 0, parent)).toString())
-        state = modelindex.data(10).toBool()
-        print name
-        actionpanel = self.panels.get_panel_by_name(name)
-        print name,state,actionpanel
-        if actionpanel:
-            if modelindex.column() == 1:
-                QG.QMessageBox.information(self, "Panel info",
-                        "<strong>{0.__shortname__}</strong><br>{0.__doc__}".format(actionpanel))
-            elif modelindex.column() == 0:
-                self.visibility_toggled.emit(str(name), state)
+from lsjuicer.ui.widgets.clicktrees import PanelClickTree, Panels
 
 
 
-class ControlWidget(QG.QWidget):
+class ControlWidget(QW.QWidget):
     def  __init__(self, panels, parent = None):
         super(ControlWidget, self).__init__(parent)
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         layout.setAlignment(QC.Qt.AlignLeft)
         layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(layout)
         self.groupboxes = {}
         self.panels = panels
-        chooser = ClickTree(panels)
+        chooser = PanelClickTree(panels)
         self.chooser = chooser
         chooser.visibility_toggled.connect(self.toggle)
         self.add_grouping(chooser, "Panels")
 
     def add_grouping(self, widget, name):
-        groupbox = QG.QGroupBox(name)
-        layout = QG.QVBoxLayout()
+        groupbox = QW.QGroupBox(name)
+        layout = QW.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
-        groupbox.setSizePolicy(QG.QSizePolicy.Maximum,QG.QSizePolicy.Minimum)
+        groupbox.setSizePolicy(QW.QSizePolicy.Maximum,QW.QSizePolicy.Minimum)
         groupbox.setLayout(layout)
         layout.addWidget(widget)
         self.groupboxes[name]=groupbox
@@ -210,15 +59,15 @@ class ControlWidget(QG.QWidget):
             gb.setVisible(state)
 
 
-
-class AnalysisImageTab(QG.QWidget):
+class AnalysisImageTab(QW.QWidget):
     """Tab containing image to analyze"""
+    positionTXT = QC.pyqtSignal(str)
     def  __init__(self, analysis = None, parent = None):
         super(AnalysisImageTab, self).__init__(parent)
         self.image_shown = False
         self.analysis = analysis
         self.sess = sa.dbmaster.get_session()
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.image_plot =self.makePlotArea()
         self.image_plot.updateLocation.connect(self.updateCoords)
@@ -244,10 +93,11 @@ class AnalysisImageTab(QG.QWidget):
 
     @property
     def active_channel(self):
-        return self.frame_widget.channel_combobox.currentIndex()
+        return self.frame_widget.active_channel
+
     @property
     def active_frame(self):
-        return self.frame_widget.selection_slider.value()
+        return self.frame_widget.active_frame
 
     def force_new_pixmap(self, v = None):
         self.make_new_pixmap(force = True)
@@ -304,6 +154,8 @@ class AnalysisImageTab(QG.QWidget):
             if self.analysis.fitregions:
                 self.event_widget = self.control_widget.init_panel(EventPanel,
                         parent = self)
+                self.event_widget.active_events_changed.connect(self.force_new_pixmap)
+                self.frame_widget.set_region(self.analysis.fitregions[0])
 
         self.vis_widget.settings_changed.connect(self.make_new_pixmap)
         self.frame_widget.frame_changed.connect(self.change_frame)
@@ -321,8 +173,7 @@ class AnalysisImageTab(QG.QWidget):
 
 
     def updateCoords(self,x,y,xx,yy):
-        self.emit(QC.SIGNAL('positionTXT(QString)'),
-                'x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x,y,xx,yy))
+        self.positionTXT.emit('x: %.3f [s], y: %.1f [um], sx: %i, sy: %i'%(x, y, xx, yy))
 
     def makePlotArea(self):
         return PixmapPlotWidget(sceneClass=LSMDisplay, parent=self)

@@ -1,22 +1,16 @@
 import os
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
 
-from lsjuicer.static.constants import Constants
+from PyQt5 import QtWidgets as QW
+from PyQt5 import QtCore as QC
+
+
 from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
 from lsjuicer.ui.tabs.resulttab import ResultTab
 
-class AnalysisWidget(QG.QTabWidget):
+class AnalysisWidget(QW.QTabWidget):
     """Widget containing all analysis related stuff (fluorescence view, selection view)"""
-    @property
-    def analysis_type(self):
-        mode = self.imageTab.analysis_mode
-        if mode == "Sparks":
-            return Constants.SPARK_TYPE
-        elif mode == "Transients":
-            return Constants.TRANSIENT_TYPE
-        elif mode == "SparkDetect":
-            return Constants.SPARKDETECT_TYPE
+    setStatusText = QC.pyqtSignal(str)
+    tabs_closed = QC.pyqtSignal()
 
     def __init__(self, analysis=None, parent=None):
         super(AnalysisWidget, self).__init__(parent)
@@ -28,17 +22,24 @@ class AnalysisWidget(QG.QTabWidget):
             alignment: right;
         }
         """)
-        self.connect(self.imageTab,QC.SIGNAL('positionTXT(QString)'), self.emitStatusTXT)
+        self.setTabsClosable(True)
+        self.tabCloseRequested.connect(self.close_tab)
+        self.imageTab.positionTXT[str].connect(self.emitStatusTXT)
+
+    def close_tab(self, index):
+        widget = self.widget(index)
+        widget.deleteLater()
+        self.removeTab(index)
+        if self.count()==0:
+            self.tabs_closed.emit()
+
+
 
     def emitStatusTXT(self, txt):
-        self.emit(QC.SIGNAL('setStatusText(QString)'),txt)
-
-    def getImageTab(self):
-        return self.imageTab
+        self.setStatusText.emit(txt)
 
     def save_result_data(self):
         resdirname = os.path.join(self.data.filedir,'results')
-        #print 'resdir',resdirname,self.data.filedir
         if not os.path.isdir(resdirname):
             os.mkdir(resdirname)
         datafilename = os.path.join(resdirname, os.path.basename(self.data.name)+".dat")
@@ -62,7 +63,7 @@ class AnalysisWidget(QG.QTabWidget):
 #        self.resultTab = FluorescenceTab(self.DS1,self)
         self.addTab(self.resultTab,'Results')
         #self.setCurrentIndex(2)
-        self.connect(self.resultTab,QC.SIGNAL('positionTXT(QString)'),self.emitStatusTXT)
+        self.resultTab.positionTXT[str].connect(self.emitStatusTXT)
         #self.setCurrentIndex(2)
 
     def addResPlot(self,*args,**kwargs):

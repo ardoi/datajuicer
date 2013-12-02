@@ -1,19 +1,20 @@
-from PyQt4 import QtCore as QC
+from PyQt5 import QtCore as QC
+
 
 class EventFitParametersDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):
         super(EventFitParametersDataModel, self).__init__(parent)
         self.rows = 0
-        self.keys = ['A','d','tau2','s','m2','d2']
+        self.keys = ['A','d','tau2','m2','d2']
         self.columns = len(self.keys)
         self.events = []
 
     def set_events(self, res):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
+        self.modelAboutToBeReset.emit()
         self.events = res.pixel_events
         self.rows = res.event_count
-        self.emit(QC.SIGNAL('modelReset()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.modelReset.emit()
+        self.layoutChanged.emit((),0)
 
     def rowCount(self, parent):
         return self.rows

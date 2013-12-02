@@ -21,21 +21,18 @@ class DBMaster(object):
         self.tables_created = False
 
     def reset_tables(self):
+        session = self.Session()
+        engine = session.get_bind()
+        self.Base.metadata.drop_all(engine)
         self.tables_created = False
         print 'reset'
         connection = self.engine.connect()
         trans = connection.begin()
-        for name, table in self.Base.metadata.tables.items():
-            print 'delete',name,table.delete()
-            try:
-                connection.execute(table.delete())
-            except OperationalError:
-                pass
-                #traceback.print_exc()
         connection.execute("VACUUM")
         trans.commit()
         trans.close()
         connection.close()
+        session.close()
 
     def make_tables(self):
         print "making tables"

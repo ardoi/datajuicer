@@ -1,8 +1,12 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+from PyQt5 import QtGui as QG
+
+from PyQt5 import QtWidgets as QW
+
+from lsjuicer.util.helpers import timeIt
 
 
-class ZoomView(QG.QGraphicsView):
+class ZoomView(QW.QGraphicsView):
     hor_zoom_changed = QC.pyqtSignal(float, float)
     hor_range_changed = QC.pyqtSignal(float, float)
     ver_zoom_changed = QC.pyqtSignal(float, float)
@@ -23,6 +27,10 @@ class ZoomView(QG.QGraphicsView):
         self.zooming_ver = False
         #lock horizontal and vertical zoom
         self.locked = locked
+        self.setTransformationAnchor(QW.QGraphicsView.AnchorUnderMouse)
+        #self.setOptimizationFlag(QG.QGraphicsView.DontAdjustForAntialiasing)
+        self.setViewportUpdateMode(QW.QGraphicsView.FullViewportUpdate)
+        self.setFrameStyle(QW.QFrame.NoFrame)
 
     def alert_horizontal_zoom_change(self):
         left, right = self.visible_horizontal_range()
@@ -76,7 +84,8 @@ class ZoomView(QG.QGraphicsView):
         self.scale_view(hor_factor, ver_factor)
         self.alert_horizontal_zoom_change()
         self.alert_vertical_zoom_change()
-        self.setDragMode(QG.QGraphicsView.NoDrag)
+        self.setDragMode(QW.QGraphicsView.NoDrag)
+
 
 
     def wheelEvent(self,event):
@@ -84,17 +93,17 @@ class ZoomView(QG.QGraphicsView):
         #if not hasattr(self, 'originalZoom'):
         #    self.resetZoom()
         #    #print 'original',self.originalZoom
-        event.ignore()
+        #event.ignore()
 #        rect = self.mapToScene(self.viewport().geometry()).boundingRect()
 #        print 'before',rect
         hor_factor = 1.0
         ver_factor = 1.0
         self.zooming_ver = False
         self.zooming_hor = False
-        if event.modifiers() & QC.Qt.ShiftModifier:
+        if bool(event.modifiers() & QC.Qt.ShiftModifier):
             #zoom in y
             self.zooming_ver = True
-        elif event.modifiers() & QC.Qt.ControlModifier:
+        elif bool(event.modifiers() & QC.Qt.ControlModifier):
             self.zooming_hor = True
         else:
             self.zooming_hor = True
@@ -103,7 +112,7 @@ class ZoomView(QG.QGraphicsView):
 
         #print 'zoom',self.zoom_count_hor, self.zoom_count_ver
         #print self.zooming_hor, self.zooming_ver
-        if event.delta() > 0:
+        if event.angleDelta().y() > 0:
             if self.zooming_hor:
                 self.zoom_count_hor += 1
                 hor_factor = 1.25
@@ -138,10 +147,11 @@ class ZoomView(QG.QGraphicsView):
         #    self.setDragMode(QG.QGraphicsView.ScrollHandDrag)
         #else:
         #    self.setDragMode(QG.QGraphicsView.NoDrag)
-        if self.full_view and (self.zoom_count_hor > 0 or self.zoom_count_ver > 0):
-            self.setDragMode(QG.QGraphicsView.ScrollHandDrag)
+        #if self.full_view and (self.zoom_count_hor > 0 or self.zoom_count_ver > 0):
+        if self.zoom_count_hor > 0 or self.zoom_count_ver > 0:
+            self.setDragMode(QW.QGraphicsView.ScrollHandDrag)
         else:
-            self.setDragMode(QG.QGraphicsView.NoDrag)
+            self.setDragMode(QW.QGraphicsView.NoDrag)
         #self.visibleRectSignal.emit(self.mapToScene(self.viewport().geometry()).boundingRect())
         #print self.sceneRect()
         if self.locked:
@@ -216,3 +226,4 @@ class ZoomView(QG.QGraphicsView):
    # def resizeEvent(self, event):
    #     QG.QGraphicsView.resizeEvent(self,event)
    #     self.fitInView(self.scene().itemsBoundingRect())
+

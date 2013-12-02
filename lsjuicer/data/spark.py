@@ -1,5 +1,7 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+
 import numpy as n
 import scipy.interpolate as si
 import scipy.optimize as so

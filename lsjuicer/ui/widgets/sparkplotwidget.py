@@ -1,5 +1,8 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 
 class SparkFluorescencePlotWidget(PixmapPlotWidget):
 
@@ -85,14 +88,14 @@ class SparkFluorescencePlotWidget(PixmapPlotWidget):
 
 
 
-class SparkScene(QG.QGraphicsScene):
+class SparkScene(QW.QGraphicsScene):
     mouseclicked = QC.pyqtSignal(int, int)
 
     def mouseReleaseEvent(self, event):
         pos = event.scenePos()
         self.mouseclicked.emit(pos.x(), pos.y())
 
-class PlotWidget(QG.QWidget):
+class PlotWidget(QW.QWidget):
     hlinemoved = QC.pyqtSignal(int)
     vlinemoved = QC.pyqtSignal(int)
 
@@ -110,13 +113,13 @@ class PlotWidget(QG.QWidget):
         self.ggroup = None
         self.accept_mouse_clicks = True
         self.view_fit_mode = 0
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        self.fV = QG.QGraphicsView(self)
+        self.fV = QW.QGraphicsView(self)
         self.fV.setRenderHint(QG.QPainter.Antialiasing)
         self.fV.setVerticalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
         # self.fV.setHorizontalScrollBarPolicy(QC.Qt.ScrollBarAlwaysOff)
-        self.fV.setFrameStyle(QG.QFrame.NoFrame)
+        self.fV.setFrameStyle(QW.QFrame.NoFrame)
         self.fV.setViewportUpdateMode(0)
         layout.addWidget(self.fV)
         self.fscene = SparkScene(self)

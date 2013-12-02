@@ -1,14 +1,17 @@
 from collections import defaultdict
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from roi import ROIItem
 from boundary import BoundaryItem
 from line import LineItem
 from snaproi import SnapROIItem
 
-from lsjuicer.util.helpers import round_point
+from lsjuicer.util.helpers import round_point, floor_point_x
 
 class PickledSelection:
     def __init__(self, name, color):
@@ -129,7 +132,7 @@ def make_icon(color):
     pixmap = QG.QPixmap(20,20)
     pixmap.fill(color)
     return QG.QIcon(pixmap)
-class NewExperimentTypeWidget(QG.QWidget):
+class NewExperimentTypeWidget(QW.QWidget):
 
     cancel = QC.pyqtSignal()
     accept = QC.pyqtSignal()
@@ -137,34 +140,34 @@ class NewExperimentTypeWidget(QG.QWidget):
         super(NewExperimentTypeWidget, self).__init__(parent)
         self.model = model
         self.valid_name = None
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        groupbox_new = QG.QGroupBox('Create new experiment type')
-        new_layout = QG.QVBoxLayout()
-        new_gb_layout = QG.QGridLayout()
+        groupbox_new = QW.QGroupBox('Create new experiment type')
+        new_layout = QW.QVBoxLayout()
+        new_gb_layout = QW.QGridLayout()
         groupbox_new.setLayout(new_layout)
         layout.addWidget(groupbox_new)
         new_layout.addLayout(new_gb_layout)
-        new_gb_layout.addWidget(QG.QLabel('Name:'), 0, 0)
+        new_gb_layout.addWidget(QW.QLabel('Name:'), 0, 0)
 
-        self.new_selection_name_lineedit = QG.QLineEdit()
+        self.new_selection_name_lineedit = QW.QLineEdit()
         self.new_selection_name_lineedit.textChanged.connect(self.validate_new_selection)
         new_gb_layout.addWidget(self.new_selection_name_lineedit, 0, 1)
 
-        self.status_label = QG.QLabel('<strong> Enter name for group</strong>')
+        self.status_label = QW.QLabel('<strong> Enter name for group</strong>')
 
         new_gb_layout.addWidget(self.status_label, 1, 1, QC.Qt.AlignRight)
         new_gb_layout.setSpacing(0)
 
-        self.accept_pb = QG.QPushButton('Accept')
+        self.accept_pb = QW.QPushButton('Accept')
         self.accept_pb.clicked.connect(self.add_new_selection_type)
         self.accept_pb.setEnabled(False)
-        self.accept_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.accept_pb.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
 
-        self.cancel_pb = QG.QPushButton('Cancel')
+        self.cancel_pb = QW.QPushButton('Cancel')
         self.cancel_pb.clicked.connect(self.cancel_pb_clicked)
 
-        button_layout = QG.QHBoxLayout()
+        button_layout = QW.QHBoxLayout()
         new_layout.addLayout(button_layout)
         button_layout.addWidget(self.accept_pb)
         button_layout.addWidget(self.cancel_pb)
@@ -194,7 +197,7 @@ class NewExperimentTypeWidget(QG.QWidget):
         self.model.add_new(self.valid_name)
         self.accept.emit()
 
-class NewBoundaryWidget(QG.QWidget):
+class NewBoundaryWidget(QW.QWidget):
 
     cancel = QC.pyqtSignal()
     accept = QC.pyqtSignal()
@@ -203,25 +206,25 @@ class NewBoundaryWidget(QG.QWidget):
         self.model = model
         self.new_color = None
         self.valid_name = None
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        groupbox_new = QG.QGroupBox('Create new group')
-        new_layout = QG.QVBoxLayout()
-        new_gb_layout = QG.QGridLayout()
+        groupbox_new = QW.QGroupBox('Create new group')
+        new_layout = QW.QVBoxLayout()
+        new_gb_layout = QW.QGridLayout()
         groupbox_new.setLayout(new_layout)
         layout.addWidget(groupbox_new)
         new_layout.addLayout(new_gb_layout)
-        new_gb_layout.addWidget(QG.QLabel('Name:'), 0, 0)
+        new_gb_layout.addWidget(QW.QLabel('Name:'), 0, 0)
 
-        self.new_selection_name_lineedit = QG.QLineEdit()
+        self.new_selection_name_lineedit = QW.QLineEdit()
         self.new_selection_name_lineedit.textChanged.connect(self.validate_new_selection)
         new_gb_layout.addWidget(self.new_selection_name_lineedit, 0, 1)
 
-        self.status_label = QG.QLabel('<strong> Enter name for group</strong>')
+        self.status_label = QW.QLabel('<strong> Enter name for group</strong>')
 
-        new_gb_layout.addWidget(QG.QLabel('Color:'), 2, 0)
+        new_gb_layout.addWidget(QW.QLabel('Color:'), 2, 0)
 
-        self.color_pb = QG.QToolButton()
+        self.color_pb = QW.QToolButton()
         self.color_pb.setIcon(QG.QIcon('://color_wheel.png'))
         self.color_pb.clicked.connect(self.show_color_dialog)
 
@@ -229,15 +232,15 @@ class NewBoundaryWidget(QG.QWidget):
         new_gb_layout.addWidget(self.status_label, 1, 1, QC.Qt.AlignRight)
         new_gb_layout.setSpacing(0)
 
-        self.accept_pb = QG.QPushButton('Accept')
+        self.accept_pb = QW.QPushButton('Accept')
         self.accept_pb.clicked.connect(self.add_new_selection_type)
         self.accept_pb.setEnabled(False)
-        self.accept_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.accept_pb.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
 
-        self.cancel_pb = QG.QPushButton('Cancel')
+        self.cancel_pb = QW.QPushButton('Cancel')
         self.cancel_pb.clicked.connect(self.cancel_pb_clicked)
 
-        button_layout = QG.QHBoxLayout()
+        button_layout = QW.QHBoxLayout()
         new_layout.addLayout(button_layout)
         button_layout.addWidget(self.accept_pb)
         button_layout.addWidget(self.cancel_pb)
@@ -266,7 +269,7 @@ class NewBoundaryWidget(QG.QWidget):
     def show_color_dialog(self):
         #dialog = QG.QColorDialog()
         #dialog.open()
-        color = QG.QColorDialog.getColor(parent=self)
+        color = QW.QColorDialog.getColor(parent=self)
         print color
         pixmap = QG.QPixmap(20,20)
         pixmap.fill(color)
@@ -283,7 +286,7 @@ class NewBoundaryWidget(QG.QWidget):
         self.accept.emit()
 
 
-class SelectionSelectDialog(QG.QDialog):
+class SelectionSelectDialog(QW.QDialog):
     comboindex_set = QC.pyqtSignal(int)
     def comboindex_set_call(self, index):
         print 'call for index',index
@@ -293,15 +296,15 @@ class SelectionSelectDialog(QG.QDialog):
         self.model = selection_model
         self.new_color = None
         self.valid_name = False
-        dialog_layout = QG.QVBoxLayout()
+        dialog_layout = QW.QVBoxLayout()
         self.setLayout(dialog_layout)
-        self.combobox = QG.QComboBox()
+        self.combobox = QW.QComboBox()
         self.combobox.currentIndexChanged.connect(self.comboindex_set_call)
-        self.groupbox_old = QG.QGroupBox('Choose existing group')
-        groupbox_layout = QG.QHBoxLayout()
+        self.groupbox_old = QW.QGroupBox('Choose existing group')
+        groupbox_layout = QW.QHBoxLayout()
         dialog_layout.addLayout(groupbox_layout)
         groupbox_layout.addWidget(self.groupbox_old)
-        old_gb_layout = QG.QVBoxLayout()
+        old_gb_layout = QW.QVBoxLayout()
         old_gb_layout.addWidget(self.combobox)
         self.groupbox_old.setLayout(old_gb_layout)
         for selection_type in self.model.selection_manager.selection_types:
@@ -312,26 +315,26 @@ class SelectionSelectDialog(QG.QDialog):
             else:
                 icon = QG.QIcon()
             self.combobox.addItem(icon, selection_type.name)
-        self.groupbox_new = QG.QGroupBox('Create new group')
+        self.groupbox_new = QW.QGroupBox('Create new group')
         self.groupbox_new.setVisible(False)
         groupbox_layout.addWidget(self.groupbox_new)
-        new_layout = QG.QVBoxLayout()
+        new_layout = QW.QVBoxLayout()
 
-        new_gb_layout = QG.QGridLayout()
+        new_gb_layout = QW.QGridLayout()
         self.groupbox_new.setLayout(new_layout)
         new_layout.addLayout(new_gb_layout)
         #new_b1_layout = QG.QHBoxLayout()
         #new_b2_layout = QG.QGridLayout()
-        new_gb_layout.addWidget(QG.QLabel('Name:'),0,0)
-        self.new_selection_name_lineedit = QG.QLineEdit()
-        self.status_label = QG.QLabel('<strong> Enter name for group</strong>')
+        new_gb_layout.addWidget(QW.QLabel('Name:'),0,0)
+        self.new_selection_name_lineedit = QW.QLineEdit()
+        self.status_label = QW.QLabel('<strong> Enter name for group</strong>')
 
         #self.validator = NameValidator()
         #self.new_selection_name_lineedit.setValidator(self.validator)
         new_gb_layout.addWidget(self.new_selection_name_lineedit,0,1)
         #new_b1_layout.addWidget(self.status_label)
-        new_gb_layout.addWidget(QG.QLabel('Color:'),2,0)
-        self.color_pb = QG.QToolButton()
+        new_gb_layout.addWidget(QW.QLabel('Color:'),2,0)
+        self.color_pb = QW.QToolButton()
         self.color_pb.clicked.connect(self.show_color_dialog)
         #new_gb_layout.setAlignment(QC.Qt.AlignLeft)
         #self.color_pb.resize(20, 20)
@@ -341,12 +344,12 @@ class SelectionSelectDialog(QG.QDialog):
         #new_gb_layout.setContentsMargins(0,0,0,0)
         new_gb_layout.setSpacing(0)
 #        new_gb_layout.addLayout(new_b2_layout)
-        self.accept_pb = QG.QPushButton('Accept')
+        self.accept_pb = QW.QPushButton('Accept')
         self.accept_pb.setEnabled(False)
-        self.accept_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.accept_pb.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
 #        self.new_selection_name_lineedit.editingFinished.connect(lambda:accept_pb.setEnabled(True))
         self.new_selection_name_lineedit.textChanged.connect(self.validate_new_selection)
-        button_layout = QG.QHBoxLayout()
+        button_layout = QW.QHBoxLayout()
         new_layout.addLayout(button_layout)
         button_layout.addWidget(self.accept_pb)
         #button_layout.setAlignment(QC.Qt.AlignCenter)
@@ -355,11 +358,11 @@ class SelectionSelectDialog(QG.QDialog):
         #new_layout.setContentsMargins(0,0,0,0)
         self.accept_pb.clicked.connect(self.add_new_selection_type)
 
-        self.button_box = QG.QDialogButtonBox(QG.QDialogButtonBox.Ok |
-                QG.QDialogButtonBox.Cancel)
-        new_type_pb = QG.QPushButton('Create new type')
+        self.button_box = QW.QDialogButtonBox(QW.QDialogButtonBox.Ok |
+                QW.QDialogButtonBox.Cancel)
+        new_type_pb = QW.QPushButton('Create new type')
         self.button_box.addButton(new_type_pb,
-                QG.QDialogButtonBox.ActionRole)
+                QW.QDialogButtonBox.ActionRole)
         new_type_pb.clicked.connect(self.show_make_new)
         self.button_box.accepted.connect(self.accept)
         self.button_box.rejected.connect(self.reject)
@@ -367,7 +370,7 @@ class SelectionSelectDialog(QG.QDialog):
 
     def accept(self):
         self.comboindex_set.emit(self.combobox.currentIndex())
-        return QG.QDialog.accept(self)
+        return QW.QDialog.accept(self)
 
     def add_new_selection_type(self):
         pickled_selection = PickledSelection(self.valid_name, self.new_color)
@@ -409,15 +412,15 @@ class SelectionSelectDialog(QG.QDialog):
         print 'selectedd',self.combobox.currentIndex()
 
 
-class SelectionWidget(QG.QWidget):
+class SelectionWidget(QW.QWidget):
     item_clicked = QC.pyqtSignal(QC.QModelIndex)
     def view_item_clicked(self, index):
         self.item_clicked.emit(index)
     def __init__(self, user_can_add_types = False, parent = None):
         super(SelectionWidget, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.user_can_add_types = user_can_add_types
-        self.view = QG.QListView()
+        self.view = QW.QListView()
         self.view.setIconSize(QC.QSize(12,12))
         ff=self.view.font()
         #print '\n\n\nFONT',ff.family(), ff.bold(), ff.pixelSize(), ff.pointSize()
@@ -427,7 +430,7 @@ class SelectionWidget(QG.QWidget):
         #self.view.setFont(font)
         #ff=self.view.font()
         #print '\n\n\nFONT',ff.family(), ff.bold(), ff.pixelSize(), ff.pointSize()
-        self.view.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.view.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
         show_rows = 4
         row_height = 12
         gap = 3
@@ -436,20 +439,20 @@ class SelectionWidget(QG.QWidget):
         #self.view.setSelectionMode(QG.QAbstractItemView.MultiSelection)
         self.setLayout(layout)
         layout.addWidget(self.view)
-        toolbar = QG.QToolBar(self)
+        toolbar = QW.QToolBar(self)
         self.add_action = toolbar.addAction(QG.QIcon(':/add.png'),'Add')
         delete_action = toolbar.addAction(QG.QIcon(':/delete.png'),'Delete')
         deselect_action = toolbar.addAction(QG.QIcon(':/shape_align_bottom.png'),'Deselect')
-        button_layout = QG.QHBoxLayout()
+        button_layout = QW.QHBoxLayout()
         layout.addLayout(button_layout)
         self.add_action.setCheckable(True)
         self.add_action.triggered.connect(self.add_selection)
         delete_action.triggered.connect(self.remove_selection)
         #deselect_action.triggered.connect(self.view.clearSelection)
         deselect_action.triggered.connect(self.deselect)
-        self.add_menu = QG.QMenu(toolbar)
+        self.add_menu = QW.QMenu(toolbar)
         if not self.user_can_add_types:
-            self.pb = QG.QComboBox(self)
+            self.pb = QW.QComboBox(self)
             button_layout.addWidget(self.pb)
         else:
             self.pb = None
@@ -606,7 +609,7 @@ class FixedSizeSnapROI(Selection):
         if not start_point:
             self.rectf = scene_rect
         else:
-            round_point(start_point)
+            floor_point_x(start_point)
             end_point = start_point + QC.QPointF(size, size)
             self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
@@ -784,19 +787,21 @@ class SelectionDataModel(QC.QAbstractListModel):
         else:
             return 0
     def removeRows(self, index):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selection_manager.selections
         for i in index:
             q=selections[i.row()]
             self.selection_manager.remove_selection(q)
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def set_selection_manager(self, selection_manager):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
+        #self.modelAboutToBeReset.emit()
+        self.beginResetModel()
         self.selection_manager = selection_manager
-        self.selection_manager.selection_added.connect(self.layoutChanged)
-        self.selection_manager.selection_update.connect(self.layoutChanged)
-        self.emit(QC.SIGNAL('modelReset()'))
+        self.selection_manager.selection_added.connect(self.modelReset)
+        self.selection_manager.selection_update.connect(self.modelReset)
+        self.endResetModel()
+        #self.modelReset.emit()
 
     def active_look(self, index):
         print 'active look', self, index

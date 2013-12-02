@@ -1,7 +1,9 @@
 import numpy
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.items.selection import SelectionDataModel, SelectionWidget, FixedSizeSnapROIManager
@@ -11,16 +13,16 @@ import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.data.models.eventfitparameters import EventFitParametersDataModel
 
-class PixelTracesPlotWidget(QG.QWidget):
+class PixelTracesPlotWidget(QW.QWidget):
     def __init__(self, scene, pixpixw, parent=None):
         super(PixelTracesPlotWidget, self).__init__(parent)
         self.plot_widget = TracePlotWidget(parent=self)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         #original image
         self.pixpixw = pixpixw
         self.setLayout(layout)
         layout.addWidget(self.plot_widget)
-        tables_layout = QG.QHBoxLayout()
+        tables_layout = QW.QHBoxLayout()
 
         layout.addLayout(tables_layout)
 
@@ -49,15 +51,18 @@ class PixelTracesPlotWidget(QG.QWidget):
         rect = roiitem.rect()
         y = rect.top()
         x = rect.left()
-        #trace = self.pixpixw.imagedata.trace_in_time(x+ self.pixpixw.x0, y + self.pixpixw.y0, 1, 1)
-        trace = self.pixpixw.imagedata.trace_in_time(x + self.pixpixw.x0 + self.pixpixw.dx,
-                y + self.pixpixw.y0 + self.pixpixw.dy, self.pixpixw.dx, self.pixpixw.dy,
-                self.pixpixw.start_frame, self.pixpixw.end_frame)
-        #print '\n',x,y,trace
+        #trace = self.pixpixw.imagedata.trace_in_time(x+ so.elf.pixpixw.x0, y + self.pixpixw.y0, 1, 1)
+        params = {'x':x + self.pixpixw.x0 + self.pixpixw.dx,
+                  'y':y + self.pixpixw.y0 + self.pixpixw.dy,
+                  'dx':self.pixpixw.dx, 'dy':self.pixpixw.dy,
+                  't0':self.pixpixw.start_frame, 't1':self.pixpixw.end_frame}
+        print 'get trace', params
+        trace = self.pixpixw.imagedata.get_trace(params)
+        print '\n',x,y,trace
         time_4_fit = numpy.arange(len(trace))
         res_4_fit = self.pixpixw.fit_result.get_fitted_pixel(x, y)
         #res_4_fit = self.pixpixw.res['fits'][(int(x)+1, int(y)+1)]
-        syn_data = tf.SyntheticData(results=None)
+        syn_data = tf.SyntheticData()
         syn_data.times = time_4_fit
         fit = syn_data.func_all(res_4_fit)
         #fit = tf.res_all(time_4_fit, res_4_fit)

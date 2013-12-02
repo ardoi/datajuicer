@@ -1,7 +1,9 @@
 import numpy as n
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+
+from PyQt5 import QtCore as QC
+
 
 
 class PlottedData(QC.QObject):
@@ -22,7 +24,7 @@ class PlottedData(QC.QObject):
         self.size = size
         if style == 'line':
             self.pen.setColor(QG.QColor(color))
-            self.pen.setWidth(self.size)
+            #self.pen.setWidth(self.size)
         else:
             self.pen.setStyle(QC.Qt.NoPen)
         # self.pen.setJoinStyle(QC.Qt.RoundJoin)

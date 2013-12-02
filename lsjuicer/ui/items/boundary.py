@@ -1,11 +1,14 @@
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
 
 
-class BoundaryItem(QG.QGraphicsRectItem):
+class BoundaryItem(QW.QGraphicsRectItem):
     # changed = QC.pyqtSignal()
 
     def __init__(self, selection_type, boundary, parent=None):
@@ -87,7 +90,7 @@ class BoundaryItem(QG.QGraphicsRectItem):
         # self.setFlag(QGraphicsItem.ItemIsMovable,False)
         # else:
         #    self.setCursor(QC.Qt.SizeAllCursor)
-        return QG.QGraphicsRectItem.hoverMoveEvent(self, event)
+        return QW.QGraphicsRectItem.hoverMoveEvent(self, event)
 
     def hoverLeaveEvent(self, event):
         self.hovering = False
@@ -96,7 +99,7 @@ class BoundaryItem(QG.QGraphicsRectItem):
         #    self.setPen(self.pen)
         self.make_look_active(False)
         self.unsetCursor()
-        return QG.QGraphicsRectItem.hoverLeaveEvent(self, event)
+        return QW.QGraphicsRectItem.hoverLeaveEvent(self, event)
 
     def resizeDistance(self):
         return self.rect().width()/4.
@@ -123,4 +126,4 @@ class BoundaryItem(QG.QGraphicsRectItem):
         self.hovering = True
         self.counter = 0
         self.cursorPositionBasedStyling(event)
-        return QG.QGraphicsRectItem.hoverEnterEvent(self, event)
+        return QW.QGraphicsRectItem.hoverEnterEvent(self, event)

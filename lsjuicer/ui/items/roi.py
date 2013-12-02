@@ -1,5 +1,8 @@
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
@@ -14,14 +17,14 @@ class ROIDataModel(QC.QAbstractListModel):
         self.sender = SenderObject()
 
     def updateData(self):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         self.rois = {}
         for b in self.builders:
             for i,r in enumerate(b.rois):
                 self.rois["%s %i"%(b.name,i+1)] = {'roi':r,'builder':b}
         self.keys = self.rois.keys()
         self.keys.sort()
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def rowCount(self,parent):
         return len(self.rois)
@@ -57,8 +60,8 @@ class ROIManager(QC.QObject):
         self.activeBuilder = None
         self.dataModel.watchBuilder(self.roiBuilder)
         self.dataModel.watchBuilder(self.bgRoiBuilder)
-        self.connect(self.roiBuilder,QC.SIGNAL('ROIDone()'), lambda:self.setActive(Constants.ROI, False))
-        self.connect(self.bgRoiBuilder,QC.SIGNAL('ROIDone()'), lambda:self.setActive(Constants.BGROI, False))
+        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.ROI))
+        self.bgRoiBuilder.ROIDone.connect(lambda:self.setActive(Constants.BGROI))
 
     def roisSelected(self):
         return any([b.roiSelected() for b in self.builders.values()])
@@ -91,9 +94,9 @@ class ROIManager(QC.QObject):
             self.ROIView.viewport().setCursor(QC.Qt.CrossCursor)
         else:
             if rtype == Constants.ROI:
-                self.emit(QC.SIGNAL('ROIButtonUncheck()'))
+                self.ROIButtonUncheck.emit()
             elif rtype == Constants.BGROI:
-                self.emit(QC.SIGNAL('BgROIButtonUncheck()'))
+                self.BgROIButtonUncheck.emit()
             self.activeBuilder = None
             self.enableEditing(True)
             self.ROIView.viewport().setCursor(QC.Qt.ArrowCursor)
@@ -121,7 +124,7 @@ class GroupManager(ROIManager):
         self.activeBuilder = None
         self.builders = {Constants.GROUP:self.roiBuilder}
         self.dataModel.watchBuilder(self.roiBuilder)
-        self.connect(self.roiBuilder,QC.SIGNAL('ROIDone()'), lambda:self.setActive(Constants.GROUP, False))
+        self.roiBuilder.ROIDone.connect(lambda:self.setActive(Constants.GROUP))
 
     def setActive(self, rtype,state):
         print 'setactive'
@@ -133,28 +136,28 @@ class GroupManager(ROIManager):
             self.ROIView.viewport().setCursor(QC.Qt.CrossCursor)
         else:
             if rtype == Constants.GROUP:
-                self.emit(QC.SIGNAL('GroupButtonUncheck()'))
+                self.GroupButtonUncheck.emit()
             self.activeBuilder = None
             self.enableEditing(True)
             self.ROIView.viewport().setCursor(QC.Qt.ArrowCursor)
 
-class GroupManagerWidget(QG.QWidget):
+class GroupManagerWidget(QW.QWidget):
 
     def __init__(self, roimanager, parent = None):
         super(GroupManagerWidget, self).__init__(parent)
         self.manager = roimanager
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         self.setLayout(layout)
-        self.view = QG.QListView()
-        self.view.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Maximum)
+        self.view = QW.QListView()
+        self.view.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Maximum)
         self.view.setMaximumWidth(200)
         self.view.setMaximumHeight(100)
         self.view.setModel(self.manager.dataModel)
-        buttonLayout = QG.QVBoxLayout()
+        buttonLayout = QW.QVBoxLayout()
         layout.addLayout(buttonLayout)
-        addRB = QG.QPushButton('Add Group')
-        delB = QG.QPushButton('Delete')
+        addRB = QW.QPushButton('Add Group')
+        delB = QW.QPushButton('Delete')
         #bg =QG.QButtonGroup(self)
         addRB.setCheckable(True)
         #bg.addButton(addRB)
@@ -162,28 +165,28 @@ class GroupManagerWidget(QG.QWidget):
         buttonLayout.addWidget(addRB)
         buttonLayout.addWidget(delB)
         layout.addWidget(self.view)
-        self.connect(addRB, QC.SIGNAL('toggled(bool)'),self.manager.setGroupActive)
-        self.connect(delB, QC.SIGNAL('clicked()'),lambda:self.manager.delete(self.view.selectedIndexes()))
-        self.connect(self.manager,QC.SIGNAL('GroupButtonUncheck()'),lambda:addRB.setChecked(False))
+        addRB.toggled[bool].connect(self.manager.setGroupActive)
+        delB.clicked[()].connect(lambda:self.manager.delete(self.view.selectedIndexes()))
+        self.manager.GroupButtonUncheck.connect(lambda:addRB.setChecked(False))
 
-class ROIManagerWidget(QG.QWidget):
+class ROIManagerWidget(QW.QWidget):
 
     def __init__(self, roimanager, parent = None):
         super(ROIManagerWidget, self).__init__(parent)
         self.manager = roimanager
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         self.setLayout(layout)
-        self.view =  QG.QListView()
-        self.view.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Maximum)
+        self.view =  QW.QListView()
+        self.view.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Maximum)
         self.view.setMaximumWidth(200)
         self.view.setMaximumHeight(100)
         self.view.setModel(self.manager.dataModel)
-        buttonLayout = QG.QVBoxLayout()
+        buttonLayout = QW.QVBoxLayout()
         layout.addLayout(buttonLayout)
-        addRB = QG.QPushButton('Add ROI')
-        addBgRB = QG.QPushButton('Add BgROI')
-        delB = QG.QPushButton('Delete')
+        addRB = QW.QPushButton('Add ROI')
+        addBgRB = QW.QPushButton('Add BgROI')
+        delB = QW.QPushButton('Delete')
         #bg =QG.QButtonGroup(self)
         addRB.setCheckable(True)
         addBgRB.setCheckable(True)
@@ -193,11 +196,11 @@ class ROIManagerWidget(QG.QWidget):
         buttonLayout.addWidget(addBgRB)
         buttonLayout.addWidget(delB)
         layout.addWidget(self.view)
-        self.connect(addRB, QC.SIGNAL('toggled(bool)'),self.manager.setROIActive)
-        self.connect(addBgRB, QC.SIGNAL('toggled(bool)'),self.manager.setBgROIActive)
-        self.connect(delB, QC.SIGNAL('clicked()'),lambda:self.manager.delete(self.view.selectedIndexes()))
-        self.connect(self.manager,QC.SIGNAL('ROIButtonUncheck()'),lambda:addRB.setChecked(False))
-        self.connect(self.manager,QC.SIGNAL('BgROIButtonUncheck()'),lambda:addBgRB.setChecked(False))
+        addRB.toggled[bool].connect(self.manager.setROIActive)
+        addBgRB.toggled[bool].connect(self.manager.setBgROIActive)
+        delB.clicked[()].connect(lambda:self.manager.delete(self.view.selectedIndexes()))
+        self.manager.ROIButtonUncheck.connect(lambda:addRB.setChecked(False))
+        self.manager.BgROIButtonUncheck.connect(lambda:addBgRB.setChecked(False))
 
 class ROIBuilder(QC.QObject):
 
@@ -239,7 +242,7 @@ class ROIBuilder(QC.QObject):
     def done(self):
         #if self.roi_count >= self.maximum:
         self.makeROIsEditable(True)
-        self.emit(QC.SIGNAL('ROIDone()'))
+        self.ROIDone.emit()
 
     #def getROI(self, rect):
     #    print 'in builder',rect
@@ -261,7 +264,7 @@ class ROIBuilder(QC.QObject):
 #class SelectionGraphicItem(QG.QGraphicsRectItem):
 #    pass
 
-class ROIItem(QG.QGraphicsRectItem):
+class ROIItem(QW.QGraphicsRectItem):
     def _set_number(self, number):
         self._number = number
         if self.text_item:
@@ -418,17 +421,17 @@ class ROIItem(QG.QGraphicsRectItem):
         #self.update()
         if not self.text_item:
 #            self.text_item = QG.QGraphicsTextItem("<p style='background:red;'>%i</p>"%self.number, self)
-            self.text_item = QG.QGraphicsTextItem(self)
+            self.text_item = QW.QGraphicsTextItem(self)
             self.text_item.setHtml('<p style="background-color:rgba(255,255,255,80);">%i</p>'%self.number)
             self.text_item.setDefaultTextColor(self.pen.color())
             self.text_item.setPos(self.rect().topLeft())
-            self.text_item.setFlag(QG.QGraphicsItem.ItemIgnoresTransformations)
+            self.text_item.setFlag(QW.QGraphicsItem.ItemIgnoresTransformations)
             self.font = self.text_item.font()
             self.font.setFamily('Sans')
             self.font.setBold(True)
             self.font.setPointSize(2)
             self.text_item.setFont(self.font)
-        QG.QGraphicsRectItem.mouseMoveEvent(self,event)
+        QW.QGraphicsRectItem.mouseMoveEvent(self,event)
 
     def hoverMoveEvent(self, event):
         self.cursorPositionBasedStyling(event)
@@ -448,7 +451,7 @@ class ROIItem(QG.QGraphicsRectItem):
             #self.pen.setStyle(QC.Qt.SolidLine)
             #self.setPen(self.pen)
         self.unsetCursor()
-        QG.QGraphicsRectItem.hoverEnterEvent(self,event)
+        QW.QGraphicsRectItem.hoverEnterEvent(self,event)
 
     def resizeDistance(self):
         if self.rect().width() / 2. > self.maxResizeDistance and self.rect().height()/2. > self.maxResizeDistance:
@@ -502,4 +505,4 @@ class ROIItem(QG.QGraphicsRectItem):
         self.counter = 0
         self.cursorPositionBasedStyling(event)
         #hoverRect = QC.QRectF(self.bottomRight()-QC.QPoint(20,20),self.bottomRight())
-        return QG.QGraphicsRectItem.hoverEnterEvent(self,event)
+        return QW.QGraphicsRectItem.hoverEnterEvent(self,event)

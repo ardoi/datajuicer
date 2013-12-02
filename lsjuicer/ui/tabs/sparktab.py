@@ -1,8 +1,11 @@
 from collections import defaultdict
 
 
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 import numpy as n
 
 from lsjuicer.ui.widgets.plot_with_axes_widget import PlotWidget, SparkFluorescencePlotWidget
@@ -22,7 +25,7 @@ class LocatedSpark(QC.QObject):
         self.location_h = location_h
         self.location_v = location_v
 
-class SparkTab(QG.QTabWidget):
+class SparkTab(QW.QTabWidget):
     def __init__(self, rois, imagedata, parent = None):
         super(SparkTab, self).__init__(parent)
         print '\n\n\n\n\n\ncreating sparktab'
@@ -320,13 +323,13 @@ class SparkTab(QG.QTabWidget):
 
 
     def setup_ui(self):
-        main_layout = QG.QGridLayout()
+        main_layout = QW.QGridLayout()
         self.setLayout(main_layout)
 
-        self.temporal_stack = QG.QStackedWidget()
-        self.spatial_stack = QG.QStackedWidget()
-        temporal_plot_groupbox = QG.QGroupBox('Temporal slice')
-        temporal_plot_groupbox.setLayout(QG.QVBoxLayout())
+        self.temporal_stack = QW.QStackedWidget()
+        self.spatial_stack = QW.QStackedWidget()
+        temporal_plot_groupbox = QW.QGroupBox('Temporal slice')
+        temporal_plot_groupbox.setLayout(QW.QVBoxLayout())
         temporal_plot_groupbox.layout().addWidget(self.temporal_stack)
         main_layout.addWidget(temporal_plot_groupbox, 0, 0)
         temporal_plot_groupbox.setStyleSheet("""
@@ -337,8 +340,8 @@ class SparkTab(QG.QTabWidget):
         }
         """)
 
-        spatial_plot_groupbox = QG.QGroupBox('Spatial slice')
-        spatial_plot_groupbox.setLayout(QG.QVBoxLayout())
+        spatial_plot_groupbox = QW.QGroupBox('Spatial slice')
+        spatial_plot_groupbox.setLayout(QW.QVBoxLayout())
         spatial_plot_groupbox.layout().addWidget(self.spatial_stack)
         main_layout.addWidget(spatial_plot_groupbox, 1, 0)
         main_layout.setRowStretch(0,1)
@@ -353,19 +356,19 @@ class SparkTab(QG.QTabWidget):
         """)
         main_layout.setColumnStretch(0,2)
         main_layout.setColumnStretch(1,2)
-        select_and_result_layout = QG.QVBoxLayout()
-        interaction_layout = QG.QVBoxLayout()
+        select_and_result_layout = QW.QVBoxLayout()
+        interaction_layout = QW.QVBoxLayout()
         main_layout.addLayout(interaction_layout, 0, 1, 2, 1)
         interaction_layout.addLayout(select_and_result_layout)
 
-        self.spark_select_combobox = QG.QComboBox(self)
+        self.spark_select_combobox = QW.QComboBox(self)
         for spark_roi in self.spark_rois:
             self.spark_select_combobox.addItem(spark_roi.icon, spark_roi.name)
-        spark_and_boundary_button_layout = QG.QHBoxLayout()
-        spark_select_groupbox = QG.QGroupBox('Select spark ROI')
-        self.previous_spark_pb = QG.QPushButton(QG.QIcon(":/arrow_left.png"),'Previous')
-        self.next_spark_pb = QG.QPushButton(QG.QIcon(":/arrow_right.png"),'Next')
-        next_prev_layout = QG.QHBoxLayout()
+        spark_and_boundary_button_layout = QW.QHBoxLayout()
+        spark_select_groupbox = QW.QGroupBox('Select spark ROI')
+        self.previous_spark_pb = QW.QPushButton(QG.QIcon(":/arrow_left.png"),'Previous')
+        self.next_spark_pb = QW.QPushButton(QG.QIcon(":/arrow_right.png"),'Next')
+        next_prev_layout = QW.QHBoxLayout()
         next_prev_layout.addWidget(self.previous_spark_pb)
         next_prev_layout.addWidget(self.next_spark_pb)
         self.previous_spark_pb.clicked.connect(self.activate_previous_spark)
@@ -375,7 +378,7 @@ class SparkTab(QG.QTabWidget):
             self.next_spark_pb.setEnabled(False)
 
         #delete_spark_pb = QG.QPushButton(QG.QIcon(":/cross.png"),'Remove')
-        spark_select_button_layout = QG.QGridLayout()
+        spark_select_button_layout = QW.QGridLayout()
         spark_select_groupbox.setLayout(spark_select_button_layout)
         spark_and_boundary_button_layout.addWidget(spark_select_groupbox)
         select_and_result_layout.addLayout(spark_and_boundary_button_layout)
@@ -383,7 +386,7 @@ class SparkTab(QG.QTabWidget):
         spark_select_button_layout.addLayout(next_prev_layout,1,0)
         #spark_select_button_layout.addWidget(delete_spark_pb,2,0)
 
-        spark_boundaries_groupbox = QG.QGroupBox('Spark boundaries')
+        spark_boundaries_groupbox = QW.QGroupBox('Spark boundaries')
 
         self.selection_widget = SelectionWidget()
         self.selection_widget.item_clicked.connect(self.change_active_spark)
@@ -391,7 +394,7 @@ class SparkTab(QG.QTabWidget):
 
 
         spark_and_boundary_button_layout.addWidget(spark_boundaries_groupbox)
-        boundary_buttons_layout = QG.QGridLayout()
+        boundary_buttons_layout = QW.QGridLayout()
         spark_boundaries_groupbox.setLayout(boundary_buttons_layout)
         boundary_buttons_layout.addWidget(self.selection_widget)
 
@@ -400,29 +403,29 @@ class SparkTab(QG.QTabWidget):
         self.spark_select_combobox.currentIndexChanged.\
                 connect(self.change_active_spark_region)
 
-        results_groupbox = QG.QGroupBox('Analysis results')
-        results_layout = QG.QGridLayout()
+        results_groupbox = QW.QGroupBox('Analysis results')
+        results_layout = QW.QGridLayout()
         results_groupbox.setLayout(results_layout)
         self.spark_result = SparkResultWidget(self)
-        results_pb = QG.QPushButton(QG.QIcon(":/report_go.png"), 'Make table')
+        results_pb = QW.QPushButton(QG.QIcon(":/report_go.png"), 'Make table')
         results_pb.clicked.connect(self.results_table_clicked)
 
-        self.calculate_spark_properties = QG.QPushButton(QG.QIcon(":/cog_go.png"),
+        self.calculate_spark_properties = QW.QPushButton(QG.QIcon(":/cog_go.png"),
                 'Analyze')
-        self.calculate_all_spark_properties = QG.QPushButton(QG.QIcon(":/cog_add.png"),
+        self.calculate_all_spark_properties = QW.QPushButton(QG.QIcon(":/cog_add.png"),
                 'Analyze all')
         self.calculate_spark_properties.clicked.connect(self.analyze_spark)
         self.calculate_all_spark_properties.clicked.connect(self.analyze_all_sparks)
 
-        self.accept_button = QG.QPushButton(QG.QIcon(":/lock_open.png"),'Accept')
+        self.accept_button = QW.QPushButton(QG.QIcon(":/lock_open.png"),'Accept')
         self.accept_button.setCheckable(True)
         self.accept_button.toggled.connect(self.accept_toggled)
 
-        self.recalc_button=QG.QPushButton(QG.QIcon(":/find.png"), 'ReFind')
+        self.recalc_button=QW.QPushButton(QG.QIcon(":/find.png"), 'ReFind')
         self.recalc_button.clicked.connect(self.recalculate_locations)
 
-        self.spark_result.setSizePolicy(QG.QSizePolicy.Maximum,
-                QG.QSizePolicy.Maximum)
+        self.spark_result.setSizePolicy(QW.QSizePolicy.Maximum,
+                QW.QSizePolicy.Maximum)
 
         results_layout.addWidget(self.spark_result,0,0,3,1)
         results_layout.addWidget(self.calculate_spark_properties,0,1)
@@ -436,21 +439,21 @@ class SparkTab(QG.QTabWidget):
         self.sparkplot = PlotWidget(self)
 
 
-        spark_plot_layout = QG.QGridLayout()
+        spark_plot_layout = QW.QGridLayout()
         interaction_layout.addLayout(spark_plot_layout)
         spark_plot_layout.addWidget(self.sparkplot, 1, 0)
-        ver_layout = QG.QVBoxLayout()
-        hor_layout = QG.QHBoxLayout()
-        self.hor_slider = QG.QSlider(QC.Qt.Horizontal)
-        self.ver_slider = QG.QSlider(QC.Qt.Vertical)
-        self.hor_spinner = QG.QSpinBox()
+        ver_layout = QW.QVBoxLayout()
+        hor_layout = QW.QHBoxLayout()
+        self.hor_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.ver_slider = QW.QSlider(QC.Qt.Vertical)
+        self.hor_spinner = QW.QSpinBox()
         self.hor_spinner.setStyleSheet("""
         QSpinBox{
             color:purple;
             font-weight:bold;
             }
         """)
-        self.ver_spinner = QG.QSpinBox()
+        self.ver_spinner = QW.QSpinBox()
         self.ver_spinner.setStyleSheet("""
         QSpinBox{
             color:cornflowerblue;
@@ -464,49 +467,49 @@ class SparkTab(QG.QTabWidget):
         hor_layout.addWidget(self.hor_spinner)
         spark_plot_layout.addLayout(ver_layout, 1, 1)
         spark_plot_layout.addLayout(hor_layout, 2, 0)
-        vis_options_pb = QG.QToolButton()
+        vis_options_pb = QW.QToolButton()
         vis_options_pb.clicked.connect(self.show_vis_options_dialog)
         vis_options_pb.setIcon(QG.QIcon('://color_wheel.png'))
         spark_plot_layout.addWidget(vis_options_pb)
 
 
-        self.left_F0_slider = QG.QSlider(QC.Qt.Horizontal)
-        self.right_F0_slider = QG.QSlider(QC.Qt.Horizontal)
-        F0_layout = QG.QHBoxLayout()
-        F0_layout.addWidget(QG.QLabel('<b>F0:</b> left:'))
+        self.left_F0_slider = QW.QSlider(QC.Qt.Horizontal)
+        self.right_F0_slider = QW.QSlider(QC.Qt.Horizontal)
+        F0_layout = QW.QHBoxLayout()
+        F0_layout.addWidget(QW.QLabel('<b>F0:</b> left:'))
         F0_layout.addWidget(self.left_F0_slider)
-        F0_layout.addWidget(QG.QLabel(' right:'))
+        F0_layout.addWidget(QW.QLabel(' right:'))
         F0_layout.addWidget(self.right_F0_slider)
 
         spark_plot_layout.addLayout(F0_layout,0,0,1,2)
         self.left_F0_slider.valueChanged.connect(self.left_F0_changed)
         self.right_F0_slider.valueChanged.connect(self.right_F0_changed)
-        st_span_layout = QG.QGridLayout()
-        self.temporal_slice_span_spinb = QG.QSpinBox()
+        st_span_layout = QW.QGridLayout()
+        self.temporal_slice_span_spinb = QW.QSpinBox()
         self.temporal_slice_span_spinb.setMaximum(20)
-        st_span_layout.addWidget(QG.QLabel("<b>Slice</b>"),0,0)
-        st_span_layout.addWidget(QG.QLabel("<b>Pixels &plusmn;</b>"),0,1)
-        st_span_layout.addWidget(QG.QLabel("<b>Physical span</b>"),0,2)
-        st_span_layout.addWidget(QG.QLabel("<b>Smoothing</b>"),0,3)
+        st_span_layout.addWidget(QW.QLabel("<b>Slice</b>"),0,0)
+        st_span_layout.addWidget(QW.QLabel("<b>Pixels &plusmn;</b>"),0,1)
+        st_span_layout.addWidget(QW.QLabel("<b>Physical span</b>"),0,2)
+        st_span_layout.addWidget(QW.QLabel("<b>Smoothing</b>"),0,3)
        # self.temporal_slice_span_spinb.setSizePolicy(QG.QSizePolicy.Maximum,QG.QSizePolicy.Maximum)
-        st_span_layout.addWidget(QG.QLabel('<p style="background-color:cornflowerblue;font-weight:bold;">Temporal</p>' ),1,0)
+        st_span_layout.addWidget(QW.QLabel('<p style="background-color:cornflowerblue;font-weight:bold;">Temporal</p>' ),1,0)
         st_span_layout.addWidget(self.temporal_slice_span_spinb, 1, 1)
-        self.t_span_label = QG.QLabel('0')
+        self.t_span_label = QW.QLabel('0')
         st_span_layout.addWidget(self.t_span_label, 1, 2)
 
-        self.spatial_slice_span_spinb = QG.QSpinBox()
+        self.spatial_slice_span_spinb = QW.QSpinBox()
         self.spatial_slice_span_spinb.setMaximum(20)
-        st_span_layout.addWidget(QG.QLabel('<p style="background-color:magenta;font-weight:bold;">Spatial</p> '),2,0)
+        st_span_layout.addWidget(QW.QLabel('<p style="background-color:magenta;font-weight:bold;">Spatial</p> '),2,0)
         st_span_layout.addWidget(self.spatial_slice_span_spinb, 2, 1)
-        self.s_span_label = QG.QLabel('0')
+        self.s_span_label = QW.QLabel('0')
         st_span_layout.addWidget(self.s_span_label,2,2)
 
-        self.s_smooth_spinb = QG.QSpinBox()
+        self.s_smooth_spinb = QW.QSpinBox()
         self.s_smooth_spinb.setMaximum(10)
         self.s_smooth_spinb.setValue(1)
 
         #t_smooth_label
-        self.t_smooth_spinb = QG.QSpinBox()
+        self.t_smooth_spinb = QW.QSpinBox()
         self.t_smooth_spinb.setMaximum(10)
         self.t_smooth_spinb.setValue(1)
         st_span_layout.addWidget(self.s_smooth_spinb, 2, 3)
@@ -514,9 +517,9 @@ class SparkTab(QG.QTabWidget):
         self.s_smooth_spinb.valueChanged.connect(self.spatial_smoothing_changed)
         self.t_smooth_spinb.valueChanged.connect(self.temporal_smoothing_changed)
 
-        frame = QG.QFrame(self)
-        frame.setFrameStyle(QG.QFrame.HLine)
-        frame.setFrameShadow(QG.QFrame.Sunken)
+        frame = QW.QFrame(self)
+        frame.setFrameStyle(QW.QFrame.HLine)
+        frame.setFrameShadow(QW.QFrame.Sunken)
         spark_plot_layout.addWidget(frame, 3,0,1,2)
         spark_plot_layout.addLayout(st_span_layout,4,0,1,2)
 
@@ -554,13 +557,13 @@ class SparkTab(QG.QTabWidget):
         #self.recalculate_locations()
         #QC.QTimer.singleShot(40, lambda:self.recalculate_locations())
         #main_height = main_layout.sizeHint().height()
-        self.fplot_temporal.setSizePolicy(QG.QSizePolicy.Expanding,QG.QSizePolicy.Expanding)
-        self.fplot_spatial.setSizePolicy(QG.QSizePolicy.Expanding,QG.QSizePolicy.Expanding)
+        self.fplot_temporal.setSizePolicy(QW.QSizePolicy.Expanding,QW.QSizePolicy.Expanding)
+        self.fplot_spatial.setSizePolicy(QW.QSizePolicy.Expanding,QW.QSizePolicy.Expanding)
         QC.QTimer.singleShot(50,lambda:self.sparkplot.fitView(0))
 
     def show_vis_options_dialog(self):
-        dialog = QG.QDialog(self)
-        layout = QG.QHBoxLayout()
+        dialog = QW.QDialog(self)
+        layout = QW.QHBoxLayout()
         dialog.setLayout(layout)
         widget = VisualizationOptionsWidget(self.spark_roi, self.sparkplot, parent=dialog)
         layout.addWidget(widget)

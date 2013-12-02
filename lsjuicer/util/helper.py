@@ -1,4 +1,5 @@
-import PyQt4.QtCore as QC
+from PyQt5 import QtCore as QC
+
 import numpy as n
 
 class OffsetPixmap:

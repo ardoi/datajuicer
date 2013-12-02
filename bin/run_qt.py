@@ -6,8 +6,9 @@ import sys
 import logging
 from subprocess import Popen, PIPE
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui
+from PyQt5 import QtWidgets
+from PyQt5 import QtCore as QC
 
 from lsjuicer.util import config
 from lsjuicer.ui.windows.main import MainUI
@@ -18,11 +19,11 @@ def java_check(parent):
     p = Popen(java_cmd, shell=True, stdout=PIPE, stderr=PIPE)
     retcode = p.wait()
     if retcode:
-        QG.QMessageBox.warning(parent, 'Java missing', """It appears you do not
+        QtWidgets.QMessageBox.warning(parent, 'Java missing', """<html>It appears you do not
         have Java installed.  It is needed to convert files into a readable
         format. Please download it from here: <a
         href="http://java.com/en/download/index.jsp">http://java.com</a>,
-        install it and restart this program""")
+        install it and restart this program</html>""")
         return False
     return True
 
@@ -33,16 +34,16 @@ def dependencies_for_myprogram():
     id(_validation)
 
 if __name__ == "__main__":
-    app = QG.QApplication(sys.argv)
-    # app.setStyle(QG.QStyleFactory.create('GTK+'))
-    # app.setStyle(QG.QStyleFactory.create('Plastique'))
-    # app.setStyle(QG.QStyleFactory.create('Cleanlooks'))
-    app.setStyle(QG.QStyleFactory.create('Macintosh (aqua)'))
+    app = QtWidgets.QApplication(sys.argv)
+    # app.setStyle(QtGui.QStyleFactory.create('GTK+'))
+    # app.setStyle(QtGui.QStyleFactory.create('Plastique'))
+    app.setStyle(QtWidgets.QStyleFactory.create('Fusion'))
+    #app.setStyle(QtWidgets.QStyleFactory.create('Macintosh (aqua)'))
     #make sure icons are shown in menus
     app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
-    print 'Available styles: %s' % (str(QG.QStyleFactory.keys().join(' : ')))
-    logo = QG.QPixmap(":/juicerlogo.png")
-    # splash = QG.QSplashScreen(logo)
+    print 'Available styles: %s' % (str(" : ".join(QtWidgets.QStyleFactory.keys())))
+    logo = QtGui.QPixmap(":/juicerlogo.png")
+    # splash = QtGui.QSplashScreen(logo)
     # splash.show()
     app.processEvents()
     # time.sleep(1)
@@ -102,8 +103,10 @@ if __name__ == "__main__":
     ret = java_check(gui)
 
     if not ret:
-        sys.exit(0)
-    gui.show()
-    gui.showMaximized()
-    gui.raise_()
-    app.exec_()
+        gui.close()
+        app.exit()
+    else:
+        gui.show()
+        gui.showMaximized()
+        gui.raise_()
+        app.exec_()

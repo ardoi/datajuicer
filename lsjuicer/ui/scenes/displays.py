@@ -1,8 +1,11 @@
-from PyQt4 import QtCore as QC
-from PyQt4 import QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 
-class PlotDisplay(QG.QGraphicsScene):
+
+class PlotDisplay(QW.QGraphicsScene):
     setLocation = QC.pyqtSignal(float, float)
 
     def __init__(self, parent=None):
@@ -13,21 +16,21 @@ class PlotDisplay(QG.QGraphicsScene):
         # if self.r.contains(event.scenePos()):
         toScene = event.scenePos()
         self.setLocation.emit(toScene.x(), toScene.y())
-        return QG.QGraphicsScene.mouseMoveEvent(self, event)
+        return QW.QGraphicsScene.mouseMoveEvent(self, event)
 
     def set_selection_builder(self, builder):
         self.selection_builder = builder
 
     def mousePressEvent(self, event):
         if self.selection_builder:
-            item = self.itemAt(event.scenePos())
+            item = self.itemAt(event.scenePos(), event.widget().parent().transform())
             # make sure there is no selection item at the current mouse
             # position
-            if not isinstance(item, QG.QGraphicsRectItem):
+            if not isinstance(item, QW.QGraphicsRectItem):
                 selection_start = event.scenePos()
                 self.selection_builder.make_selection_rect(
                     selection_start, self.sceneRect())
-        return QG.QGraphicsScene.mousePressEvent(self, event)
+        return QW.QGraphicsScene.mousePressEvent(self, event)
 
 
 class FDisplay(PlotDisplay):

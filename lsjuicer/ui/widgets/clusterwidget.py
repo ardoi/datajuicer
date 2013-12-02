@@ -6,8 +6,11 @@ from sklearn.cluster import DBSCAN
 import scipy.ndimage as nd
 import scipy.stats as ss
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.inout.db.sqla import dbmaster
 import lsjuicer.inout.db.sqla as sa
@@ -26,7 +29,7 @@ def normify(a):
     #r2=res.clip(left,right)
     return res
 
-class ClusterWidget(QG.QWidget):
+class ClusterWidget(QW.QWidget):
 
     clusters_ready = QC.pyqtSignal(dict)
 
@@ -52,8 +55,8 @@ class ClusterWidget(QG.QWidget):
         self.events = []
         if normalize:
             self.cluster_data = n.apply_along_axis(normify, 0, self.cluster_data)
-        widget_layout = QG.QVBoxLayout()
-        self.plot_layout = QG.QGridLayout()
+        widget_layout = QW.QVBoxLayout()
+        self.plot_layout = QW.QGridLayout()
         self.plot_layout.setContentsMargins(0,0,0,0)
         self.plot_layout.setSpacing(0)
         self.setLayout(widget_layout)
@@ -64,15 +67,15 @@ class ClusterWidget(QG.QWidget):
         self.plot_pairs = plot_pairs
         self.make_plot_widgets()
         self.key = key
-        setting_layout = QG.QHBoxLayout()
-        do_pb = QG.QPushButton('Do clustering')
+        setting_layout = QW.QHBoxLayout()
+        do_pb = QW.QPushButton('Do clustering')
         if self.category_class == sa.EventCategoryShapeType:
-            action_pb = QG.QPushButton("Cluster by Location")
+            action_pb = QW.QPushButton("Cluster by Location")
             action_pb.clicked.connect(self.emit_ready)
         elif self.category_class == sa.EventCategoryLocationType:
-            action_pb = QG.QPushButton("Save clusters")
+            action_pb = QW.QPushButton("Save clusters")
             action_pb.clicked.connect(lambda :self.save_clusters())
-            dilate_pb = QG.QPushButton("Fill gaps")
+            dilate_pb = QW.QPushButton("Fill gaps")
             dilate_pb.clicked.connect(self.do_dilate)
             setting_layout.addWidget(dilate_pb)
         self.action_pb = action_pb
@@ -152,7 +155,7 @@ class ClusterWidget(QG.QWidget):
                     self.plot_layout.addWidget(plotwidget, i, j)
                 else:
                     self.plot_layout.addWidget(plotwidget, j, 0)
-        QG.QApplication.processEvents()
+        QW.QApplication.processEvents()
 
     def do_plots(self):
         colornames = cycle(['red', 'green', 'blue', 'yellow', 'orange', 'teal', 'magenta', 'lime', 'navy', 'brown'])
@@ -188,7 +191,7 @@ class ClusterWidget(QG.QWidget):
         #print self.clusters
         #TODO remove existing events
         self.action_pb.setEnabled(False)
-        QG.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
+        QW.QApplication.setOverrideCursor(QG.QCursor(QC.Qt.BusyCursor))
         sess = dbmaster.get_session()
         sess.add(self.result)
 
@@ -216,6 +219,7 @@ class ClusterWidget(QG.QWidget):
             if event_no == -1:
                 continue
             event = sa.Event()
+            sess.add(event)
             new_events.append(event)
             event.category = category
             stats.append(self.clusters[event_no].shape[0])
@@ -228,7 +232,8 @@ class ClusterWidget(QG.QWidget):
         new_event_ids = [event.id for event in new_events]
         old_events = sess.query(sa.Event).filter(~sa.Event.id.in_(new_event_ids)).\
                 join(sa.EventCategory).\
-                filter(sa.EventCategory.category_type == category.category_type).all()
+                filter(sa.EventCategory.category_type == category.category_type).\
+                filter(sa.Event.result == self.result).all()
         print 'old events', len(old_events), category.category_type.name, new_event_ids
         for old_event in old_events:
             sess.delete(old_event)
@@ -242,8 +247,8 @@ class ClusterWidget(QG.QWidget):
         sess.commit()
         print [len(el.pixel_events) for el in new_events]
         self.action_pb.setEnabled(True)
-        QG.QApplication.restoreOverrideCursor()
-        QG.QMessageBox.information(self, "", save_string)
+        QW.QApplication.restoreOverrideCursor()
+        QW.QMessageBox.information(self, "", save_string)
 
 
 class Clusterer(object):
@@ -272,13 +277,13 @@ class Clusterer(object):
         return labels
 
 
-class ClusterDialog(QG.QDialog):
+class ClusterDialog(QW.QDialog):
     def __init__(self, analysis, parent=None):
         super(ClusterDialog, self).__init__(parent)
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         self.analysis = analysis
         self.setLayout(layout)
-        do_pb = QG.QPushButton("Get clusters")
+        do_pb = QW.QPushButton("Get clusters")
         layout.addWidget(do_pb)
         do_pb.clicked.connect(self.stats)
         self.do_pb = do_pb
@@ -319,7 +324,7 @@ class ClusterDialog(QG.QDialog):
         #ea_shape0 = tf.do_event_array(el,shape_params)
         #ea_shape = ea_shape0
         #ea_loc = tf.do_event_array(el,['m2','x','y'])
-        tabs = QG.QTabWidget(self)
+        tabs = QW.QTabWidget(self)
         self.layout().addWidget(tabs)
         self.tabs = tabs
 
@@ -354,31 +359,31 @@ class ClusterDialog(QG.QDialog):
                 index = self.tabs.addTab(tab,'Type %i'%cluster)
             self.tabs.setCurrentIndex(index)
 
-class EventCategoryWidget(QG.QWidget):
+class EventCategoryWidget(QW.QWidget):
     def __init__(self, category_class, parent = None):
         super(EventCategoryWidget, self).__init__(parent)
         self.category_class = category_class
         self.cat_type = None
         self.category = None
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        gbox = QG.QGroupBox("Clustering settings")
+        gbox = QW.QGroupBox("Clustering settings")
         settings_layout = MyFormLikeLayout()
         gbox.setLayout(settings_layout)
         layout.addWidget(gbox)
         combo = DBComboAddBox(category_class, show_None = False)
         self.combo=combo
-        combo.combo.currentIndexChanged[QC.QString].connect(self.update_settings)
+        combo.combo.currentIndexChanged[str].connect(self.update_settings)
         settings_layout.add_row("Type", combo)
-        settings_combo = QG.QComboBox()
+        settings_combo = QW.QComboBox()
         settings_combo.currentIndexChanged.connect(self.update_spinboxes)
         settings_layout.add_row("Parameters", settings_combo)
         self.settings_combo =settings_combo
         self.settings_combo.setMinimumWidth(250)
 
-        edit_checkbox = QG.QCheckBox(self)
-        min_sample_spinbox = QG.QSpinBox(self)
-        eps_spinbox = QG.QDoubleSpinBox(self)
+        edit_checkbox = QW.QCheckBox(self)
+        min_sample_spinbox = QW.QSpinBox(self)
+        eps_spinbox = QW.QDoubleSpinBox(self)
         eps_spinbox.setMinimum(0.1)
         eps_spinbox.setMaximum(25.0)
         eps_spinbox.setValue(4.0)
@@ -394,7 +399,7 @@ class EventCategoryWidget(QG.QWidget):
         settings_layout.add_row("Description", desc_edit)
         settings_layout.add_row("Minimum core samples", min_sample_spinbox)
         settings_layout.add_row("EPS", eps_spinbox)
-        save_pb = QG.QPushButton("Save")
+        save_pb = QW.QPushButton("Save")
         settings_layout.add_row("", save_pb)
 
         self.min_sample_spinbox = min_sample_spinbox
@@ -477,7 +482,7 @@ class EventCategoryWidget(QG.QWidget):
             #we don't want categories with same settings but different descriptions
             if existing:
                 print "settings alread exist",(samples, eps)
-                QG.QMessageBox.information(self, "Category exists",
+                QW.QMessageBox.information(self, "Category exists",
                         """<p style='font-weight:normal;'>A <strong
                         style='color:navy;'>{}</strong> category with parameters
                         <br><strong style='color:navy'>{}</strong> already exists</p>"""

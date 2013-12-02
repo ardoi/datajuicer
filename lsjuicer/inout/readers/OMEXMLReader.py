@@ -1,4 +1,5 @@
-from xml.etree.ElementTree import ElementTree
+#from xml.etree.ElementTree import ElementTree, ParseError
+import xml.etree.ElementTree as ElementTree
 import base64
 import StringIO
 import zlib
@@ -31,6 +32,8 @@ class OMEXMLReader(AbstractReader):
 
     @property
     def image_width(self):
+        print 'active',self.active_type
+        print self.image_attrs
         return self.image_attrs[self.active_type]["image_width"]
     @image_width.setter
     def image_width(self, val ):
@@ -84,10 +87,22 @@ class OMEXMLReader(AbstractReader):
             #image_description_tag = 270
             #self.et = xmle.fromstring(self.pil_image.tag[image_description_tag])
         else:
-            self.et = ElementTree()
-            self.et.parse(self.filename)
+            try:
+                self.et = ElementTree.ElementTree()
+                self.et.parse(self.filename)
+            except ElementTree.ParseError:
+                print 'bad characters'
+                with open(self.filename,'r') as f:
+                    lines = f.readlines()
+                    bad = {'&':"_and_"}
+                    for i,line in enumerate(lines):
+                        change = True in [bad_char in line for bad_char in bad.keys()]
+                        if change:
+                            data = line.replace("&","_and_")
+                            lines[i] = data
+                            print data
+                    self.et=ElementTree.fromstringlist(lines)
         self.fulltags = {}
-
         self._make_tags()
         self._get_image_attributes()
         self.metadata_loaded = True
@@ -115,14 +130,12 @@ class OMEXMLReader(AbstractReader):
         microscope before a linescan). Linescan image is used for the general image attributes as those are the ones
         relevant to analysis.
         """
-        print "Image attrib"
+        print "\nImage attrib"
         self.active_type = None
         self.image_attrs = {"Pixels": {}, "Reference": {}}
         images = {"Pixels": None, "Reference": None}
         image_elements = self.et.findall(self.fulltags["Image"])
-        #print self.image_elements, self.fulltags["Image"]
         for im_n, image_element in enumerate(image_elements):
-            #print 'im',im_n,image_element
             pixels = image_element.findall(self.fulltags["Pixels"])
             #channel_dict = {}
             tiffdata_dict = {}
@@ -140,7 +153,7 @@ class OMEXMLReader(AbstractReader):
                     else:
                         tiffdata_dict[bin_n] = tiffdata
                 image_stuff["PixelAttributes"] = pixel.attrib
-                if pixel.attrib["SizeX"] == pixel.attrib["SizeY"] and pixel.attrib['SizeT']==1:
+                if pixel.attrib["SizeX"] == pixel.attrib["SizeY"] and int(pixel.attrib['SizeT'])==1:
                     #assume that a square image is the reference image
                     #FIXME
                     image_type = "Reference"
@@ -149,10 +162,9 @@ class OMEXMLReader(AbstractReader):
                 break #because there should only be one Pixel element in an Image tag
             images[image_type] = image_stuff
             self.active_type = image_type
-            #print 'set image type', image_type
             pix_attr = images[image_type]["PixelAttributes"]
-            self.image_width = int(pix_attr['SizeY'])
-            self.image_height = int(pix_attr['SizeX'])
+            self.image_width = int(pix_attr['SizeX'])
+            self.image_height = int(pix_attr['SizeY'])
             self.channels = int(pix_attr['SizeC'])
             self.frames = int(pix_attr['SizeT'])
             self.data_type = pix_attr["Type"]
@@ -201,9 +213,9 @@ class OMEXMLReader(AbstractReader):
     def _get_image_data(self, image_type):
         #print "reading data for type %s"%self.active_type
         tiffdata_elements = self.images[image_type]["BinDatas"]
-        #data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
-        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_width, self.image_height),
+        data_array = numpy.zeros(shape=(self.channels, self.frames, self.image_height, self.image_width),
                 dtype=self.data_type)
+        print 'zero data', data_array.shape
         #print data_array.shape
         self.images[image_type]["ImageData"] = data_array
         for tiffdata_element_key in tiffdata_elements:
@@ -223,9 +235,9 @@ class OMEXMLReader(AbstractReader):
                 else:
                     pass
                     #print 'Not compressed'
-                data_length = int(bin_attrib['Length'])
+                #data_length = int(bin_attrib['Length'])
                 dtype = self.data_type
-                dtype_size = numpy.dtype(dtype).itemsize
+                #dtype_size = numpy.dtype(dtype).itemsize
                 #print 'Total data %s' % data_length
                 #decode base64 data
                 stringio_in = StringIO.StringIO(tiffdata_element.text)
@@ -244,14 +256,16 @@ class OMEXMLReader(AbstractReader):
                 self.pil_image.seek(ifd)
                 image_data = numpy.array(self.pil_image.getdata(),'float')
             #Need to read image dimension from PixelAttribute as they are different for different image types
-            image_width = int(self.images[image_type]["PixelAttributes"]["SizeY"])
-            image_height = int(self.images[image_type]["PixelAttributes"]["SizeX"])
-            image_data.shape = (image_width, image_height)
-            #print "Image dimensions", image_data.shape
+            image_width = int(self.images[image_type]["PixelAttributes"]["SizeX"])
+            image_height = int(self.images[image_type]["PixelAttributes"]["SizeY"])
+            print "original_shape", image_data.shape
+            image_data.shape = (image_height, image_width)
+            print "Image dimensions", image_data.shape
             #print "channel: %i of %i , frame: %i of %i"%(channel+1, self.channels,frame+1, self.frames)
             #self.images[image_type]["ImageData"][channel][frame] = image_data.transpose()
             #data_array[channel][frame] = image_data.transpose()
             data_array[channel][frame] = image_data
+
         print "\n\n%s\nRead %i channels\n%i frames in each channel\n%ix%i pixels in each frame\n%i MB for entire array\n" % \
                 ("="*10,self.channels, self.frames, self.image_width, self.image_height, data_array.nbytes/1024**2)
 

@@ -29,13 +29,13 @@ setup(
     license='LICENSE.txt',
     description='',
     long_description=open('README.txt').read(),
-    install_requires=[
-        "SQLAlchemy>=0.8.1",
-        "alembic>=0.5.0",
-        "numpy>=1.7.1",
-        "scikit-learn>=0.13.1",
-        "scikits-image>=0.7.1",
-        "scipy>=0.12.0",
-        "webcolors>=1.4",
-    ],
+    #install_requires=[
+    #    "SQLAlchemy>=0.8.1",
+    #    "alembic>=0.5.0",
+    #    "numpy>=1.7.1",
+    #    "scikit-learn>=0.13.1",
+    #    "scikits-image>=0.7.1",
+    #    "scipy>=0.12.0",
+    #    "webcolors>=1.4",
+    #],
 )

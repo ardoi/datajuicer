@@ -1,8 +1,11 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
 
-class AxisWidget(QG.QWidget):
+
+class AxisWidget(QW.QWidget):
 
     def __init__(self, label = None, parent=None):
         self.max_limit = 2000
@@ -117,7 +120,7 @@ class AxisWidget(QG.QWidget):
 
 
 class HorizontalAxisWidget(AxisWidget):
-    active_dimension_length = property(QG.QWidget.width)
+    active_dimension_length = property(QW.QWidget.width)
 
     def my_init(self):
         self.min_tick_distance = 100.0  # pixels

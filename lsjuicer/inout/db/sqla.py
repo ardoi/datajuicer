@@ -4,7 +4,8 @@ from collections import defaultdict
 
 import numpy as n
 
-import PyQt4.QtCore as QC
+from PyQt5 import QtCore as QC
+
 
 from sqlalchemy import Column, Integer, String, Float, DateTime, PickleType
 from sqlalchemy.orm.exc import NoResultFound
@@ -31,10 +32,11 @@ class ReaderFactory(object):
 
 class ImageMaker(object):
     @staticmethod
+    @timeIt
     def get_hash(filename):
         if os.path.isfile(filename):
             f = open(filename,'r')
-            data = f.read()
+            data = f.read(1024**2)
             fhash = hashlib.sha1(data).hexdigest()[:10]
             f.close()
             return fhash
@@ -605,7 +607,12 @@ class PixelFittedSyntheticImage(Image):
     def __init__(self, pixelfitresult):
         Image.__init__(self)
         reg = pixelfitresult.region
-        self.image_width = reg.width - 2*pixelfitresult.fit_settings['padding']
+        if reg.width == 1:
+            self.image_width = reg.frames
+            self.image_frames = 1
+        else:
+            self.image_width = reg.width - 2*pixelfitresult.fit_settings['padding']
+            self.image_frames = reg.frames
         self.image_height = reg.height - 2*pixelfitresult.fit_settings['padding']
         self.channels = 2
         self.syn_image_data = None
@@ -614,42 +621,7 @@ class PixelFittedSyntheticImage(Image):
             #channel with all events
             self.channels += 1
             self._channel_names.update({2:"events"})
-            #self._channel_names[self.channels-1] = "all events"
-            #event_types = pixelfitresult.event_types()
-            #self.event_types = event_types
-            #print 'ET',event_types
-            #event_type_keys = event_types.keys()
-            #event_type_keys.sort()
 
-            #self.channel_events = {}
-            #all_event_ids = []
-            #[all_event_ids.extend(el) for el in self.event_types.values()]
-            #self.channel_events[self.channels-1] = all_event_ids
-
-            #for et in event_type_keys:
-            #    event_ids= self.event_types[et]
-            #    events = len(event_types[et])
-            #    if events == 1:
-            #        #if only one event of type then one extra channel is enough
-            #        self.channels += 1
-            #        self._channel_names[self.channels-1] = et
-            #        self.channel_events[self.channels-1] = event_types[et]
-            #    else:
-            #        #for more than one event we need one channel per event
-            #        #plus summary channel of all events of type
-            #        self.channels += 1
-            #        self._channel_names[self.channels-1] = et+" all"
-            #        all_ids_of_type = []
-            #        self.channel_events[self.channels-1] = all_ids_of_type
-            #        for i,event_id in enumerate(event_ids):
-            #            self.channels += 1
-            #            self._channel_names[self.channels-1] = "{} {}".format(et,i)
-            #            self.channel_events[self.channels-1] = event_id
-            #            all_ids_of_type.append(event_id)
-        #print self._channel_names
-        #print self.channel_events
-
-        self.image_frames = reg.frames
         analysis = reg.analysis
         self.record_date = analysis.date
         mimage = analysis.imagefile
@@ -660,22 +632,23 @@ class PixelFittedSyntheticImage(Image):
         self.file_hash = mimage.file_hash
         self.state = mimage.state
         self.description = ""
+        self.result = pixelfitresult
 
-        results = {}
-        results['width'] = self.image_width
-        results['height'] = self.image_height
-        results['frames'] = self.image_frames
-        results['dx'] = pixelfitresult.fit_settings['padding']
-        results['dy'] = pixelfitresult.fit_settings['padding']
-        results['x0'] = reg.x0
-        results['y0'] = reg.y0
-        results['fits'] = pixelfitresult.pixels
-        self.results = results
+        #results = {}
+        #results['width'] = self.image_width
+        #results['height'] = self.image_height
+        #results['frames'] = self.image_frames
+        #results['dx'] = pixelfitresult.fit_settings['padding']
+        #results['dy'] = pixelfitresult.fit_settings['padding']
+        #results['x0'] = reg.x0
+        #results['y0'] = reg.y0
+        #results['fits'] = pixelfitresult.pixels
+        #self.results = results
 
     @timeIt
     def make_image_data(self):
         print 'Making image data'
-        sd = tf.SyntheticData(self.results)
+        sd = tf.SyntheticData(self.result)
         new_data = sd.get_fit()
         bl = sd.get_baseline()
         ch_data = [new_data, bl]
@@ -715,8 +688,6 @@ class PixelFittedSyntheticImage(Image):
 class MicroscopeImage(Image):
     """Representation of image recorded by the microscope"""
     __tablename__ = "microscope_images"
-    id = Column(Integer, ForeignKey('images.id'), primary_key=True)
-    #ome_dir = os.path.join(os.getenv('HOME'), '.JuicerTemp')
     id = Column(Integer, ForeignKey('images.id'), primary_key=True)
     _file_hash = Column(String(200), nullable=False)#, unique=True)
     _file_name = Column(String(500), nullable=False)
@@ -785,6 +756,7 @@ class MicroscopeImage(Image):
     def image_data(self, image_type):
         if self.ome_file:
             self.ome_file.read_image(image_type)
+            print 'imaget',image_type, self.ome_file.images[image_type]
             return self.ome_file.images[image_type]#["ImageData"]
         else:
             return None
@@ -792,6 +764,7 @@ class MicroscopeImage(Image):
     def populate_attributes(self):
         of = self.ome_file
         of.read_meta()
+        of.active_type = "Pixels"
         self.delta_space = of.image_step_y
         #print "populate",of.interval
         self.delta_time = of.interval

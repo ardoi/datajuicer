@@ -1,29 +1,18 @@
 import glob
 import os
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.inout.converters.OMEXMLMaker import OMEXMLMaker
 from lsjuicer.static.constants import Constants
 from lsjuicer.inout.db.sqla import ImageMaker
 import lsjuicer.inout.db.sqla as sa
 from lsjuicer.static.constants import ImageStates
-
-class CheckBoxDelegate(QG.QItemDelegate):
-    def createEditor(self, parent, styleoption, modelindex):
-        box = QG.QCheckBox(parent)
-        return box
-
-    def setEditorData(self, editor, index):
-        state  = index.model().data(index, QC.Qt.DisplayRole)
-        print 'edit',state
-        editor.setChecked(state)
-
-    def setModelData(self, editor, model, index):
-        state = editor.isChecked()
-        print 'set',state
-        model.setData(index, state, QC.Qt.DisplayRole)
+from lsjuicer.util.helpers import timeIt
 
 class TransientDataModel(QC.QAbstractTableModel):
     def __init__(self, parent = None):
@@ -39,16 +28,16 @@ class TransientDataModel(QC.QAbstractTableModel):
             return 4
     rows = property(get_rows)
     def set_visual_transient_collection(self, visual_transient_collection):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         self.visual_transient_collection = visual_transient_collection
         #self.transients = transients.ts
         #self.rows = len(self.visual_transient_collection)
         #print 'set %i vis transients'%self.rows
         #print 'transients',self.rows
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def remove_transients(self, indexes):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         transients_to_remove = []
         for index in indexes:
             transient_key = self.visual_transient_collection.transient_group.order[index.row()]
@@ -58,13 +47,13 @@ class TransientDataModel(QC.QAbstractTableModel):
         for key in transients_to_remove:
             print 'remove', key
             self.visual_transient_collection.remove_transient(key)
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
 
     def set_transients_state(self, attrib, indexes):
         function = {'visible':'set_visible', 'editable':'set_editable'}
         assert attrib in function
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         transients_to_modify_keys = []
         states = []
         for index in indexes:
@@ -76,7 +65,7 @@ class TransientDataModel(QC.QAbstractTableModel):
         print 'set state', attrib, indexes
         f = getattr(self.visual_transient_collection, function[attrib])
         f(transients_to_modify_keys, states)
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def set_transients_visible(self, indexes):
         self.set_transients_state('visible', indexes)
@@ -195,12 +184,13 @@ class TransientDataModel(QC.QAbstractTableModel):
         #else:
         #    return QC.Qt.ItemIsEnabled
 
-class MyProxyModel(QG.QSortFilterProxyModel):
+class MyProxyModel(QC.QSortFilterProxyModel):
     """
     Extended QSortFilterProxyModel to allow only unique indices to set to be plotted
     """
     #def __init__(self,parent = None):
     #    super(MyProxyModel, self).__init__(parent)
+    doPlot = QC.pyqtSignal(object)
     def setView(self, view):
         self.view=view
 
@@ -216,22 +206,22 @@ class MyProxyModel(QG.QSortFilterProxyModel):
 
     def preparePlot(self):
         indices = self.uniqueIndices(self.view.selectedIndexes())
-        self.emit(QC.SIGNAL('doPlot(PyQt_PyObject)'),indices)
+        self.doPlot.emit(indices)
     def prepareShowReference(self):
         indices = self.uniqueIndices(self.view.selectedIndexes())
         return indices
         #self.emit(QC.SIGNAL('plotReference(PyQt_PyObject)'),indices)
 
-class MyFileIconProvider(QG.QFileIconProvider):
+class MyFileIconProvider(QW.QFileIconProvider):
     def icon(self, icontype):
         if icontype.isDir():
             return QG.QIcon(':/folder.png')
         elif icontype.isFile():
             return QG.QIcon(':/picture.png')
         else:
-            return QG.QFileIconProvider.icon(self,icontype)
+            return QW.QFileIconProvider.icon(self,icontype)
 
-class MyFileSystemModel(QG.QFileSystemModel):
+class MyFileSystemModel(QW.QFileSystemModel):
     """FileSystemModel that links to a :class:`RandomDataModel`
 
     Attributes
@@ -239,6 +229,8 @@ class MyFileSystemModel(QG.QFileSystemModel):
     target : :class:`RandomDataModel`
         Model with image file data
     """
+    inspect_visible = QC.pyqtSignal(bool)
+    inspect_needed = QC.pyqtSignal(int)
     def __init__(self,parent = None):
         super(MyFileSystemModel, self).__init__(parent)
         self.icon_provider = MyFileIconProvider()
@@ -249,9 +241,9 @@ class MyFileSystemModel(QG.QFileSystemModel):
         print 'ftype', ftype
         if ftype=="oib":
             self.ftype="oib,oif"
-            self.setNameFilters(QC.QStringList([QC.QString("*.oib"),QC.QString("*.oif")]))
+            self.setNameFilters([str("*.oib"),str("*.oif")])
         else:
-            self.setNameFilters(QC.QStringList([QC.QString("*.%s"%ftype)]))
+            self.setNameFilters([str("*.%s"%ftype)])
 
     def setTarget(self, target):
         self.target = target
@@ -272,10 +264,10 @@ class MyFileSystemModel(QG.QFileSystemModel):
             filelist.extend(fl)
             print 'FILES',dd,len(filelist),os.path.join(str(dd),str(suffix)), filelist
         if filelist:
-            self.emit(QC.SIGNAL('inspect_visible(bool)'),True)
-            self.emit(QC.SIGNAL('inspect_needed(int)'),len(filelist))
+            self.inspect_visible.emit(True)
+            self.inspect_needed.emit(len(filelist))
         else:
-            self.emit(QC.SIGNAL('inspect_visible(bool)'),False)
+            self.inspect_visible.emit(False)
         return dd
 
     def flags(self, index):
@@ -290,6 +282,14 @@ class RandomDataModel(QC.QAbstractTableModel):
     """DataModel to display data from image file in a directory"""
     conversion_finished = QC.pyqtSignal()
     switchToFileSelection = QC.pyqtSignal(str)
+    filesRead = QC.pyqtSignal(int)
+    totalFiles = QC.pyqtSignal(int)
+    progressVisible = QC.pyqtSignal(bool)
+    conversion_needed = QC.pyqtSignal(int)
+    convert_pb_visible = QC.pyqtSignal(bool)
+    convert_progress_visible = QC.pyqtSignal(bool)
+    fitColumns=QC.pyqtSignal()
+    plotFile = QC.pyqtSignal(object)
     def __init__(self, parent=None):
         super(RandomDataModel, self).__init__(parent)
         print 'parent', parent
@@ -301,7 +301,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.ftype = sa.dbmaster.get_config_setting_value('filetype')
         #formats = ["*.lsm","*.ome"]
         self.omexml_maker = OMEXMLMaker()
-        self.connect(self.omexml_maker,QC.SIGNAL('conversion_update()'),self.conversion_update)
+        self.omexml_maker.conversion_update.connect(self.conversion_update)
 #        self.connect(self.omexml_maker,QC.SIGNAL('conversion_finished()'),self.conversion_finished)
         self.omexml_maker.conversion_finished.connect(self.ome_conversion_finished)
 
@@ -336,9 +336,9 @@ class RandomDataModel(QC.QAbstractTableModel):
         print 'formats:',self.formats
 
     def conversion_update(self):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
-        self.emit(QC.SIGNAL('fitColumns()'))
+        self.layoutAboutToBeChanged.emit((),0)
+        self.layoutChanged.emit((),0)
+        self.fitColumns.emit()
 
     def rowCount(self, parent):
         return self.rows
@@ -354,7 +354,7 @@ class RandomDataModel(QC.QAbstractTableModel):
             f.state=Constants.PLOTTED
             toplot.append(self.dirdatas[ind])
         print 'toplot:::',toplot
-        self.emit(QC.SIGNAL('plotFile(PyQt_PyObject)'),toplot)
+        self.plotFile.emit(toplot)
 
     def show_ref(self, indexlist):
         toplot = []
@@ -367,30 +367,36 @@ class RandomDataModel(QC.QAbstractTableModel):
     def rows(self):
         return len(self.dirdatas)
 
+    @timeIt
     def updateData(self):
         print '\n\n\n\ndata update'
+        import time
+        t0=time.time()
         self.dirdatas = []
-        self.emit(QC.SIGNAL('progressVisible(bool)'),True)
+        self.progressVisible.emit(True)
         files = []
         new_files=False
         for fmt in self.formats:
             files.extend(glob.glob(os.path.join(str(self.dirname),fmt)))
-        self.emit(QC.SIGNAL('totalFiles(int)'),len(files)-1)
+        self.totalFiles.emit(len(files)-1)
         self.session = sa.dbmaster.get_session()
-
+        import time
+        t0 = time.time()
         for i,f in enumerate(files):
             print '\n\n read',f
             new_files = True
             im = ImageMaker.check_in_database(f, self.session)
             self.dirdatas.append(im)
-            analyses = im.analyses
-            fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
-                    join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\
-                    join(sa.MicroscopeImage).filter(sa.MicroscopeImage.id == im.id).all()
+            print 't=', time.time()-t0
+            t0=time.time()
+            #analyses = im.analyses
+            #fit_results = self.session.query(sa.PixelByPixelRegionFitResult).\
+            #        join(sa.PixelByPixelFitRegion).join(sa.PixelByPixelAnalysis).\
+            #        join(sa.MicroscopeImage).filter(sa.MicroscopeImage.id == im.id).all()
             #for result in fit_results:
             #    syn_im = sa.PixelFittedSyntheticImage(result)
             #    self.dirdatas.append(syn_im)
-            self.emit(QC.SIGNAL('filesRead(int)'), i)
+            self.filesRead.emit(i)
 
         ##self.files.sort(key=lambda f:self.dirdatas[self.dirname][f].datetime)
         #find how many files need to be converted
@@ -406,21 +412,20 @@ class RandomDataModel(QC.QAbstractTableModel):
                     self.omexml_maker.add_file_to_convert(fr)
             print 'conversion needed for %i files'%needs_converting
             if needs_converting:
-                self.emit(QC.SIGNAL('conversion_needed(int)'), needs_converting)
-                self.emit(QC.SIGNAL('totalFiles(int)'), needs_converting)
+                self.conversion_needed.emit(needs_converting)
+                self.totalFiles.emit(needs_converting)
 
-        self.emit(QC.SIGNAL('progressVisible(bool)'), False)
+        self.progressVisible.emit(False)
         if self.dirdatas:
             self.switchToFileSelection.emit(self.dirname)
         print self.dirdatas
         self.session.commit()
-        #self.session.close()
 
     def convert(self):
         print 'singleshot'
         #return QC.QTimer.singleShot(500,lambda :self.omexml_maker.convert_all())
-        self.emit(QC.SIGNAL('convert_progress_visible(bool)'), True)
-        self.emit(QC.SIGNAL('convert_pb_visible(bool)'), False)
+        self.convert_progress_visible.emit(True)
+        self.convert_pb_visible.emit(False)
 #        self.emit(QC.SIGNAL('filesRead(int)'),0)
         self.omexml_maker.convert_all()
         #self.emit(QC.SIGNAL('progressVisible(bool)'),False)
@@ -473,7 +478,7 @@ class RandomDataModel(QC.QAbstractTableModel):
             return QC.Qt.ItemIsEnabled | QC.Qt.ItemIsSelectable
 
     def recheck_images(self):
-        d = self.dirdatas
+        #d = self.dirdatas
         for f in self.dirdatas:
             print 'check'
             print f
@@ -585,12 +590,12 @@ class RandomDataModel(QC.QAbstractTableModel):
         if 1:
             self.dirname = str(dirname)
             print 'new dir',str(self.dirname)
-            self.emit(QC.SIGNAL('modelAboutToBeReset()'))
-            self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+            self.modelAboutToBeReset.emit()
+            self.layoutAboutToBeChanged.emit((),0)
             self.updateData()
  #           self.beginResetModel()
-            self.emit(QC.SIGNAL('modelReset()'))
-            self.emit(QC.SIGNAL('layoutChanged()'))
+            self.modelReset.emit()
+            self.layoutChanged.emit((),0)
             #self.emit(QC.SIGNAL('fitColumns()'))
         else:
             print 'old dir'

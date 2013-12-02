@@ -1,8 +1,10 @@
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
 
 
-class CopyTableView(QG.QTableView):
+
+class CopyTableView(QW.QTableView):
     """QTableView that allows to copy data.
     Copied data in clipboard will be separated by newlines and commas"""
     items_selected = QC.pyqtSignal(bool)
@@ -12,7 +14,7 @@ class CopyTableView(QG.QTableView):
         for s in selected:
             if s.row() not in out.keys():
                 out[s.row()]={}
-            out[s.row()].update({s.column():str(s.data().toString())})
+            out[s.row()].update({s.column():str(s.data())})
         keys = out.keys()
         print keys
         keys.sort()
@@ -30,28 +32,28 @@ class CopyTableView(QG.QTableView):
             column_names = []
             column_count = header_model.columnCount(selected[0])
             for i in range(column_count):
-                column_names.append(str(header_model.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole).toString()))
+                column_names.append(str(header_model.headerData(i, QC.Qt.Horizontal, QC.Qt.DisplayRole)))
             copyLines.insert(0, ', '.join(column_names))
         outTxt = '\n'.join(copyLines)
         #print outTxt
-        QG.QApplication.clipboard().setText(outTxt)
+        QW.QApplication.clipboard().setText(outTxt)
         #print QG.QApplication.clipboard().text()
         return
 
     def keyPressEvent(self, event):
-        if (event.modifiers() & QC.Qt.ControlModifier) and event.key() == QC.Qt.Key_C:
+        if bool(event.modifiers() & QC.Qt.ControlModifier) and event.key() == QC.Qt.Key_C:
             self.copy()
             return
         else:
-            return QG.QTableView.keyPressEvent(self,event)
+            return QW.QTableView.keyPressEvent(self,event)
 
     def mousePressEvent(self, event):
         self.repaint()
-        return QG.QTableView.mousePressEvent(self,event)
+        return QW.QTableView.mousePressEvent(self,event)
 
     def mouseReleaseEvent(self, event):
         self.repaint()
-        res = QG.QTableView.mouseReleaseEvent(self, event)
+        res = QW.QTableView.mouseReleaseEvent(self, event)
         if self.selectedIndexes():
             self.items_selected.emit(True)
         else:

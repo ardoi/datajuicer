@@ -1,23 +1,26 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 
 from lsjuicer.ui.items.selection import NewBoundaryWidget,\
         NewExperimentTypeWidget,PickledSelection
 
 from resources import cm
 
-class ConfigTab(QG.QTabWidget):
+class ConfigTab(QW.QTabWidget):
     def __init__(self, parent = None):
         super(ConfigTab, self).__init__(parent)
         self.options_changed = {}
 
-        envelop_layout = QG.QVBoxLayout()
+        envelop_layout = QW.QVBoxLayout()
         self.setLayout(envelop_layout)
-        main_layout = QG.QGridLayout()
+        main_layout = QW.QGridLayout()
         #self.setLayout(main_layout)
         envelop_layout.addLayout(main_layout)
-        self.save_pb = QG.QPushButton('Save')
-        self.save_pb.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.save_pb = QW.QPushButton('Save')
+        self.save_pb.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
         self.save_pb.clicked.connect(self.save_settings)
         self.save_pb.setEnabled(False)
         envelop_layout.addWidget(self.save_pb)
@@ -27,20 +30,20 @@ class ConfigTab(QG.QTabWidget):
         #shelf_db = Config.get_property('shelf_db')
 
         #groups
-        group_conf_groupbox = QG.QGroupBox('Transient groups')
+        group_conf_groupbox = QW.QGroupBox('Transient groups')
         main_layout.addWidget(group_conf_groupbox,0,0)
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         group_conf_groupbox.setLayout(layout)
-        self.boundary_listview = QG.QListView(group_conf_groupbox)
+        self.boundary_listview = QW.QListView(group_conf_groupbox)
         layout.addWidget(self.boundary_listview)
         self.boundary_model = BoundaryDataModel(shelf_db)
         self.boundary_listview.setModel(self.boundary_model)
-        buttonlayout = QG.QVBoxLayout()
+        buttonlayout = QW.QVBoxLayout()
         layout.addLayout(buttonlayout)
         layout.addStretch()
-        edit_pb = QG.QPushButton('Edit',group_conf_groupbox)
-        new_pb = QG.QPushButton('New', group_conf_groupbox)
-        delete_pb = QG.QPushButton('Delete', group_conf_groupbox)
+        edit_pb = QW.QPushButton('Edit',group_conf_groupbox)
+        new_pb = QW.QPushButton('New', group_conf_groupbox)
+        delete_pb = QW.QPushButton('Delete', group_conf_groupbox)
         delete_pb.clicked.connect(self.delete_item)
         new_pb.clicked.connect(self.add_item)
         buttonlayout.addWidget(edit_pb)
@@ -49,20 +52,20 @@ class ConfigTab(QG.QTabWidget):
         buttonlayout.addStretch()
 
         #Experiment types
-        type_conf_typebox = QG.QGroupBox('Experiment types')
+        type_conf_typebox = QW.QGroupBox('Experiment types')
         main_layout.addWidget(type_conf_typebox,1,0)
-        layout = QG.QHBoxLayout()
+        layout = QW.QHBoxLayout()
         type_conf_typebox.setLayout(layout)
-        self.type_listview = QG.QListView(type_conf_typebox)
+        self.type_listview = QW.QListView(type_conf_typebox)
         layout.addWidget(self.type_listview)
         self.type_model = ExperimentTypeDataModel(shelf_db)
         self.type_listview.setModel(self.type_model)
-        buttonlayout = QG.QVBoxLayout()
+        buttonlayout = QW.QVBoxLayout()
         layout.addLayout(buttonlayout)
         layout.addStretch()
-        edit_pb = QG.QPushButton('Edit',type_conf_typebox)
-        new_pb = QG.QPushButton('New', type_conf_typebox)
-        delete_pb = QG.QPushButton('Delete', type_conf_typebox)
+        edit_pb = QW.QPushButton('Edit',type_conf_typebox)
+        new_pb = QW.QPushButton('New', type_conf_typebox)
+        delete_pb = QW.QPushButton('Delete', type_conf_typebox)
         delete_pb.clicked.connect(self.delete_type_item)
         new_pb.clicked.connect(self.add_type_item)
         buttonlayout.addWidget(edit_pb)
@@ -75,10 +78,10 @@ class ConfigTab(QG.QTabWidget):
         vis_key = 'visualization'
         self.vis_conf = shelf_db[vis_key]
 
-        vis_conf_groupbox = QG.QGroupBox('Default visualization settings')
+        vis_conf_groupbox = QW.QGroupBox('Default visualization settings')
         main_layout.addWidget(vis_conf_groupbox)
-        layout = QG.QFormLayout()
-        self.blur_spinbox = QG.QSpinBox(vis_conf_groupbox)
+        layout = QW.QFormLayout()
+        self.blur_spinbox = QW.QSpinBox(vis_conf_groupbox)
         self.blur_spinbox.setMaximum(10)
         self.blur_spinbox.setMinimum(0)
         self.blur_spinbox.setValue(self.vis_conf['blur'])
@@ -87,7 +90,7 @@ class ConfigTab(QG.QTabWidget):
         vis_conf_groupbox.setLayout(layout)
         layout.addRow('&Blur amount',self.blur_spinbox)
 
-        self.saturation_spinbox = QG.QSpinBox(vis_conf_groupbox)
+        self.saturation_spinbox = QW.QSpinBox(vis_conf_groupbox)
         self.saturation_spinbox.setMaximum(100)
         self.saturation_spinbox.setSingleStep(5)
         self.saturation_spinbox.setMinimum(1)
@@ -96,7 +99,7 @@ class ConfigTab(QG.QTabWidget):
                 self.visualization_controls_moved)
         layout.addRow('&Saturation',self.saturation_spinbox)
 
-        self.colormap_combobox = QG.QComboBox(vis_conf_groupbox)
+        self.colormap_combobox = QW.QComboBox(vis_conf_groupbox)
         self.colormaps = [name for name in cm.datad if not name.endswith("_r")]
         self.colormaps.sort()
         self.colormap_combobox.setIconSize(QC.QSize(100,20))
@@ -109,7 +112,7 @@ class ConfigTab(QG.QTabWidget):
                 self.visualization_controls_moved)
         layout.addRow('&Colormap',self.colormap_combobox)
 
-        self.colormap_reverse_checkbox = QG.QCheckBox(vis_conf_groupbox)
+        self.colormap_reverse_checkbox = QW.QCheckBox(vis_conf_groupbox)
         self.colormap_reverse_checkbox.setChecked(self.vis_conf['colormap_reverse'])
         self.colormap_reverse_checkbox.stateChanged.connect(
                 self.visualization_controls_moved)
@@ -168,8 +171,8 @@ class ConfigTab(QG.QTabWidget):
         self.boundary_model.removeRows(self.boundary_listview.selectedIndexes())
 
     def add_item(self):
-        dialog = QG.QDialog(self)
-        layout = QG.QHBoxLayout()
+        dialog = QW.QDialog(self)
+        layout = QW.QHBoxLayout()
         dialog.setLayout(layout)
         new_boundary_widget = NewBoundaryWidget(self.boundary_model, dialog)
         layout.addWidget(new_boundary_widget)
@@ -182,8 +185,8 @@ class ConfigTab(QG.QTabWidget):
         self.type_model.removeRows(self.type_listview.selectedIndexes())
 
     def add_type_item(self):
-        dialog = QG.QDialog(self)
-        layout = QG.QHBoxLayout()
+        dialog = QW.QDialog(self)
+        layout = QW.QHBoxLayout()
         dialog.setLayout(layout)
         new_et_widget = NewExperimentTypeWidget(self.type_model, dialog)
         layout.addWidget(new_et_widget)
@@ -215,18 +218,18 @@ class ExperimentTypeDataModel(QC.QAbstractListModel):
         return rows
 
     def removeRows(self, index):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         ets = self.experimenttypes
         ets.remove(ets[index[0].row()])
         self.experimenttypes = ets
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def add_new(self, et):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         ets = self.experimenttypes
         ets.append(et)
         self.experimenttypes = ets
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def data(self, index, role):
         ets = self.experimenttypes
@@ -278,19 +281,19 @@ class BoundaryDataModel(QC.QAbstractListModel):
         return rows
 
     def removeRows(self, index):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selectiontypes
         print 'remove row',index[0].row()
         selections.remove(selections[index[0].row()])
         self.selectiontypes = selections
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
     def add_new(self, selection):
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
+        self.layoutAboutToBeChanged.emit((),0)
         selections = self.selectiontypes
         selections.append(selection)
         self.selectiontypes = selections
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.layoutChanged.emit((),0)
 
 
     def data(self, index, role):

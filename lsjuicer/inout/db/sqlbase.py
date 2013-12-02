@@ -113,7 +113,7 @@ class DBMaster(object):
             setting.name = name
             setting.value = value
             session.add(setting)
-        self.commit_session()
+        #self.commit_session()
 
 
 dbmaster = DBMaster()

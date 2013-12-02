@@ -1,5 +1,8 @@
-import PyQt4.QtCore as QC
-import PyQt4.QtGui as QG
+from PyQt5 import QtCore as QC
+
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
 import numpy as n
 import datetime
 
@@ -19,7 +22,7 @@ class SparkDataModel(QC.QAbstractTableModel):
     def columnCount(self, parent):
         return self.columns
     def setData(self, model_data):
-        self.layoutAboutToBeChanged.emit()
+        self.layoutAboutToBeChanged.emit((),0)
         self.modelAboutToBeReset.emit()
         self.model_data = []
         for spark_roi in model_data:
@@ -33,7 +36,7 @@ class SparkDataModel(QC.QAbstractTableModel):
 
         self.rows = len(self.model_data)
         print 'new rows', self.rows
-        self.layoutChanged.emit()
+        self.layoutChanged.emit((),0)
         self.modelReset.emit()
     def headerData(self, section, orientation, role):
         if role == QC.Qt.DisplayRole:
@@ -263,12 +266,12 @@ class GroupDataModel(QC.QAbstractTableModel):
 def list2str(lin):
     return ", ".join(["%.5f"%el for el in lin])
 
-class SparkResultsWidget(QG.QWidget):
+class SparkResultsWidget(QW.QWidget):
     sparks_active = QC.pyqtSignal(list)
     def  __init__(self, sparks, imagedata, parent = None):
         super(SparkResultsWidget, self).__init__( parent)
         self.sparks = sparks
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.tableview = CopyTableView(self)
         self.dm = SparkDataModel()
@@ -276,12 +279,12 @@ class SparkResultsWidget(QG.QWidget):
             self.dm.setData(self.sparks)
         self.tableview.setModel(self.dm)
         self.tableview.items_selected.connect(self.spark_selected)
-        self.tableview.setSelectionMode(QG.QAbstractItemView.ExtendedSelection)
-        self.tableview.setSelectionBehavior(QG.QAbstractItemView.SelectRows)
+        self.tableview.setSelectionMode(QW.QAbstractItemView.ExtendedSelection)
+        self.tableview.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
         self.tableview.setAlternatingRowColors(True)
-        #self.tableview.horizontalHeader().setResizeMode(QG.QHeaderView.Fixed)
-        self.tableview.horizontalHeader().setResizeMode(QG.QHeaderView.ResizeToContents)
-        self.tableview.horizontalHeader().setResizeMode(self.dm.rows-1, QG.QHeaderView.Stretch)
+        #self.tableview.horizontalHeader().setSectionResizeMode(QG.QHeaderView.Fixed)
+        self.tableview.horizontalHeader().setSectionResizeMode(QW.QHeaderView.ResizeToContents)
+        self.tableview.horizontalHeader().setSectionResizeMode(self.dm.rows-1, QW.QHeaderView.Stretch)
 
         #self.tableview.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
         layout.addWidget(self.tableview)
@@ -311,10 +314,10 @@ class SparkResultsWidget(QG.QWidget):
         self.dm.setData(self.sparks)
         self.tableview.resizeColumnsToContents()
     def save_data(self,datafilename):
-        comment,ok = QG.QInputDialog.getText(self,
-                'info','You can enter a comment on the line below:',QG.QLineEdit.Normal, '')
+        comment,ok = QW.QInputDialog.getText(self,
+                'info','You can enter a comment on the line below:',QW.QLineEdit.Normal, '')
         if not ok:
-            QG.QMessageBox.information(self,'Cancelled','Saving was cancelled')
+            QW.QMessageBox.information(self,'Cancelled','Saving was cancelled')
             return
         #print comment, ok
         print '::Saving::', datafilename
@@ -322,7 +325,7 @@ class SparkResultsWidget(QG.QWidget):
             datafile = open(datafilename,'w')
         except IOError:
             txt = 'Error saving file \n%s'%datafilename
-            QG.QMessageBox.warning(self,'Error',txt)
+            QW.QMessageBox.warning(self,'Error',txt)
             return
         datafile.write("# Comment: %s\n"%comment)
         reader = self.imagedata.readers[0] #use the first reader
@@ -383,20 +386,20 @@ class SparkResultsWidget(QG.QWidget):
         #for vec in outdatas:
         #    datafile.write(vec + "\n")
         txt = 'Results saved to:\n%s'%datafilename
-        QG.QMessageBox.information(self,'Success',txt)
+        QW.QMessageBox.information(self,'Success',txt)
         datafile.close()
 
-class ResultTab(QG.QTabWidget):
+class ResultTab(QW.QTabWidget):
     def  __init__(self, parent = None):
         super(ResultTab, self).__init__(parent)
         self.currentChanged.connect(self.setc)
         self.groups={}
 
     def save_data(self,datafilename):
-        comment,ok = QG.QInputDialog.getText(self,
-                'info','You can enter a comment on the line below:',QG.QLineEdit.Normal, '')
+        comment,ok = QW.QInputDialog.getText(self,
+                'info','You can enter a comment on the line below:',QW.QLineEdit.Normal, '')
         if not ok:
-            QG.QMessageBox.information(self,'Cancelled','Saving was cancelled')
+            QW.QMessageBox.information(self,'Cancelled','Saving was cancelled')
             return
         #print comment, ok
         print '::Saving::', datafilename
@@ -404,7 +407,7 @@ class ResultTab(QG.QTabWidget):
             datafile = open(datafilename,'w')
         except IOError:
             txt = 'Error saving file \n%s'%datafilename
-            QG.QMessageBox.warning(self,'Error',txt)
+            QW.QMessageBox.warning(self,'Error',txt)
             return
         datafile.write("# Comment: %s\n"%comment)
         restypes = self.groups.keys()
@@ -437,7 +440,7 @@ class ResultTab(QG.QTabWidget):
                     out.append("%.5f"%vec[i])
             datafile.write(", ".join(out) + "\n")
         txt = 'Results saved to:\n%s'%datafilename
-        QG.QMessageBox.information(self,'Success',txt)
+        QW.QMessageBox.information(self,'Success',txt)
 
     def addResPlot(self, name, yval, xval,groups, size, plottype, color,append):
         groupsdata = {}
@@ -472,8 +475,8 @@ class ResultTab(QG.QTabWidget):
         print groupsdata
         if glines:
             glines.pop()
-        plot_widget = QG.QWidget()
-        layout = QG.QVBoxLayout()
+        plot_widget = QW.QWidget()
+        layout = QW.QVBoxLayout()
         plot_widget.setLayout(layout)
         plot = TracePlotWidget(sceneClass = FDisplay, parent = plot_widget)
         plot.updateLocation.connect(self.updateCoords)
@@ -482,12 +485,12 @@ class ResultTab(QG.QTabWidget):
         #w.setMaximumHeight(120)
         #w.setLayout(QG.QHBoxLayout())
         #w.layout().setContentsMargins(1,1,1,1)
-        tableview = QG.QTableView()
+        tableview = QW.QTableView()
         #w.layout().addWidget(tableview)
         #tableview.setMaximumHeight(130)
         #tableview.setMinimumWidth(450)
         tableview.setModel(dm)
-        tableview.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        tableview.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
         #w.setSizePolicy(QG.QSizePolicy.Minimum,QG.QSizePolicy.Minimum)
         #plot.extendControlArea(w)
         layout.addWidget(tableview)
@@ -517,4 +520,4 @@ class ResultTab(QG.QTabWidget):
         print t
     def updateCoords(self, xv, yv, xs, ys):
         #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.emit(QC.SIGNAL('positionTXT(QString)'),'x: %.3f , y: %.2f , sx: %i, sy: %i'%(xv,yv,xs,ys))
+        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))

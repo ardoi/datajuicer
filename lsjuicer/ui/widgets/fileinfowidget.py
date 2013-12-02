@@ -1,5 +1,8 @@
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
+
+from PyQt5 import QtCore as QC
+
 
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 from lsjuicer.data.pipes.tools import PipeChain
@@ -14,17 +17,17 @@ from lsjuicer.inout.db import sqla
 from lsjuicer.ui.views.dataviews import CopyTableView
 
 
-class FocusLineEdit(QG.QLineEdit):
+class FocusLineEdit(QW.QLineEdit):
     """QLineEdit extension that displays default text that is removed when user starts editing."""
     def focusInEvent(self, event):
         if str(self.text()) == self.default_text:
             self.setText("")
-        QG.QLineEdit.focusInEvent(self, event)
+        QW.QLineEdit.focusInEvent(self, event)
 
     def focusOutEvent(self, event):
         if str(self.text()) == self.default_text or len(self.text())==0:
             self.set_default_text()
-        QG.QLineEdit.focusOutEvent(self, event)
+        QW.QLineEdit.focusOutEvent(self, event)
 
     def set_default_text(self, text=None):
         if text:
@@ -44,43 +47,43 @@ class FocusLineEdit(QG.QLineEdit):
             self.setText(text)
 
 
-class AddSQLPropertyDialog(QG.QDialog):
+class AddSQLPropertyDialog(QW.QDialog):
     def __init__(self, db_class, parent = None):
         super(AddSQLPropertyDialog, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
         self.setWindowTitle("Add new %s type"%db_class.__name__)
         widget = AddSQLPropertyWidget(db_class, parent=self)
         layout.addWidget(widget)
-        button_layout = QG.QHBoxLayout()
-        close_pb = QG.QPushButton("Close")
+        button_layout = QW.QHBoxLayout()
+        close_pb = QW.QPushButton("Close")
         close_pb.clicked.connect(self.accept)
         button_layout.addWidget(close_pb)
         layout.addLayout(button_layout)
 
 
-class AddSQLPropertyWidget(QG.QWidget):
+class AddSQLPropertyWidget(QW.QWidget):
     def __init__(self, db_class, parent = None):
         super(AddSQLPropertyWidget, self).__init__(parent)
-        add_layout = QG.QVBoxLayout()
+        add_layout = QW.QVBoxLayout()
         self.setLayout(add_layout)
         self.db_class = db_class
-        add_formlayout = QG.QFormLayout()
+        add_formlayout = QW.QFormLayout()
         name_lineedit = FocusLineEdit()
         name_lineedit.set_default_text("Name of %s"%self.db_class.__name__)
         self.name_lineedit = name_lineedit
         add_formlayout.addRow("Name:", name_lineedit)
-        descr_lineedit = QG.QTextEdit()
+        descr_lineedit = QW.QTextEdit()
         self.descr_lineedit = descr_lineedit
         #descr_lineedit.set
         add_formlayout.addRow("Description:", descr_lineedit)
         add_layout.addLayout(add_formlayout)
-        status_label = QG.QLabel()
+        status_label = QW.QLabel()
         add_layout.addWidget(status_label)
         self.status_label = status_label
-        button_layout = QG.QHBoxLayout()
+        button_layout = QW.QHBoxLayout()
         add_layout.addLayout(button_layout)
-        ok_pb = QG.QPushButton("Add")
+        ok_pb = QW.QPushButton("Add")
         #cancel_pb = QG.QPushButton("Close")
         button_layout.addWidget(ok_pb)
         #button_layout.addWidget(cancel_pb)
@@ -109,7 +112,7 @@ class AddSQLPropertyWidget(QG.QWidget):
         self.status_label.setVisible(False)
 
 
-class DBComboAddBox(QG.QWidget):
+class DBComboAddBox(QW.QWidget):
     """Combo box with an 'Add' button to add options"""
     def show_add_dialog(self):
         add_dialog = AddSQLPropertyDialog(self.db_class, parent = self)
@@ -120,8 +123,8 @@ class DBComboAddBox(QG.QWidget):
 
     def __init__(self, db_class, show_None = True, parent = None):
         super(DBComboAddBox, self).__init__(parent)
-        layout = QG.QVBoxLayout()
-        field_layout = QG.QHBoxLayout()
+        layout = QW.QVBoxLayout()
+        field_layout = QW.QHBoxLayout()
         field_layout.setContentsMargins(0,0,0,0)
         layout.setContentsMargins(0,0,0,0)
         layout.addLayout(field_layout)
@@ -129,17 +132,17 @@ class DBComboAddBox(QG.QWidget):
         self.db_class = db_class
         self.show_None = show_None
 
-        combo = QG.QComboBox()
-        add_pb = QG.QToolButton()
+        combo = QW.QComboBox()
+        add_pb = QW.QToolButton()
         add_pb.setIcon(QG.QIcon(':/add.png'))
         add_pb.setCheckable(True)
         add_pb.setAutoRaise(True)
         add_pb.setToolTip("Add a new %s type"%db_class.__name__)
         add_pb.clicked.connect(self.show_add_dialog)
-        info_label = QG.QLabel()
+        info_label = QW.QLabel()
         info_label.setPixmap(QG.QPixmap(":/information.png"))
         info_label.setToolTip(db_class.__doc__)
-        info_label.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        info_label.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
 
         self.add_pb = add_pb
         field_layout.addWidget(combo)
@@ -169,20 +172,20 @@ class DBComboAddBox(QG.QWidget):
     def get_value(self):
         return str(self.combo.currentText())
 
-class DBAttributeSpinBox(QG.QWidget):
+class DBAttributeSpinBox(QW.QWidget):
     def __init__(self, attr, parent = None):
-        super(QG.QWidget, self).__init__(parent)
-        layout = QG.QHBoxLayout()
+        super(QW.QWidget, self).__init__(parent)
+        layout = QW.QHBoxLayout()
         layout.setContentsMargins(0,0,0,0)
         #field_layout = QG.QHBoxLayout()
         #layout.addLayout(field_layout)
         self.setLayout(layout)
-        self.spin = QG.QSpinBox(self)
+        self.spin = QW.QSpinBox(self)
         self.spin.setMinimum(0)
         self.spin.setMaximum(500)
         self.spin.setSingleStep(1)
         layout.addWidget(self.spin)
-        info_label = QG.QLabel()
+        info_label = QW.QLabel()
         info_label.setPixmap(QG.QPixmap(":/information.png"))
         info_label.setToolTip(attr.__doc__)
         layout.addWidget(info_label)
@@ -201,16 +204,16 @@ class DBAttributeSpinBox(QG.QWidget):
         else:
             return val
 
-class DBAttributeLineEdit(QG.QWidget):
+class DBAttributeLineEdit(QW.QWidget):
     def __init__(self, attr, parent = None):
-        super(QG.QWidget, self).__init__(parent)
-        layout = QG.QHBoxLayout()
+        super(QW.QWidget, self).__init__(parent)
+        layout = QW.QHBoxLayout()
         #field_layout = QG.QHBoxLayout()
         #layout.addLayout(field_layout)
         self.setLayout(layout)
-        self.lineedit = QG.QTextEdit(self)
+        self.lineedit = QW.QTextEdit(self)
         layout.addWidget(self.lineedit)
-        info_label = QG.QLabel()
+        info_label = QW.QLabel()
         info_label.setPixmap(QG.QPixmap(":/information.png"))
         info_label.setToolTip(attr.__doc__)
         layout.addWidget(info_label)
@@ -251,10 +254,10 @@ class ResultDataModel(QC.QAbstractTableModel):
             self.data_update()
 
     def data_update(self):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
-        self.emit(QC.SIGNAL('modelReset()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.modelAboutToBeReset.emit()
+        self.layoutAboutToBeChanged.emit((),0)
+        self.modelReset.emit()
+        self.layoutChanged.emit((),0)
 
     def rowCount(self, parent):
         if self.results:
@@ -392,17 +395,17 @@ class AnalysesDataModel(QC.QAbstractTableModel):
         self.data_update()
 
     def data_update(self):
-        self.emit(QC.SIGNAL('modelAboutToBeReset()'))
-        self.emit(QC.SIGNAL('layoutAboutToBeChanged()'))
-        self.emit(QC.SIGNAL('modelReset()'))
-        self.emit(QC.SIGNAL('layoutChanged()'))
+        self.modelAboutToBeReset.emit()
+        self.layoutAboutToBeChanged.emit((),0)
+        self.modelReset.emit()
+        self.layoutChanged.emit((),0)
 
     def get_selected(self, indexlist):
         ind = indexlist[0]
         print 'indices', ind
         return self.analyses[ind.row()]
 
-class AnalysesInfoWidget(QG.QGroupBox):
+class AnalysesInfoWidget(QW.QGroupBox):
     new_analysis = QC.pyqtSignal()
     load_analysis = QC.pyqtSignal(sqla.Analysis)
 
@@ -411,24 +414,24 @@ class AnalysesInfoWidget(QG.QGroupBox):
         self.ui_setup()
 
     def ui_setup(self):
-        layout = QG.QHBoxLayout()
-        table_layout = QG.QVBoxLayout()
+        layout = QW.QHBoxLayout()
+        table_layout = QW.QVBoxLayout()
         layout.addLayout(table_layout)
         self.setLayout(layout)
         analyses_table = CopyTableView(self)
         analyses_model = AnalysesDataModel(self)
-        analyses_table.setSelectionMode(QG.QAbstractItemView.SingleSelection)
-        analyses_table.setSelectionBehavior(QG.QAbstractItemView.SelectRows)
+        analyses_table.setSelectionMode(QW.QAbstractItemView.SingleSelection)
+        analyses_table.setSelectionBehavior(QW.QAbstractItemView.SelectRows)
         self.analyses_model = analyses_model
         self.analyses_table = analyses_table
         analyses_table.setModel(analyses_model)
         table_layout.addWidget(analyses_table)
         self.setTitle("Analyses")
-        self.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Expanding)
+        self.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Expanding)
 
-        plot_pb = QG.QPushButton(QG.QIcon("://chart_curve_edit.png"),"New Analysis")
-        load_pb = QG.QPushButton("Load")
-        delete_pb = QG.QPushButton("Delete")
+        plot_pb = QW.QPushButton(QG.QIcon("://chart_curve_edit.png"),"New Analysis")
+        load_pb = QW.QPushButton("Load")
+        delete_pb = QW.QPushButton("Delete")
         #self.plot_pb.setVisible(False)
         plot_pb.setStyleSheet("""
             QPushButton {
@@ -467,9 +470,9 @@ class AnalysesInfoWidget(QG.QGroupBox):
                 session.delete(r)
             session.delete(analysis)
             message = "Are you sure you want to delete this analysis?\n%i regions with %i sparks will be removed"%(region_count, spark_count)
-            res = QG.QMessageBox.question(self,'Confirm delete', message,
-                    QG.QMessageBox.Yes|QG.QMessageBox.No)
-            if res == QG.QMessageBox.Yes:
+            res = QW.QMessageBox.question(self,'Confirm delete', message,
+                    QW.QMessageBox.Yes|QW.QMessageBox.No)
+            if res == QW.QMessageBox.Yes:
                 print 'deleting'
                 session.commit()
             else:
@@ -483,18 +486,18 @@ class AnalysesInfoWidget(QG.QGroupBox):
     def clear(self):
         self.analyses_model.clear()
 
-class MyFormLikeLayout(QG.QVBoxLayout):
+class MyFormLikeLayout(QW.QVBoxLayout):
     def add_row(self, name, widget):
-        row=QG.QHBoxLayout()
+        row=QW.QHBoxLayout()
         #row.setContentsMargins(0,0,0,0)
-        row.addWidget(QG.QLabel(name))
-        if isinstance(widget, QG.QWidget):
+        row.addWidget(QW.QLabel(name))
+        if isinstance(widget, QW.QWidget):
             row.addWidget(widget)
         else:
             row.addLayout(widget)
         self.addLayout(row)
 
-class ExpInfoWidget(QG.QGroupBox):
+class ExpInfoWidget(QW.QGroupBox):
     update_results = QC.pyqtSignal()
     close = QC.pyqtSignal()
     #this is for quickly reusing the settings of the previous file
@@ -530,20 +533,20 @@ class ExpInfoWidget(QG.QGroupBox):
                 attr.set_value(val)
 
     def ui_setup(self):
-        prop_layout = QG.QVBoxLayout()
+        prop_layout = QW.QVBoxLayout()
         self.setLayout(prop_layout)
         form_layout = MyFormLikeLayout()
         form_layout.setSpacing(1)
         form_layout.setContentsMargins(0,0,0,0)
         prop_layout.addLayout(form_layout)
-        self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Maximum)
+        self.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Maximum)
 
 
-        button_layout = QG.QHBoxLayout()
-        update_pb = QG.QPushButton(QG.QIcon('://database_go.png'),"Apply")
-        reuse_pb = QG.QPushButton("Copy from last")
-        close_pb = QG.QPushButton("Close")
-        status_label = QG.QLabel('<html style="background:red;">Not saved</html>')
+        button_layout = QW.QHBoxLayout()
+        update_pb = QW.QPushButton(QG.QIcon('://database_go.png'),"Apply")
+        reuse_pb = QW.QPushButton("Copy from last")
+        close_pb = QW.QPushButton("Close")
+        status_label = QW.QLabel('<html style="background:red;">Not saved</html>')
         self.status_label = status_label
         button_layout.addWidget(status_label)
         button_layout.addWidget(update_pb)
@@ -633,12 +636,12 @@ class ExpInfoWidget(QG.QGroupBox):
 
 
 
-class ReferencePlot(QG.QWidget):
+class ReferencePlot(QW.QWidget):
     def __init__(self, parent = None):
         super(ReferencePlot, self).__init__(parent)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        self.scene = QG.QGraphicsScene(self)
+        self.scene = QW.QGraphicsScene(self)
         #self.scene.addRect(QC.QRectF(0,0,100,100))
         self.view = ZoomView(self, locked = True)
         self.view.setScene(self.scene)
@@ -646,7 +649,7 @@ class ReferencePlot(QG.QWidget):
         self.pixmaker = PixmapMaker(self.pc)
         self.image_shown = False
         self.vis_widget = None
-        screen_rect = QG.QApplication.instance().desktop().screenGeometry()
+        screen_rect = QW.QApplication.instance().desktop().screenGeometry()
         screen_width = screen_rect.width()
         if screen_width > 1500:
             self.view.setFixedSize(512, 512)
@@ -654,7 +657,7 @@ class ReferencePlot(QG.QWidget):
             self.view.setFixedSize(256, 256)
         layout.addWidget(self.view, QC.Qt.AlignTop)
 
-        vis_options_pb = QG.QPushButton("Visualization properties")
+        vis_options_pb = QW.QPushButton("Visualization properties")
         vis_options_pb.clicked.connect(self.show_vis_options_dialog)
         vis_options_pb.setIcon(QG.QIcon('://color_wheel.png'))
         layout.addWidget(vis_options_pb)
@@ -664,14 +667,14 @@ class ReferencePlot(QG.QWidget):
         self.g_roiline = None
         gt = self.scene.addText("No file selected")
         self.view.centerOn(gt)
-        self.view.setFrameStyle(QG.QFrame.NoFrame)
+        self.view.setFrameStyle(QW.QFrame.NoFrame)
         self.view.setRenderHint(QG.QPainter.Antialiasing)
-        self.view.setTransformationAnchor(QG.QGraphicsView.AnchorUnderMouse)
+        self.view.setTransformationAnchor(QW.QGraphicsView.AnchorUnderMouse)
         self.view.setMouseTracking(True)
         self.roi_pen = QG.QPen(QG.QColor('lime'))
         self.roi_pen.setCosmetic(True)
         self.roi_pen.setWidth(3)
-        self.setSizePolicy(QG.QSizePolicy.Maximum, QG.QSizePolicy.Minimum)
+        self.setSizePolicy(QW.QSizePolicy.Maximum, QW.QSizePolicy.Minimum)
 
 
     def set_pixmap(self, pixmap, view_reset):
@@ -738,8 +741,8 @@ class ReferencePlot(QG.QWidget):
                 pass
 
     def show_vis_options_dialog(self):
-        dialog = QG.QDialog(self)
-        layout = QG.QHBoxLayout()
+        dialog = QW.QDialog(self)
+        layout = QW.QHBoxLayout()
         dialog.setLayout(layout)
         widget = VisualizationOptionsWidget(self.pc, parent=dialog)
         widget.settings_changed.connect(self.change_pixmap_settings)

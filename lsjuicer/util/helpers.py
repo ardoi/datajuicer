@@ -1,7 +1,9 @@
 import time
 
-import PyQt4.QtGui as QG
-import PyQt4.QtCore as QC
+from PyQt5 import QtGui as QG
+
+from PyQt5 import QtCore as QC
+
 
 import numpy
 from scipy.signal import convolve2d
@@ -15,6 +17,17 @@ def round_point(point):
     point.setX(int(round(point.x())))
     point.setY(int(round(point.y())))
 
+def floor_point_x(point):
+    point.setX(int(point.x()))
+    point.setY(int(round(point.y())))
+
+def floor_rect_x(rect):
+    tl = rect.topLeft()
+    br = rect.bottomRight()
+    floor_point_x(tl)
+    floor_point_x(br)
+    rect.setTopLeft(tl)
+    rect.setBottomRight(br)
 
 class shiftList:
 
@@ -118,7 +131,7 @@ def timeIt(f):
         t0 = time.time()
         print '\n>>>%s Executing %s' % ('\t'*(timeIt.active-1)+'#', f.__name__)
         res = f(*args, **kwargs)
-        print '>>>%s Function %s execution time: %.2f seconds\n' %\
+        print '>>>%s Function %s execution time: %.3f seconds\n' %\
             ('\t'*(timeIt.active-1)+'#', f.__name__, time.time()-t0)
         timeIt.active -= 1
         return res

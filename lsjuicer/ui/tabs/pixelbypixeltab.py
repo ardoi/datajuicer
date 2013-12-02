@@ -2,25 +2,23 @@ import datetime
 import traceback
 #from collections import defaultdict
 
-import numpy
+from PyQt5 import QtGui as QG
+from PyQt5 import QtWidgets as QW
 
-from PyQt4 import QtGui as QG
-from PyQt4 import QtCore as QC
 
-from lsjuicer.inout.db import sqlb2
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
 from lsjuicer.inout.db.sqla import PixelEvent
 from lsjuicer.ui.widgets.clusterwidget import ClusterDialog
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
 from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
-from lsjuicer.util.threader import FitDialog
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
-from lsjuicer.data.data import ImageDataMaker
+from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
+from lsjuicer.util.helpers import timeIt
 
-class PixelByPixelTab(QG.QTabWidget):
+class PixelByPixelTab(QW.QTabWidget):
     @property
     def settings_text(self):
         out_image = "<strong>Image:</strong> <br>Width: %i<br>Height: %i<br>Pixels in frame: %i<br>Frames: %i"\
@@ -29,8 +27,8 @@ class PixelByPixelTab(QG.QTabWidget):
 
         if self.coords:
             out_selection = "<strong>Selection:</strong><br>Top left: x=%i y=%i<br>Width: %i<br>Height: %i<br>Pixels: %i<br/>Frames: %i"\
-                    %(self.coords.left(), self.coords.top(), self.coords.width(),\
-                    self.coords.height(), self.coords.width()*self.coords.height(),
+                    %(self.coords.left(), self.coords.top(), self.data_width,\
+                    self.data_height, self.data_width*self.data_height,
                     self.acquisitions)
         else:
             out_selection = ""
@@ -40,11 +38,14 @@ class PixelByPixelTab(QG.QTabWidget):
 
     @property
     def data_width(self):
-        if self.coords:
-            x = int(self.coords.width())
+        if isinstance(self.imagedata, ImageDataLineScan):
+            return 1
         else:
-            x = self.imagedata.x_points
-        return x
+            if self.coords:
+                x = int(self.coords.width())
+            else:
+                x = self.imagedata.x_points
+            return x
 
     @property
     def data_height(self):
@@ -60,6 +61,7 @@ class PixelByPixelTab(QG.QTabWidget):
         return "A"
 
     def makefits(self):
+        from lsjuicer.util.threader import FitDialog
         #t0 = time.time()
         #out = []
         params = []
@@ -67,17 +69,12 @@ class PixelByPixelTab(QG.QTabWidget):
         #    stdlimit = int(self.limit_spinbox.value())
         #else:
         #    stdlimit = None
-        for x in range(self.dx, self.data_width-self.dx):
-            for y in range(self.dy, self.data_height-self.dy):
-                data = self.imagedata.trace_in_time(x + self.x0, y+self.y0,
-                        self.dx, self.dy, self.start_frame, self.end_frame)
-                try:
-                    assert True not in numpy.isnan(data)
-                except:
-                    print "NAN", (x + self.x0, y+self.y0, self.dx, self.dy)
-                    print x,self.x0, y, self.y0
-                #numpy.savetxt("out_%i_%i.dat"%(x+self.x0, y+self.y0), data)
-                params.append({'data':data, 'coords':(x - self.dx, y-self.dy)})
+        region_parameters = {'x0':self.dx+self.x0, 'y0':self.dy + self.y0,
+                             'x1':self.x0+self.data_width - self.dx,
+                             'y1':self.y0+self.data_height - self.dy,
+                             'dx':self.dx, 'dy':self.dy,
+                             't0':self.start_frame, 't1':self.end_frame}
+        params = self.imagedata.get_traces(region_parameters)
         settings = {'width':self.data_width, 'height':self.data_height, 'dx':self.dx, 'dy':self.dy}
         fit_dialog = FitDialog(params, settings, parent = self)
         fit_dialog.progress_map_update.connect(self.set_progress_map_data)
@@ -97,6 +94,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.plot_widget.set_data(data)
 
     def threader_finished(self):
+        from lsjuicer.inout.db import sqlb2
         print "threader done. saving results"
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
@@ -159,11 +157,14 @@ class PixelByPixelTab(QG.QTabWidget):
 
     @property
     def dx(self):
-        return self.padding_spinbox.value()
+        if isinstance(self.imagedata, ImageDataLineScan):
+            return 0
+        else:
+            return self.padding_spinbox.value()
 
     @property
     def dy(self):
-        return self.dx
+        return self.padding_spinbox.value()
 
     @property
     def trace_count(self):
@@ -183,32 +184,35 @@ class PixelByPixelTab(QG.QTabWidget):
         self.imagedata = imagedata
         self.parent = parent
         print "PBPT", parent
-        self.coords = None
+        roi = selections[ISTN.ROI][0]
+        self.coords = roi.graphic_item.rect()
         self.fit = False
         self.analysis  = analysis
-        roi = selections[ISTN.ROI][0]
-        time_range = selections[ISTN.TIMERANGE]
-        self.start_frame = time_range['start']
-        self.end_frame = time_range['end']
+        if isinstance(imagedata, ImageDataLineScan):
+            self.start_frame = self.coords.left()
+            self.end_frame=self.coords.right()
+        else:
+            time_range = selections[ISTN.TIMERANGE]
+            self.start_frame = time_range['start']
+            self.end_frame = time_range['end']
         self.acquisitions = self.end_frame - self.start_frame
 
-        self.coords = roi.graphic_item.rect()
         #self.coords = QC.QRectF(167, 38, 148, 22)
         #self.coords = QC.QRectF(190, 44, 60, 9)
         #self.coords = QC.QRectF(211,22,121,15)
         #self.coords = QC.QRectF(121,29, 115, 31)
         #self.coords = QC.QRectF(202, 43, 276-202, 61-43)
-        layout = QG.QVBoxLayout()
+        layout = QW.QVBoxLayout()
         self.setLayout(layout)
-        settings_box = QG.QGroupBox('Fit settings')
-        settings_layout = QG.QVBoxLayout()
+        settings_box = QW.QGroupBox('Fit settings')
+        settings_layout = QW.QVBoxLayout()
         settings_box.setLayout(settings_layout)
         layout.addWidget(settings_box)
 
-        padding_layout = QG.QHBoxLayout()
-        padding_label = QG.QLabel("Element padding")
+        padding_layout = QW.QHBoxLayout()
+        padding_label = QW.QLabel("Element padding")
         padding_layout.addWidget(padding_label)
-        padding_spinbox = QG.QSpinBox(self)
+        padding_spinbox = QW.QSpinBox(self)
         padding_layout.addWidget(padding_spinbox)
         padding_spinbox.setMinimum(0)
         padding_spinbox.setValue(1)
@@ -217,11 +221,11 @@ class PixelByPixelTab(QG.QTabWidget):
         settings_layout.addLayout(padding_layout)
         padding_spinbox.valueChanged.connect(self.set_info_text)
 
-        limit_layout = QG.QHBoxLayout()
-        limit_checkbox = QG.QCheckBox("Ignore transients less than x stds")
+        limit_layout = QW.QHBoxLayout()
+        limit_checkbox = QW.QCheckBox("Ignore transients less than x stds")
         self.limit_checkbox = limit_checkbox
         limit_layout.addWidget(limit_checkbox)
-        limit_spinbox = QG.QSpinBox(self)
+        limit_spinbox = QW.QSpinBox(self)
         self.limit_spinbox = limit_spinbox
         limit_layout.addWidget(limit_spinbox)
         limit_checkbox.toggled.connect(limit_spinbox.setEnabled)
@@ -230,12 +234,12 @@ class PixelByPixelTab(QG.QTabWidget):
         limit_spinbox.setMaximum(10)
         settings_layout.addLayout(limit_layout)
 
-        info_widget = QG.QTextEdit(self)
+        info_widget = QW.QTextEdit(self)
         info_widget.setReadOnly(True)
         self.info_widget = info_widget
         self.set_info_text()
         settings_layout.addWidget(info_widget)
-        fit_pb = QG.QPushButton("Do fit")
+        fit_pb = QW.QPushButton("Do fit")
         #previous_pb = QG.QPushButton("Show previous")
         settings_layout.addWidget(fit_pb)
         #settings_layout.addWidget(previous_pb)
@@ -244,7 +248,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.plot_widget = BasicPixmapPlotWidget(self)
         self.pixel_trace_widget = PixelTracesPlotWidget(self.plot_widget.scene,
                 self, parent=self)
-        plots_layout = QG.QHBoxLayout()
+        plots_layout = QW.QHBoxLayout()
         plots_layout.addWidget(self.plot_widget)
         plots_layout.addWidget(self.pixel_trace_widget)
         layout.addLayout(plots_layout)
@@ -257,7 +261,7 @@ class PixelByPixelTab(QG.QTabWidget):
 
     def get_res(self):
         results = {}
-        session = dbmaster.get_session()
+        #session = dbmaster.get_session()
         fitted_pixels = self.fit_result.pixels
         #print "get res", self.fit_result.region.width, self.fit_result.region.height
         results['width'] = self.fit_result.region.width - 2*self.fit_result.fit_settings['padding']
@@ -271,7 +275,7 @@ class PixelByPixelTab(QG.QTabWidget):
         results['y0'] = self.fit_result.region.y0
         results['fits'] = fitted_pixels
         self.res = results
-        param_combo = QG.QComboBox()
+        param_combo = QW.QComboBox()
         events = tf.data_events(self.res)
         #convert numpy.int64 to python int so that sqlalchemy can
         #understand it
@@ -287,30 +291,30 @@ class PixelByPixelTab(QG.QTabWidget):
         for key in parameters:
             param_combo.addItem(key)
         param_combo.addItem('Events')
-        param_combo.currentIndexChanged[QC.QString].connect(self.param_combo_changed)
+        param_combo.currentIndexChanged[str].connect(self.param_combo_changed)
 
-        n_combo = QG.QComboBox()
+        n_combo = QW.QComboBox()
         for i in range(max_n):
             n_combo.addItem("%i"%i)
         n_combo.currentIndexChanged.connect(self.n_combo_changed)
 
-        hlayout = QG.QHBoxLayout()
+        hlayout = QW.QHBoxLayout()
         hlayout.addWidget(param_combo)
         hlayout.addWidget(n_combo)
         self.layout().addLayout(hlayout)
         self.t_number = 0
         self.param = "A"
-        pb_do_clustering  = QG.QPushButton("Do clustering")
+        pb_do_clustering  = QW.QPushButton("Do clustering")
         pb_do_clustering.setCheckable(True)
         pb_do_clustering.clicked.connect(self.do_clustering)
-        pb_make_new_stack = QG.QPushButton("New stack from fit")
+        pb_make_new_stack = QW.QPushButton("New stack from fit")
         pb_make_new_stack.clicked.connect(self.make_new_stack)
         hlayout.addWidget(pb_do_clustering)
         hlayout.addWidget(pb_make_new_stack)
         self.show_res()
 
     def make_new_stack(self):
-        session = dbmaster.get_session()
+        #session = dbmaster.get_session()
         from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
         synthetic_image = sa.PixelFittedSyntheticImage(self.fit_result)
         next_tab = AnalysisImageTab(parent=self,analysis=self.analysis)
@@ -329,6 +333,7 @@ class PixelByPixelTab(QG.QTabWidget):
         self.t_number = t_number
         self.show_res()
 
+    @timeIt
     def show_res(self):
         if self.param == "Events":
             data = tf.data_events(self.res)
