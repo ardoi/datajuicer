@@ -21,7 +21,7 @@ def get_logger(name):
     return logger
 
 class Region(object):
-    minimum_size = 30
+    minimum_size = 20
     #maximum distance the left and right sides can be from the maximum
     max_dist_from_max = 250
 

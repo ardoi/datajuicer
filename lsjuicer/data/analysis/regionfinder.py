@@ -34,6 +34,7 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
         window = window.astype(int)
         noises[ind] = scoreatpercentile(row_one[window], per=noise_perc)
         #noises[ind] = n.std(row_one[window])
+    noise_level = scoreatpercentile(row_one, per = noise_perc)
 
     def filt_func(line):
         if len(line[0]) < min_length:
@@ -41,8 +42,10 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
         #snr = abs(cwt[line[0][0], line[1][0]] / noises[line[1][0]])
         c=line[0][-1]/2
         #snr = -cwt[c, line[1][0]] / noises[line[1][0]]
-        snr = cwt[c, line[1][0]] / abs(noises[line[1][0]]) + 1
-        line.append(['snr=',snr,c,cwt[c, line[1][0]] , noises[line[1][0]]] )
+        #snr = cwt[c, line[1][0]] / abs(noises[line[1][0]]) + 1
+        snr = cwt[c, line[1][0]] / abs(noise_level) + 1
+        #line.append(['snr=',snr,c,cwt[c, line[1][0]] , noises[line[1][0]]] )
+        line.append(['snr=',snr,c,cwt[c, line[1][0]] , noise_level] )
         if snr < min_snr:
             return False
         return True
@@ -64,7 +67,7 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     cwt_dat = cwt_dat_all[:,vector.size/pad:vector.size/pad+vector.size]
     ridge_lines = ss._peak_finding._identify_ridge_lines(cwt_dat, max_distances, gap_thresh)
     #filtered = ss._peak_finding._filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
-    filtered = _filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
+    filtered = _filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr, min_length=5)
     #if pad:
     #    good_ones = [x for x in filtered if x[1][0]>vector.size/pad\
     #                and x[1][0]<vector.size+vector.size/pad]
@@ -88,6 +91,7 @@ def find_peaks_cwt(vector, widths, min_snr=1):
             if mi>x_loc and mi<right_min:
                 right_min = mi
         max_locs.append((x_loc ,g[0][-1], left_min, right_min,loc))
+    print 'mm',max_locs
     return n.array(sorted(max_locs, key=lambda x:x[0]))
 
 def find_regions2(rrr, widths, data_size):
@@ -105,12 +109,16 @@ def find_regions2(rrr, widths, data_size):
         right = r[3]
         print ri,r
         if ri<len(rrr)-1:
+            print 'a'
             next_left = rrr[ri+1][2]
-            #next_p = rrr[ri+1][0]
+            next_p = rrr[ri+1][0]
             #next_w = widths[rrr[ri+1][1]]
             #regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
             if next_left < right:
-                right_new = p+((right-p)+abs(p-next_left))/2
+                #limit the right side to the left side of the next
+                min_next_left = next_p - 4*(next_p - next_left)/5
+                right_new = min(min_next_left, p+((right-p)+abs(p-next_left))/2)
+                print right_new, p+2*width,right
                 regions[p] = ( max(left, p - width), min(right_new, p + 2*width))
                 if regions[p][1]==right_new:
                     keep_right = True
@@ -159,10 +167,13 @@ def find_regions(peaks, cwd_data):
             regions[p] = (minleft, minright)
     return regions
 
-def get_peaks(data, min_snr=3.0):
+def get_peaks(data, min_snr=3.5, max_width=120):
     #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
     #widths=n.array(w)
-    widths =  n.arange(1,120 ,5)
+    wlist = [1] + range(2,20,2)+range(20,120,5)
+    #wlist = range(1,120,5)
+    widths = n.array(wlist)
+    #widths =  n.arange(1,max_width ,5)
     peaks_all = find_peaks_cwt(data, widths, min_snr)
     if not peaks_all.any():
         return {}
@@ -173,15 +184,14 @@ def get_peaks(data, min_snr=3.0):
     #use_size = sizes.min()/2 + 1
     #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
     #regions = find_regions(peaks, cwd)
-    print 'peaks all', peaks_all
     regions = find_regions2(peaks_all, widths, data.size)
     print 'found regions', regions
     return regions
 
-def show_peaks(data, min_snr=5.0, xmin=None, xmax=None):
+def show_peaks(data, min_snr=5.0, max_width = 120, xmin=None, xmax=None):
     import pylab
     pylab.plot(data)
-    regions = get_peaks(data, min_snr)
+    regions = get_peaks(data, min_snr, max_width)
     ca=pylab.gca()
     for r,b in regions.iteritems():
         pylab.plot(r,data.max(),'ro')
