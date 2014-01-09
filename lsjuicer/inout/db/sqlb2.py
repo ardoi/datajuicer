@@ -1,4 +1,7 @@
 import datetime
+import random
+import time
+import os
 import traceback
 
 from sqlalchemy.ext.declarative import declarative_base
@@ -10,15 +13,19 @@ from sqlalchemy import Column, Integer, DateTime, PickleType,Boolean
 from sqlalchemy.exc import OperationalError
 
 class DBMaster(object):
+
     def __init__(self):
         print "starting DBMaster2"
+        print os.getpid(),os.getppid()
         self.fname = "tables2.db"
         self.Base = declarative_base()
         self.engine = create_engine('sqlite:///%s'%self.fname, echo=False,
-                echo_pool=True, connect_args={'timeout': 30})
+                echo_pool=True, connect_args={'timeout': 50})
         self.Session = sessionmaker(bind = self.engine)
         #self.make_tables()
         self.tables_created = False
+        self.commits = 0
+        self.lock_errors = 0
 
     def reset_tables(self):
         session = self.Session()
@@ -59,6 +66,32 @@ class DBMaster(object):
         session = self.Session()
         #print 'created session', session
         return session
+
+    def end_session_retry(self, session):
+        #ii=random.randint(0,1000)
+        #print id(self),os.getpid(),os.getppid(),self.commits," closing session",session
+        self.commits+=1
+        #feedback = False
+        max_tries = 100
+        count = 0
+        while count<max_tries:
+            count+=1
+            try:
+                #if feedback:
+                #    print ii,"try again c=%i"%count, session
+                self.end_session(session)
+                #if feedback:
+                #    print ii,"success for", session
+                break
+            except OperationalError:
+                #print ii,"Error committing", session
+                #traceback.print_exc()
+                time.sleep(1)
+                #feedback = True
+                session.rollback()
+        #print ii,"success in closing ",session
+        self.lock_errors += count - 1
+        return
 
     def end_session(self, session):
         #print "ending session", session
@@ -119,10 +152,12 @@ class Worker(dbmaster.Base):
     job_end_time = Column(DateTime)
     finished = Column(Boolean)
     running_job = Column(Integer)
+    locked_errors = Column(Integer)
 
     def __init__(self):
         self.finished  = False
         self.running = False
+        self.locked_errors = 0
 
     @property
     def run_time(self):

@@ -3,6 +3,7 @@ import datetime
 import logging
 import random
 import time
+import os
 import traceback
 
 from PyQt5 import QtCore as QC
@@ -26,14 +27,14 @@ class Worker(Process):
         self.worker.id = args[0]
         self.current_job_id = None
         session.add(self.worker)
-        session.commit()
-        session.close()
+        #session.commit()
+        #session.close()
+        dbmaster.end_session_retry(session)
         self.logger = logging.getLogger(__name__)
 
     def kill(self):
         session = sqlb2.dbmaster.get_session()
         session.add(self.worker)
-        self.logger.warning("killing worker %i" % self.worker.id)
         try:
             current_job = session.query(sqlb2.Job).\
                 filter(sqlb2.Job.worker_id == self.worker.id).\
@@ -45,48 +46,39 @@ class Worker(Process):
             self.logger.warning("killing worker %i, job %i" % (
                 self.worker.id, current_job.id))
         except NoResultFound:
+            self.logger.warning("killing worker %i cancelled" % self.worker.id)
             # the job has finished so no need to kill anything
             return False
         except MultipleResultsFound:
             raise RuntimeError
         self.worker.end_time = datetime.datetime.now()
-        session.commit()
-        session.close()
+        #session.commit()
+        #session.close()
+        sqlb2.dbmaster.end_session_retry(session)
         # self.session.commit()
         # self.session.close()
         self.terminate()
         return True
 
-    #@property
-    # def is_finished(self):
-    #    return self.worker.finished
-    #@is_finished.setter
-    # def is_finished(self, val):
-    #    self.worker.finished = val
-    #    self.session.commit()
-    #@property
-    # def worker_run_time(self):
-    #    if self.worker_end_time:
-    #        return self.worker_run_time
-    #    else:
-    #        if self.worker.start_time:
-    #            return datetime.datetime.now() - self.worker.start_time
-    #        else:
-    #            return None
-    #@property
-    # def job_run_time(self):
-    #    res = self.worker.job_run_time
-    #    return res
     def single(self, job_params):
         args = job_params
         data = args['data']
         # xy = args['coords']
-        self.logger.debug("job %i starting" % self.current_job_id)
+        self.logger.debug("job %i starting" %( self.current_job_id))
+        #self.logger.info("job %i starting, pid=%i, ppid=%i" %( self.current_job_id,os.getpid(),os.getppid()))
         try:
             # f = tf.fit_regs(data)
-            f = tf.fit_2_stage(data)
-            # time.sleep(5)
-            # f=10.0
+            #f = tf.fit_2_stage(data)
+            rr = random.random()
+            if rr<0.01:
+                duration = 10 * random.randint(1,6)
+                self.logger.warning("job %i LONG SLEEP %i" %( self.current_job_id,duration))
+                time.sleep(duration)
+            else:
+                time.sleep(.1)
+            f = 1.0
+            if random.random()<0.01:
+                f = None
         except:
             # self.logger.debug("job %i failed"%self.current_job_id)
             #print '\n\n\nboooooo'
@@ -106,8 +98,9 @@ class Worker(Process):
 
         jobs = session.query(sqlb2.Job).filter(
             sqlb2.Job.worker_id == self.worker.id).all()
-        session.commit()
-        session.close()
+        #session.commit()
+        #session.close()
+        dbmaster.end_session_retry(session)
 
         for job in jobs:
             session = dbmaster.get_session()
@@ -124,15 +117,15 @@ class Worker(Process):
             self.worker.job_start_time = job.start_time
             self.worker.job_end_time = None
             job_params = job.params
-            session.commit()
-            # close session so that we dont block the db
-            session.close()
+            dbmaster.end_session_retry(session)
+            #session.commit()
+            #close session so that we dont block the db
+            #session.close()
             result = self.single(job_params)
-            # reopen session and add job and worker
+            #reopen session and add job and worker
             session = dbmaster.get_session()
             session.add(self.worker)
             session.add(job)
-            # print "\n\n\nresult",result
             job.finished = True
             job.running = False
             if not result:
@@ -140,19 +133,22 @@ class Worker(Process):
             job.result = result
             job.end_time = datetime.datetime.now()
             self.worker.job_end_time = job.end_time
-            session.commit()
+            #session.commit()p
             self.logger.debug('worker %i, finished job %i' % (
                 self.worker.id, job.id))
-            session.close()
+            #session.close()
+            dbmaster.end_session_retry(session)
 
         session = dbmaster.get_session()
         session.add(self.worker)
         self.worker.finished = True
         self.worker.running = False
         self.worker.end_time = datetime.datetime.now()
+        self.worker.locked_errors = dbmaster.lock_errors
         self.logger.debug('worker %i finished' % self.worker.id)
-        session.commit()
-        session.close()
+        #session.commit()
+        #session.close()
+        dbmaster.end_session_retry(session)
         return
 
 
@@ -172,10 +168,11 @@ class Threader(QC.QObject):
             self.start_time = time.time()
             self.run_times = []
 
-        self.logger.debug("\nUPDATE")
+        self.logger.info("UPDATE")
         newly_finished = []
         kill_list = []
-        time_limit = 200
+        time_limit = 30
+        jobs_per_worker = 50
         session = sqlb2.dbmaster.get_session()
         for i, wn in enumerate(self.running_workers):
             # w = self.workers[wn]
@@ -184,11 +181,16 @@ class Threader(QC.QObject):
                 newly_finished.append(wn)
                 self.run_times.append(w.run_time)
                 continue
-            try:
-                self.logger.debug("worker %i,%i, time %.3f, current %i" % (
-                    w.id, wn, w.job_run_time, w.running_job))
-            except TypeError:
-                self.logger.error("worker %i,%i finished error" % (w.id, wn))
+            #try:
+            #    running_job = w.running_job
+            #    if running_job is  None:
+            #        running_job = 0
+            #    self.logger.debug("worker %i,%i, time %.3f, current %i" % (
+            #        w.id, wn, w.run_time, running_job))
+            #except TypeError:
+            #    import traceback
+            #    traceback.print_exc()
+            #    self.logger.error("worker %i,%i finished error" % (w.id, wn))
 
             if w.job_run_time > time_limit:
                 self.logger.debug('kill %i' % wn)
@@ -244,6 +246,8 @@ class Threader(QC.QObject):
                     else:
                         self.state_array[y, x] = 1
                 except:
+                    import traceback
+                    traceback.print_exc()
                     print self.state_array
                     print self.state_array.shape
                     print x, y
@@ -252,7 +256,7 @@ class Threader(QC.QObject):
 
         # session.close()
 
-        # print "before new Remaining: %i"%(len(self.waiting_jobs))
+        #print "before new Remaining: %i"%(len(self.waiting_jobs))
         running = len(self.running_workers)
         empty_slots = self.slots - running
         self.logger.debug("running workers before start %i %s" % (
@@ -262,7 +266,7 @@ class Threader(QC.QObject):
         started_now = 0
         if self.waiting_jobs:
             for i in range(empty_slots):
-                job_numbers = self.get_job_numbers(20)
+                job_numbers = self.get_job_numbers(jobs_per_worker)
                 if not job_numbers:
                     break
                 wn = self.last_started_worker_number + 1
@@ -307,11 +311,11 @@ class Threader(QC.QObject):
             self.progress_update.emit(jobs_remaining, finished_jobs,
                                       timed_out_jobs, failed_jobs)
 
-        self.logger.debug("Remaining: %i\t Finished:%i" % (
+        self.logger.info("Remaining: %i\t Finished:%i" % (
             jobs_remaining, finished_jobs))
-        self.logger.debug("Successful:%i\t Failed:%i" % (
+        self.logger.info("Successful:%i\t Failed:%i" % (
             successful_jobs, failed_jobs))
-        self.logger.debug("Timed out: %i\t Running:%i" % (
+        self.logger.info("Timed out: %i\t Running:%i" % (
             timed_out_jobs, running_jobs))
         if finished_jobs == self.jobs_to_run:
             print "ALL DONE. Stopping timer"
@@ -324,6 +328,10 @@ class Threader(QC.QObject):
             print "TIMINGS: total:%.1f sec,\tcomputational: %.1f,\taverage per job: %.3f" %\
                 (total_time, computational_time, average_comp_time)
             print job_run_times.mean(), job_run_times.min(), job_run_times.max()
+            error_count = 0
+            for c, in session.query(sqlb2.Worker.locked_errors).all():
+                error_count+=c
+            print 'db errors:%i'%error_count
             # print "RESULTS ",self.out_data
             # qc=QC.QCoreApplication.instance()
             # qc.exit()
