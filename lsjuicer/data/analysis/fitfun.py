@@ -466,7 +466,7 @@ def f5(arg, tau2, d,  m2, A, B):
     #mu2 = mu1 + d
     mu2 = m2
     mu1 = mu2 - d
-    tau1=(mu2-mu1)/2.
+    tau1=(mu2-mu1)/2.#=d/2.
     #force f2 and f3 to reach 1-exp(-2) at mu2
     f2 = (1-n.exp(-(t-mu1)/tau1))#/(1-n.exp((mu1-mu2)/tau1))
     f3 = n.exp(-(t-mu2)/tau2)*(1-n.exp(-2.))

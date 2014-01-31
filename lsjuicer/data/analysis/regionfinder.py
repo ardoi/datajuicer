@@ -170,7 +170,8 @@ def find_regions(peaks, cwd_data):
 def get_peaks(data, min_snr=3.5, max_width=120):
     #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
     #widths=n.array(w)
-    wlist = [1] + range(2,20,2)+range(20,120,5)
+    #changed 2->4 for puffs
+    wlist = [1] + range(2,20,4)+range(20,120,5)
     #wlist = range(1,120,5)
     widths = n.array(wlist)
     #widths =  n.arange(1,max_width ,5)
