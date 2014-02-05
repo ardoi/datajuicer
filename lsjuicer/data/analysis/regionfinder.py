@@ -52,6 +52,52 @@ def _filter_ridge_lines(cwt, ridge_lines, window_size=None, min_length=None,
 
     return list(filter(filt_func, ridge_lines))
 
+def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
+                       min_snr=1, noise_perc=10):
+
+    num_points = cwt.shape[1]
+    if min_length is None:
+        min_length = n.ceil(cwt.shape[0] / 4)
+    if window_size is None:
+        window_size = n.ceil(num_points / 20)
+    hf_window = window_size / 2
+
+    #Filter based on SNR
+    row_one = cwt[0, :]
+    noises = n.zeros_like(row_one)
+    for ind, val in enumerate(row_one):
+        window = n.arange(max([ind - hf_window, 0]), min([ind + hf_window, num_points]))
+        window = window.astype(int)
+        noises[ind] = scoreatpercentile(row_one[window], per=noise_perc)
+        #noises[ind] = n.std(row_one[window])
+    noise_level = scoreatpercentile(row_one, per = noise_perc)
+
+    def filt_func(line):
+        if len(line[0]) < min_length:
+            return False
+        yvals,xvals = line
+        amps = []
+        ws=[]
+        for x,y in zip(xvals,yvals):
+            amps.append(cwt[y,x])
+            ws.append(y)
+        print '\n',xvals[0]
+        print 'xx,yy=',ws,",",amps
+        max_windex = find_first_max(amps)
+        print 'max',max_windex
+        if max_windex is None:
+            return False
+        c=amps[max_windex]
+        max_windex = ws[max_windex+2]#add 1 to the index for a bit bigger span
+        snr = c / abs(noise_level) + 1
+        #line.append(['snr=',snr,c,cwt[c, line[1][0]] , noises[line[1][0]]] )
+        line.append(['snrr=',snr,c,max_windex , noise_level] )
+        if snr < min_snr:
+            return False
+        return True
+
+    return list(filter(filt_func, ridge_lines))
+
 def find_peaks_cwt(vector, widths, min_snr=1):
     #print vector.size, widths
     gap_thresh = n.ceil(widths[0])
@@ -66,7 +112,6 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     cwt_dat_all = ss.cwt(vec, wavelet, widths)
     cwt_dat = cwt_dat_all[:,vector.size/pad:vector.size/pad+vector.size]
     ridge_lines = ss._peak_finding._identify_ridge_lines(cwt_dat, max_distances, gap_thresh)
-    #filtered = ss._peak_finding._filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
     filtered = _filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr, min_length=5)
     #if pad:
     #    good_ones = [x for x in filtered if x[1][0]>vector.size/pad\
@@ -94,13 +139,74 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     print 'mm',max_locs
     return n.array(sorted(max_locs, key=lambda x:x[0]))
 
+def find_first_max(vec_in):
+    """find the first local maximum in a vector"""
+    i = 0
+    vec = n.diff(vec_in)
+    while i<len(vec)-1:
+        if vec[i]>0 and vec[i]*vec[i+1]<0:
+            return i + 1
+        i+=1
+    return None
+
+def find_peaks_cwt2(vector, widths, min_snr=1):
+    #print vector.size, widths
+    gap_thresh = n.ceil(widths[0])
+    max_distances = widths / 3.0
+    wavelet = ss.ricker
+    pad = 1
+    if pad:
+        #vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
+        vec = pad_data_const(vector, pad)
+    else:
+        vec=vector
+    cwt_dat_all = ss.cwt(vec, wavelet, widths)
+    cwt_dat = cwt_dat_all[:,vector.size/pad:vector.size/pad+vector.size]
+    ridge_lines = ss._peak_finding._identify_ridge_lines(cwt_dat, max_distances, gap_thresh)
+    min_length = 5
+
+    #filtered = ss._peak_finding._filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
+    filtered = _filter_ridge_lines2(cwt_dat, ridge_lines, min_snr=min_snr, min_length=min_length)
+    #if pad:
+    #    good_ones = [x for x in filtered if x[1][0]>vector.size/pad\
+    #                and x[1][0]<vector.size+vector.size/pad]
+    #else:
+    good_ones = filtered
+    print '\n\ngood ones'
+    for g in good_ones:
+        print g
+    #adjust = vector.size/pad - 1 if pad else 0
+    #find boundaries of region from its half height cwd by looking for local minima around the peak
+    max_locs = []
+    for g in good_ones:
+        x_loc = g[1][2]
+        width_index = g[-1][-2]#the width at the maximum on the ridge
+        width = widths[width_index]
+        print 'width',x_loc, width_index,width
+        left_min = max(0,x_loc-width)
+        right_min = min(x_loc+2*width, len(cwt_dat[0]))
+        max_locs.append((x_loc ,width, left_min, right_min))
+    print 'mm',max_locs
+    return n.array(sorted(max_locs, key=lambda x:x[0]))
+
+def find_regions3(rrr, widths, data_size):
+    regions = {}
+    for ri, r in enumerate(rrr):
+        p=int(r[0])
+        regions[p]=(r[2],r[3])
+    return regions
+
+
+
 def find_regions2(rrr, widths, data_size):
     regions = {}
     keep_right = False
     right_new = None
+    print 'rrr',rrr
     for ri, r in enumerate(rrr):
         p=int(r[0])
         width = widths[r[1]]
+        print 'get width', p,r[1],width,widths
         if keep_right:
             left = right_new
         else:
@@ -114,7 +220,8 @@ def find_regions2(rrr, widths, data_size):
             next_p = rrr[ri+1][0]
             #next_w = widths[rrr[ri+1][1]]
             #regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
-            if next_left < right:
+            print next_left,next_p
+            if 0:#next_left < right:
                 #limit the right side to the left side of the next
                 min_next_left = next_p - 4*(next_p - next_left)/5
                 right_new = min(min_next_left, p+((right-p)+abs(p-next_left))/2)
@@ -123,11 +230,13 @@ def find_regions2(rrr, widths, data_size):
                 if regions[p][1]==right_new:
                     keep_right = True
             else:
+                print 'else'
                 regions[p] = (max(left, p - width), min(right, p+2*width))
         else:
             regions[p] = (max(left, p - width), min(right, p+2*width))
             #regions[p] = (left, right)
             #regions[p] = (max(0, p - width/2), min(p+1*width, data_size))
+        assert regions[p][0]<p and regions[p][1]>p,str(regions[p])+" "+str(p)
     return regions
 
 def find_regions(peaks, cwd_data):
@@ -167,15 +276,15 @@ def find_regions(peaks, cwd_data):
             regions[p] = (minleft, minright)
     return regions
 
-def get_peaks(data, min_snr=3.5, max_width=120):
+def get_peaks(data, min_snr=3.5, max_width=50):
     #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
     #widths=n.array(w)
     #changed 2->4 for puffs
-    wlist = [1] + range(2,20,4)+range(20,120,5)
+    #wlist = [1] + range(2,20,4)+range(20,120,5)
     #wlist = range(1,120,5)
-    widths = n.array(wlist)
-    #widths =  n.arange(1,max_width ,5)
-    peaks_all = find_peaks_cwt(data, widths, min_snr)
+    #widths = n.array(wlist)
+    widths =  n.arange(1,max_width ,2)
+    peaks_all = find_peaks_cwt2(data, widths, min_snr)
     if not peaks_all.any():
         return {}
     #peaks = peaks_all[:,0]
@@ -185,11 +294,11 @@ def get_peaks(data, min_snr=3.5, max_width=120):
     #use_size = sizes.min()/2 + 1
     #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
     #regions = find_regions(peaks, cwd)
-    regions = find_regions2(peaks_all, widths, data.size)
+    regions = find_regions3(peaks_all, widths, data.size)
     print 'found regions', regions
     return regions
 
-def show_peaks(data, min_snr=5.0, max_width = 120, xmin=None, xmax=None):
+def show_peaks(data, min_snr=5.0, max_width = 50, xmin=None, xmax=None):
     import pylab
     pylab.plot(data)
     regions = get_peaks(data, min_snr, max_width)

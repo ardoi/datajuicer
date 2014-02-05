@@ -44,6 +44,21 @@ class Region(object):
     def data(self):
         return self._all_data[self.left:self.right]
 
+    def extra_range(self):
+        """Give an extended range of the region based on FDHM from the last fit"""
+        param = self.fit_res[-1].solutions
+        m2 = param['m2']
+        d = param['d']
+        tau2 = param['tau2']
+        d2 = param['d2']
+        left_half = m2-d*(1+0.5*n.log((1+n.exp(-2))/2.))
+        right_half = m2+d2+tau2*n.log(2)
+        fdhm = right_half - left_half
+        amount = 0.25
+        extra = int(fdhm*amount)
+        print 'fdhm is:',fdhm
+        return (self.left - extra, self.right+extra)
+
     def __init__(self, left, right, maximum, data, smooth_data, time_data):
 
         self._left = left
@@ -61,9 +76,11 @@ class Region(object):
         #print self.bad
 
     def fit_curve(self):
+        print '\n'
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
+        print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
         #make first fit with non-convolved function
         f0r = fu[ri-5:min(len(fu), ri+5)].mean()
@@ -83,6 +100,8 @@ class Region(object):
         mu_est = self.maximum
         oo.set_parameter_range('m2', le+1, ri-1, mu_est)
         d_est = (self.maximum-le)/2.+1.
+        left_data = fu[le:self.maximum]
+        d_est = 5.0
         try:
             oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
         except AssertionError:
@@ -168,86 +187,13 @@ class Region(object):
         return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>"%(self.left, self.right,
                 self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
-def clean_min_max(minima, maxima, smooth_data):
-    """Clean up the minima, maxima lists. First only the highest maxima between minima are taken.
-       Then, then only the lowest minimum between maxima is used"""
-    logger=get_logger(__name__)
-    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
-    logger.debug('start: %s'%min_max_string(minima,maxima))
-    #take only the biggest max in between minima
 
-    ma_remove = []
-    for i in range(len(minima)-1):
-        mi1 = minima[i]
-        mi2 = minima[i+1]
-        maxima_between=[]
-        for ma in maxima:
-            if ma>mi1 and ma<mi2:
-                maxima_between.append((ma,smooth_data[ma]))
-        if maxima_between:
-            maxima_between.sort(key=lambda x: x[1],reverse=True)
-           # print maxima_between
-            for ma in maxima_between[1:]:
-                ma_remove.append(ma[0])
-    for ma in ma_remove:
-        maxima.remove(ma)
-    #print min_max_string(minima,maxima)
-    logger.debug('mid: %s'%min_max_string(minima,maxima))
-    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
-
-    #only keep two minima between any two maxima
-    mi_remove = []
-    temp_max = maxima[:]
-    if maxima[0] > minima[0]:
-        temp_max.insert(0,0)
-    if maxima[-1] < minima[-1]:
-        temp_max.append(len(smooth_data)+1)
-    for i in range(len(temp_max)-1):
-        ma1 = temp_max[i]
-        ma2 = temp_max[i+1]
-        minima_between = []
-        for mi in minima:
-            if mi>ma1 and mi<ma2:
-                if i == 0:
-                    minima_between.append((mi, mi))
-                elif i==len(temp_max)-2:
-                    minima_between.append((mi, len(smooth_data) - mi ))
-                else:
-                    minima_between.append((mi,smooth_data[mi]))
-        if minima_between:
-            minima_between.sort(key=lambda x: x[1], reverse=False)
-            for mi in minima_between[1:]:
-                mi_remove.append(mi[0])
-    for mi in mi_remove:
-        minima.remove(mi)
-    logger.debug('end: %s'%min_max_string(minima,maxima))
-    logger.debug("minima:%s, maxima:%s"%(str(minima),str(maxima)))
-
-
-def min_max_string(minima, maxima):
-    """Give a textual representation of the minima,maxima"""
-    mii=0
-    mai=0
-    out = ""
-    while 1:
-        mi = minima[mii]
-        ma = maxima[mai]
-        if mi < ma:
-            out += "."
-            mii+=1
-        else:
-            out += "|"
-            mai+=1
-        if mii >= len(minima) or mai>=len(maxima):
-            break
-    return out
-
-def find_transient_boundaries2(data,baseline=None, plot=False):
+def find_transient_boundaries2(data, min_snr ):
     smooth_data = nd.uniform_filter(data, 25)
     #smooth_data = data
     time_data = n.arange(data.size)
     regions = []
-    peaks = rf.get_peaks(data)
+    peaks = rf.get_peaks(data,min_snr=min_snr)
     for maxval, margins in peaks.iteritems():
         left = margins[0]
         right = margins[1]
@@ -255,187 +201,70 @@ def find_transient_boundaries2(data,baseline=None, plot=False):
         regions.append(reg)
     return regions
 
-def find_transient_boundaries(data, baseline = None, plot=False):
-    f = data
-    #fu = nd.uniform_filter(f, 3)
-    time_data = n.arange(len(data))
-    smooth_data = nd.uniform_filter(nd.uniform_filter(data, 25),10)
-    d1f = n.diff(smooth_data) - 0
-    smooth_d1 = nd.uniform_filter(d1f,25)
-    d2f = n.diff(smooth_d1)
-    fu = smooth_data
 
-    plot=False
-
-    #start looking from the start of d1f for zero crossings where d2f is < 0
-    maxima = []
-    minima = []
-
-    margin = 2 #margin to leave from left/right sides
-    for i in range(1,d1f.shape[0]-1):
-        #this_f = smooth_data[i-1]
-        this_d1f = d1f[i]
-        next_d1f = d1f[i+1]
-        this_d2f = d2f[i]
-        if this_d1f * next_d1f <= 0:
-            if this_d2f < 0:# and this_f > criterium:
-                maxima.append(i-1)
-            elif this_d2f > 0:
-                if i-1 < margin:
-                    minima.append(margin)
-                elif i-1 > len(f) - 1- margin:
-                    minima.append(len(f)-1-margin)
-                else:
-                    minima.append(i-1)
-            else:
-                continue
-
-    if not maxima:
-        #nothing found in pixel
-        return []
-
-    #go trough all minima and find pairs which have a maximum in the middle
-    minimum_size = 10
-    #add minimum to the left size if there is a maximum present
-    if minima:
-        if maxima[0] < minima[0] and minima[0] > minimum_size:
-            minima.insert(0,margin)
-        #right side
-        if maxima[-1] > minima[-1] and len(f)-minima[-1] > minimum_size:
-            minima.append(len(f))
-    else:
-        minima.insert(0,margin)
-        minima.append(len(f))
-
-    count=0
-    max_count = 100
-    logger=get_logger(__name__)
-    if plot:
-        import pylab as p
-        p.figure(10+count)
-        p.plot(f,marker='o',ls='None',ms=4,mec='None',alpha=.5)
-        p.xlim(0, len(f))
-        ax=p.gca()
-    while count < max_count:
-        #print '\n new search',count
-        logger.debug('\nsearch number {}'.format(count))
-        regions = []
-        if not maxima:
-            #nothing found in pixel
-            return []
-        clean_min_max(minima, maxima, smooth_data)
-        if minima and maxima:
-            #check for cases where the start or end of a transient is not included in the data
-            #left side
-            for mi in range(len(minima)-1):
-                mi1 = minima[mi]
-                mi2 = minima[mi+1]
-                local_maxima = []
-                for ma in maxima:
-                    if ma > mi1 and ma < mi2:
-                        #keep all maxima and later find the biggest
-                        local_maxima.append((ma,smooth_data[ma]))
-                if local_maxima:
-                    local_maxima.sort(key=lambda x: x[1],reverse=True)
-                    lma = local_maxima[0][0]
-                    try:
-                        reg = Region( max(margin, mi1), min(len(f) - 1 - margin, mi2), lma, f, fu, time_data)
-                        regions.append(reg)
-                    except AssertionError,e:
-                        pass
-                        print e.message
-                        print traceback.print_exc()
-                        #print 'skip',mi1,mi2
-                else:
-                    pass
-        #the case when no minima are found but maximum exists (for no noise data)
-        if not minima and maxima:
-            if maxima[0] > margin:
-                reg = Region( margin, len(f) - margin, maxima[0], f, fu, time_data)
-                regions.append(reg)
-
-        regions.sort(key=lambda x:x.maximum)
-        remove = []
-        for r in regions:
-            if r.bad:
-                remove.append(r)
-        if not remove:
-            break
-        else:
-            for r in remove:
-                maxima.remove(r.maximum)
-        count+=1
-    if plot:
-        for r in regions:
-            fmin=f.min()
-            fmax=f.max()
-            ax.add_patch(p.Rectangle((r.left,fmin),r.size,fmax-fmin,facecolor="red",alpha=0.1))
-    print "count is {}".format(count)
-    print regions
-    return regions
-
-def fit_regs(f, plot=False , baseline = None):
-    regs  = find_transient_boundaries2(f, baseline, plot)
+def fit_regs(f, min_snr, plot=False):
+    regs  = find_transient_boundaries2(f, min_snr=min_snr)
     print 'regs are', regs
-    fmin=f.min()
-    fmax=f.max()
     time = n.arange(len(f))
-    f2= f[:]
-    z = n.zeros_like(f2)
-    bl = n.zeros_like(f2)
+    #f2= f[:]
+    z = n.zeros_like(f)
+    bl = n.zeros_like(f)
     good_regions = []
-    #fu = nd.uniform_filter(f, 3)
     if plot:
         import pylab as p
         p.figure(1)
         p.plot(f,marker='o',ls='None',ms=4,mec='None',alpha=.5)
-        if baseline is not None:
-            p.plot(baseline)
         p.xlim(0, len(f))
         ax=p.gca()
     for i,r in enumerate(regs):
-        if r.bad:
-            continue
-        le = r.left
-        ri = r.right
-        transient_t = time[le:ri]
-        if plot:
-            ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor="orange",alpha=0.1))
-        oo = r.fit_res[-1]
-        if not oo.solutions:
-            r.bad=True
-            continue
-        #fit_res.append(oo)
-        if plot:
-            p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
-        good_regions.append(r)
+        if not r.bad:
+            oo = r.fit_res[-1]
+            if not oo.solutions:
+                r.bad = True
+            else:
+                good_regions.append(r)
+            if plot:
+                fcolor = 'orange'
+                if r.bad:
+                    fcolor = 'salmon'
+                le = r.left
+                ri = r.right
+                transient_t = time[le:ri]
+                fmin=f.min()
+                fmax=f.max()
+                ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor=fcolor,alpha=0.1))
+                if oo.solutions:
+                    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
 
     i=0
-    #Asum = 0.0
+    print '\n\n'
     while i<len(good_regions):
         r = good_regions[i]
-        le = r.left
-        ri = r.right
-        transient_t = time[le:ri]
+        #le = r.left
+        #ri = r.right
+        le,ri = r.extra_range()
+        print '\nranges',le,ri,r.left,r.right
+        #transient_t = time[le:ri]
+        transient_t = time
         sol = r.fit_res[-1].solutions
+        #print r,sol,r.extra_range()
         fit_vals = fitfun.ff50(transient_t, **sol)
-
-        transient_t = time[le:ri]
-        z[le:ri] = 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
-        bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
+        print 'sol',sol
+        z += 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
+        #bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
         i+=1
-    if plot:
-        p.figure(2)
-        p.plot(time, f-z,color='orange',label='signal - fits')
-        p.plot(time, f, label='signal')
-        p.plot(time, z,label='fit - bl')
-        p.plot(time, bl,label='bl')
-        p.legend()
     f2 = f-z
     baseline_fit_params = n.polyfit(time, f2, 4)
     pf_fun = n.poly1d(baseline_fit_params)
     baseline = pf_fun(time)
     fullres = baseline.copy()
+    if plot:
+        p.figure(2)
+        p.plot(time, f-z,color='orange',label='signal - fits')
+        p.plot(time, f, label='signal')
+        p.plot(time, z,label='fit - bl')
+        p.plot(time, baseline,label='bl')
+        p.legend()
     #create data for each transient with the other transients removed
     final = {'transients':{},'baseline':baseline_fit_params, 'peak_fits':{}}
     if not good_regions:
@@ -453,8 +282,9 @@ def fit_regs(f, plot=False , baseline = None):
         if plot:
             p.figure(3)
             p.subplot(rows, cols, i+1)
-        le = r.left
-        ri = r.right
+        #le = r.left
+        #ri = r.right
+        le,ri = r.extra_range()
         transient_f = f[le:ri]
         #transient_t = time[le:ri]
         ff = n.zeros_like(f)
@@ -464,12 +294,14 @@ def fit_regs(f, plot=False , baseline = None):
         #use transient as 50% of data. add 25% of transient duration from left and right sides
         #as extra data for fitting (good for cases where the baseline is cut off by a
         #close-by transient
-        points = len(transient_f)
-        end = min(len(ff), ri + points/2)
-        start = max(0,le-points/2)
+        #points = len(transient_f)
+        #end = min(len(ff), ri + points/2)
+        #start = max(0,le-points/2)
+        start,end = r.extra_range()
+        print 'extra range',(le,ri),(start,end)
         fff = ff[start:end]
         time_new = time[start:end]
-        #subtract cubic fit of baseline from fff
+        #subtract fit of baseline from fff
         fff = fff-baseline[start:end]
         if plot:
             p.plot(time_new, fff,'-o',ms=4,mec='None',alpha=.5)
@@ -539,13 +371,13 @@ def fit_regs(f, plot=False , baseline = None):
         p.plot(smooth_data,color='magenta')
         p.plot([0,len(f)],[f.mean(),f.mean()])
 
-def fit_2_stage(data, plot=False):
+def fit_2_stage(data, plot=False, min_snr=5.0):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
 
     #time = n.arange(len(data))
-    res_1 = fit_regs(data, plot)
+    res_1 = fit_regs(data,min_snr, plot)
     #bl_1_func = n.poly1d(res_1['baseline'])
     #bl_1 = bl_1_func(time)
     #print (max(bl_1)-min(bl_1))/min(bl_1)
