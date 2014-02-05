@@ -489,7 +489,7 @@ def ff60(arg, tau2, d,d2,m2,A):
 
 
 def ff50(arg, tau2, d,d2, m2, A, B, C):
-    """same as ff5 but with s and d2 fixed
+    """same as ff5 but with s fixed
 
     Args:
         arg: time vector
@@ -590,7 +590,9 @@ def ff5(arg, tau2, d, d2, m2, s, A, B, C):
             (n.power(E,(s_2+2.0*t2*(d2+d_m_tt-2.0*t2))/\
             (2.0*t2_2))*(-A+(A+C)*E_2)*ss.erfc((s_2+t2*(d2+d_m_tt))/(sqrt2*s*t2)))/2.0
     resmask = n.logical_or(n.isnan(res),n.isinf(res))
-    res[resmask]=0.0
+    if resmask.any():
+        baseline = ff5_bl(arg, tau2, m2,d2,d,A,B,C)
+        res[resmask]=baseline[resmask]
     return res
 
 def ff6o(arg, tau2, d, d2, m2, s, A):
