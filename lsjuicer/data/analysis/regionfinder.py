@@ -1,3 +1,5 @@
+import itertools
+from collections import defaultdict
 import numpy as n
 import scipy.signal as ss
 from scipy.stats import scoreatpercentile
@@ -182,15 +184,47 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
         x_loc = g[1][2]
         width_index = g[-1][-2]#the width at the maximum on the ridge
         width = widths[width_index]
-        print 'width',x_loc, width_index,width
+        snr = g[-1][1]
+        print 'width',x_loc, width_index,width,snr
         left_min = max(0,x_loc-width)
         right_min = min(x_loc+2*width, len(cwt_dat[0]))
-        max_locs.append((x_loc ,width, left_min, right_min))
-    print 'mm',max_locs
-    return n.array(sorted(max_locs, key=lambda x:x[0]))
+        max_locs.append((x_loc ,width, left_min, right_min, snr))
+    #print 'mm',max_locs
+    return sorted(max_locs, key=lambda x:x[0])
+
+def remove_overlapping_regions(regs):
+    def test_overlap(a,b):
+        return not(a[3]<b[2] or b[3]<a[2])
+
+    ii=itertools.combinations(regs,2)
+    res = defaultdict(int)
+    for i in ii:
+        one = i[0]
+        two = i[1]
+        print one,two
+        test = test_overlap(one, two)
+        if not test:
+            #regions don't overlap so both get +1 score
+            res[one]+=1
+            res[two]+=1
+        else:
+            #overlap so the region with the highest score gets +1
+            res[one]+=max(0, cmp(one[4],two[4]))
+            res[two]+=max(0, cmp(two[4],one[4]))
+    good=[]
+    #only regions which have len(res) - 1 as score have no overlaps
+    #with higher scored regions and are kept
+    for k,v in res.iteritems():
+        if v == len(res) - 1:
+            good.append(k)
+    return good
 
 def find_regions3(rrr, widths, data_size):
     regions = {}
+    print 'all regions',rrr
+    rrr = remove_overlapping_regions(rrr)
+    print 'q'
+    print 'nonoverlapped', rrr
     for ri, r in enumerate(rrr):
         p=int(r[0])
         regions[p]=(r[2],r[3])
@@ -285,8 +319,10 @@ def get_peaks(data, min_snr=3.5, max_width=50):
     #widths = n.array(wlist)
     widths =  n.arange(1,max_width ,2)
     peaks_all = find_peaks_cwt2(data, widths, min_snr)
-    if not peaks_all.any():
+    if not peaks_all:
         return {}
+    #if not peaks_all.any():
+    #    return {}
     #peaks = peaks_all[:,0]
     #sizes = peaks_all[:,1]
     #wavelet width to use for estimating region sizes
