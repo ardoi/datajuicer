@@ -78,22 +78,24 @@ def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
         if len(line[0]) < min_length:
             return False
         yvals,xvals = line
-        amps = []
-        ws=[]
+        amps = [] #amplitudes along the ridge
+        ws=[] #w indices along the rigde
         for x,y in zip(xvals,yvals):
             amps.append(cwt[y,x])
             ws.append(y)
         print '\n',xvals[0]
         print 'xx,yy=',ws,",",amps
-        max_windex = find_first_max(amps)
-        print 'max',max_windex
-        if max_windex is None:
+        #index of the weight at ridge maximum
+        max_ws_index = find_first_max(amps)
+        #print 'max',max_windex
+        if max_ws_index is None:
             return False
-        c=amps[max_windex]
-        max_windex = ws[max_windex+2]#add 1 to the index for a bit bigger span
+        c=amps[max_ws_index]
+        #add 2 to the index for a bit bigger span and take the actual weight index
+        max_w_index = ws[max_ws_index + min(2, len(ws)-1-max_ws_index)]
         snr = c / abs(noise_level) + 1
         #line.append(['snr=',snr,c,cwt[c, line[1][0]] , noises[line[1][0]]] )
-        line.append(['snrr=',snr,c,max_windex , noise_level] )
+        line.append(['snrr=',snr,c,max_w_index , noise_level] )
         if snr < min_snr:
             return False
         return True
@@ -120,9 +122,9 @@ def find_peaks_cwt(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    print '\n\ngood ones'
-    for g in good_ones:
-        print g
+    #print '\n\ngood ones'
+    #for g in good_ones:
+    #    print g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -138,18 +140,29 @@ def find_peaks_cwt(vector, widths, min_snr=1):
             if mi>x_loc and mi<right_min:
                 right_min = mi
         max_locs.append((x_loc ,g[0][-1], left_min, right_min,loc))
-    print 'mm',max_locs
+    #print 'mm',max_locs
     return n.array(sorted(max_locs, key=lambda x:x[0]))
 
 def find_first_max(vec_in):
     """find the first local maximum in a vector"""
-    i = 0
+    i = 1
+    threshold = 1.05#peak cannot be more than treshold x neighbour value
     vec = n.diff(vec_in)
-    while i<len(vec)-1:
+    remembered = None
+    while i<len(vec)-2:
         if vec[i]>0 and vec[i]*vec[i+1]<0:
-            return i + 1
+            if min(vec[i]/vec[i-1], vec[i]/vec[i+1])<threshold:
+                return i + 1
+            else:
+                #we want the peak not to be more than 5% of neighbours
+                #in order to avoid noise forcing a smaller region to
+                #be detected instead of a larger one. However,
+                #if it turns out that it is the only maximum then
+                #still want to return it
+                remembered = i+1
+                continue
         i+=1
-    return None
+    return remembered
 
 def find_peaks_cwt2(vector, widths, min_snr=1):
     #print vector.size, widths
@@ -174,9 +187,9 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    print '\n\ngood ones'
-    for g in good_ones:
-        print g
+    #print '\n\ngood ones'
+    #for g in good_ones:
+    #    print g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -185,8 +198,8 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
         width_index = g[-1][-2]#the width at the maximum on the ridge
         width = widths[width_index]
         snr = g[-1][1]
-        print 'width',x_loc, width_index,width,snr
-        left_min = max(0,x_loc-width)
+        #print 'width',x_loc, width_index,width,snr
+        left_min = max(0,x_loc-int(1.5*width))
         right_min = min(x_loc+2*width, len(cwt_dat[0]))
         max_locs.append((x_loc ,width, left_min, right_min, snr))
     #print 'mm',max_locs
@@ -195,20 +208,22 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
 def remove_overlapping_regions(regs):
     def test_overlap(a,b):
         return not(a[3]<b[2] or b[3]<a[2])
-
+    if len(regs) == 1:
+        return regs
+    print 'all:',regs
     ii=itertools.combinations(regs,2)
     res = defaultdict(int)
     for i in ii:
         one = i[0]
         two = i[1]
-        print one,two
+        #print one,two
         test = test_overlap(one, two)
         if not test:
             #regions don't overlap so both get +1 score
             res[one]+=1
             res[two]+=1
         else:
-            #overlap so the region with the highest score gets +1
+            #overlap so the region with the )highest score gets +1
             res[one]+=max(0, cmp(one[4],two[4]))
             res[two]+=max(0, cmp(two[4],one[4]))
     good=[]
@@ -217,14 +232,14 @@ def remove_overlapping_regions(regs):
     for k,v in res.iteritems():
         if v == len(res) - 1:
             good.append(k)
+    print 'good:',good
     return good
 
 def find_regions3(rrr, widths, data_size):
     regions = {}
-    print 'all regions',rrr
+    #print 'all regions',rrr
     rrr = remove_overlapping_regions(rrr)
-    print 'q'
-    print 'nonoverlapped', rrr
+    #print 'nonoverlapped', rrr
     for ri, r in enumerate(rrr):
         p=int(r[0])
         regions[p]=(r[2],r[3])
@@ -236,35 +251,35 @@ def find_regions2(rrr, widths, data_size):
     regions = {}
     keep_right = False
     right_new = None
-    print 'rrr',rrr
+    #print 'rrr',rrr
     for ri, r in enumerate(rrr):
         p=int(r[0])
         width = widths[r[1]]
-        print 'get width', p,r[1],width,widths
+        #print 'get width', p,r[1],width,widths
         if keep_right:
             left = right_new
         else:
             left = r[2]
         keep_right = False
         right = r[3]
-        print ri,r
+        #print ri,r
         if ri<len(rrr)-1:
-            print 'a'
+            #print 'a'
             next_left = rrr[ri+1][2]
             next_p = rrr[ri+1][0]
             #next_w = widths[rrr[ri+1][1]]
             #regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
-            print next_left,next_p
+            #print next_left,next_p
             if 0:#next_left < right:
                 #limit the right side to the left side of the next
                 min_next_left = next_p - 4*(next_p - next_left)/5
                 right_new = min(min_next_left, p+((right-p)+abs(p-next_left))/2)
-                print right_new, p+2*width,right
+                #print right_new, p+2*width,right
                 regions[p] = ( max(left, p - width), min(right_new, p + 2*width))
                 if regions[p][1]==right_new:
                     keep_right = True
             else:
-                print 'else'
+                #print 'else'
                 regions[p] = (max(left, p - width), min(right, p+2*width))
         else:
             regions[p] = (max(left, p - width), min(right, p+2*width))
@@ -310,7 +325,7 @@ def find_regions(peaks, cwd_data):
             regions[p] = (minleft, minright)
     return regions
 
-def get_peaks(data, min_snr=3.5, max_width=50):
+def get_peaks(data, min_snr=3.5, max_width=75):
     #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
     #widths=n.array(w)
     #changed 2->4 for puffs
@@ -331,7 +346,7 @@ def get_peaks(data, min_snr=3.5, max_width=50):
     #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
     #regions = find_regions(peaks, cwd)
     regions = find_regions3(peaks_all, widths, data.size)
-    print 'found regions', regions
+    #print 'found regions', regions
     return regions
 
 def show_peaks(data, min_snr=5.0, max_width = 50, xmin=None, xmax=None):

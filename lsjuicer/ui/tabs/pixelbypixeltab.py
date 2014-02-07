@@ -81,7 +81,7 @@ class PixelByPixelTab(QW.QTabWidget):
         self.threader = fit_dialog.d
         #self.threader.finished.connect(self.threader_finished)
         res = fit_dialog.exec_()
-        #print 'res=',res
+        print 'res=',res
         if res:
             self.threader_finished()
             self.get_res()

@@ -56,7 +56,7 @@ class Region(object):
         fdhm = right_half - left_half
         amount = 0.25
         extra = int(fdhm*amount)
-        print 'fdhm is:',fdhm
+        #print 'fdhm is:',fdhm
         return (self.left - extra, self.right+extra)
 
     def __init__(self, left, right, maximum, data, smooth_data, time_data):
@@ -76,11 +76,11 @@ class Region(object):
         #print self.bad
 
     def fit_curve(self):
-        print '\n'
+        #print '\n'
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
-        print le,ri,self.maximum
+        #print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
         #make first fit with non-convolved function
         f0r = fu[ri-5:min(len(fu), ri+5)].mean()
@@ -113,7 +113,7 @@ class Region(object):
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
                 c_init_delta, c_init)
-        oo.show_parameters()
+        #oo.show_parameters()
         oo.optimize(max_fev = 10000)
         #optimization failed
         if not oo.solutions:
@@ -204,7 +204,7 @@ def find_transient_boundaries2(data, min_snr ):
 
 def fit_regs(f, min_snr, plot=False):
     regs  = find_transient_boundaries2(f, min_snr=min_snr)
-    print 'regs are', regs
+    #print 'regs are', regs
     time = n.arange(len(f))
     #f2= f[:]
     z = n.zeros_like(f)
@@ -237,19 +237,19 @@ def fit_regs(f, min_snr, plot=False):
                     p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
 
     i=0
-    print '\n\n'
+    #print '\n\n'
     while i<len(good_regions):
         r = good_regions[i]
         #le = r.left
         #ri = r.right
         le,ri = r.extra_range()
-        print '\nranges',le,ri,r.left,r.right
+        #print '\nranges',le,ri,r.left,r.right
         #transient_t = time[le:ri]
         transient_t = time
         sol = r.fit_res[-1].solutions
         #print r,sol,r.extra_range()
         fit_vals = fitfun.ff50(transient_t, **sol)
-        print 'sol',sol
+        #print 'sol',sol
         z += 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
         #bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
         i+=1
@@ -257,7 +257,7 @@ def fit_regs(f, min_snr, plot=False):
     baseline_fit_params = n.polyfit(time, f2, 4)
     pf_fun = n.poly1d(baseline_fit_params)
     baseline = pf_fun(time)
-    fullres = baseline.copy()
+    fullres = n.zeros_like(baseline)
     if plot:
         p.figure(2)
         p.plot(time, f-z,color='orange',label='signal - fits')
@@ -298,7 +298,7 @@ def fit_regs(f, min_snr, plot=False):
         #end = min(len(ff), ri + points/2)
         #start = max(0,le-points/2)
         start,end = r.extra_range()
-        print 'extra range',(le,ri),(start,end)
+        #nprint 'extra range',(le,ri),(start,end)
         fff = ff[start:end]
         time_new = time[start:end]
         #subtract fit of baseline from fff
@@ -337,10 +337,6 @@ def fit_regs(f, min_snr, plot=False):
             p.plot(time_new, oo.function(time_new, **oo.solutions),lw=2,color='brown')
             p.xlim(time_new[0], time_new[-1])
             fullres += oo.function(time, **oo.solutions)
-    if plot:
-        p.figure(5)
-        p.plot(time,f, 'o',ms=4,mec='None',alpha=.5)
-        p.plot(time, fullres,color='red',lw=2)
 
     #last stage
     #estimate baseline again
@@ -351,6 +347,7 @@ def fit_regs(f, min_snr, plot=False):
             continue
         else:
             very_good_regions.append(region)
+    #print 'very good', very_good_regions
     if do_last_fit:
         baseline_f = f.copy()
         for i,r in enumerate(very_good_regions):
@@ -362,22 +359,40 @@ def fit_regs(f, min_snr, plot=False):
             baseline_fit_params = n.zeros_like(baseline_fit_params)
         pf_fun = n.poly1d(baseline_fit_params)
         final['baseline'] = baseline_fit_params
+    if plot:
+        pf_fun = n.poly1d(baseline_fit_params)
+        baseline = pf_fun(time)
+        fullres+=baseline
+        p.figure(5)
+        p.plot(time,f, 'o',ms=4,mec='None',alpha=.5)
+        p.plot(time, fullres,color='red',lw=2)
 
     return final
 
-    if plot:
-        p.figure(1)
-        smooth_data = nd.uniform_filter(nd.uniform_filter(f, 15),20)
-        p.plot(smooth_data,color='magenta')
-        p.plot([0,len(f)],[f.mean(),f.mean()])
+def remove_fits(vec, fitdict):
+    tt=n.arange(vec.size)
+    s2 = vec.copy()
+    for ev in fitdict['transients'].values():
+        fit=fitfun.ff60(tt,**ev)
+        s2-=fit
+    return s2
 
 def fit_2_stage(data, plot=False, min_snr=5.0):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
 
-    #time = n.arange(len(data))
     res_1 = fit_regs(data,min_snr, plot)
+    cleaned = remove_fits(data, res_1)
+    res_2 = fit_regs(cleaned, min_snr-1,plot)
+    if res_2['transients'] is not {}:
+        new_res = {}
+        for k,v in res_1['transients'].iteritems():
+            new_res[k] = v
+        for k,v in res_2['transients'].iteritems():
+            new_res[k+len(res_1['transients'])] = v
+        res_1['transients'] = new_res
+        res_1['baseline'] = res_2['baseline']
     #bl_1_func = n.poly1d(res_1['baseline'])
     #bl_1 = bl_1_func(time)
     #print (max(bl_1)-min(bl_1))/min(bl_1)
@@ -635,16 +650,16 @@ def fitted_pixel_max(pixel, event = 0):
     baseline_f = n.poly1d(pixel.baseline)
     baseline = baseline_f(param['m2'])
     #vals = fitted_pixel_ff0(pixel, event)
-    if n.isnan(maxval):
-        print 'max is nan'
-        print param
-    elif n.isnan(baseline):
-        print 'base is nan'
-        print param
-        print pixel.baseline, pixel.id
-    elif n.isinf(baseline):
-        print 'base is inf'
-        print param
+    #if n.isnan(maxval):
+        #print 'max is nan'
+        #print param
+    #elif n.isnan(baseline):
+        #print 'base is nan'
+        #print param
+        #print pixel.baseline, pixel.id
+    #elif n.isinf(baseline):
+        #print 'base is inf'
+        #print param
     f_max = maxval/baseline + 1 #F/F0 not dF/F0
     return f_max
 

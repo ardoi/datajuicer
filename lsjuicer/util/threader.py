@@ -68,17 +68,17 @@ class Worker(Process):
         #self.logger.info("job %i starting, pid=%i, ppid=%i" %( self.current_job_id,os.getpid(),os.getppid()))
         try:
             # f = tf.fit_regs(data)
-            #f = tf.fit_2_stage(data)
-            rr = random.random()
-            if rr<0.01:
-                duration = 10 * random.randint(1,6)
-                self.logger.warning("job %i LONG SLEEP %i" %( self.current_job_id,duration))
-                time.sleep(duration)
-            else:
-                time.sleep(.1)
-            f = 1.0
-            if random.random()<0.01:
-                f = None
+            f = tf.fit_2_stage(data)
+            #rr = random.random()
+            #if rr<0.01:
+            #    duration = 10 * random.randint(1,6)
+            #    self.logger.warning("job %i LONG SLEEP %i" %( self.current_job_id,duration))
+            #    time.sleep(duration)
+            #else:
+            #    time.sleep(.1)
+            #f = 1.0
+            #if random.random()<0.01:
+            #    f = None
         except:
             # self.logger.debug("job %i failed"%self.current_job_id)
             #print '\n\n\nboooooo'
@@ -354,7 +354,7 @@ class Threader(QC.QObject):
         self.workers = {}
         self.start_time = None
 
-        self.slots = cpu_count()
+        self.slots = cpu_count() - 1
         self.last_started_worker_number = 0
         self.logger = logging.getLogger(__name__)
 
