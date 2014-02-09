@@ -142,9 +142,11 @@ class Region(object):
             return
         logger = get_logger(__name__)
         logger.debug("\nregion:%s"%self)
-        oo = self.fit_curve()
-        if not oo:
-            #print 'a'
+        try:
+            oo = self.fit_curve()
+            if not oo:
+                raise ValueError
+        except:
             self.bad = True
             return
         aicc_curve = oo.aicc()
