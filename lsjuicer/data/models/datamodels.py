@@ -359,7 +359,7 @@ class RandomDataModel(QC.QAbstractTableModel):
     def show_ref(self, indexlist):
         toplot = []
         for ind in indexlist:
-            f = self.dirdatas[ind]
+            #f = self.dirdatas[ind]
             toplot.append(self.dirdatas[ind])
         return toplot
 
@@ -381,6 +381,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.totalFiles.emit(len(files)-1)
         self.session = sa.dbmaster.get_session()
         import time
+        self.omexml_maker.reset_convert_list()
         t0 = time.time()
         for i,f in enumerate(files):
             print '\n\n read',f

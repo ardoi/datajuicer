@@ -117,7 +117,8 @@ class OMEXMLMaker(QC.QObject):
     #def ome_dir_name(self,filename):
     #    ome_folder = util.config.Config.get_property('ome_folder')
     #    return ome_folder
-
+    def reset_convert_list(self):
+        self.toconvert = {}
     def add_file_to_convert(self, caller):
         #caller is dummyreader instance who added file to be converted. it needs to be notified when file is done
         self.toconvert[caller.file_name] = caller
