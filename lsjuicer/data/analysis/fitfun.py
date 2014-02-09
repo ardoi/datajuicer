@@ -478,7 +478,13 @@ def ff5_bl(arg, tau2, m2,d2, d,A,B,C):
     #start of decay after plateau
     mm2 = m2+d2
     t=arg
-    return C*n.exp(-(t-mm2)/tau2)*(t>mm2)+B+C*(t<=mm2)
+    c1 = C*n.exp(-(t-mm2)/tau2)
+    res = n.zeros_like(arg)
+    res[t>mm2] = c1[t>mm2]
+    res[t<=mm2] = C
+    res+=B
+    #return C*n.exp(-(t-mm2)/tau2)*(t>mm2)+B+C*(t<=mm2)
+    return res
 
 def ff6(arg, tau2, d, d2, m2, s, A):
     return ff5(arg, tau2, d, d2, m2, s, A, 0.0, 0.0)
