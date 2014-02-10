@@ -184,7 +184,7 @@ class OMEXMLReader(AbstractReader):
         except AttributeError:
             self.description = ""
             pass
-
+        self.active_type = "Pixels"
         self._get_extra_info()
         if images["Reference"]:
             #try to get ROI
@@ -340,6 +340,8 @@ class LSMReader(OMEXMLReader):
 
 class OIBReader(OMEXMLReader):
     def _get_typespecific_extra_info(self):
+        print "\n\n\n GET SPECFIC"
+        print self.active_type
         raw_keys = self.raw_annotation.keys()
         raw_keys.sort()
         frame_time = None
@@ -350,7 +352,9 @@ class OIBReader(OMEXMLReader):
             else:
                 pass
         if frame_time:
-            self.timestamps = frame_time / float(self.image_width) * numpy.arange(self.image_width)
+            #FIXME Temporary fix to get right line time
+            print self.active_type,self.image_height,self.image_width
+            self.timestamps = frame_time / float(self.image_height) * numpy.arange(self.image_height)
             self.interval = numpy.diff(self.timestamps)[1]
         else:
             self.timestamps = None

@@ -2,7 +2,7 @@ from lsjuicer.inout.db.sqlbase import dbmaster
 import os
 
 
-def default_configuration():
+def default_configuration(override = False):
     default = {
         "visualization_options_reference":
         {"blur": 0.3, "colormap": "gist_heat",
@@ -13,8 +13,9 @@ def default_configuration():
         "filetype": "oib",
     }
     for key in default:
-        if dbmaster.get_config_setting_value(key):
-            print "config value: %s=%s" % (key, str(default[key]))
+        val= dbmaster.get_config_setting_value(key)
+        if val and not override:
+            print "config value: %s=%s" % (key, str(val))
             continue
         else:
             print "setting default config value: %s=%s"\

@@ -46,7 +46,6 @@ class DBMaster(object):
             return self.session
 
     def commit_session(self):
-        # print "ending session", session
         try:
             self.session.commit()
             return True
@@ -113,7 +112,7 @@ class DBMaster(object):
             setting.name = name
             setting.value = value
             session.add(setting)
-        #self.commit_session()
+        self.commit_session()
 
 
 dbmaster = DBMaster()
