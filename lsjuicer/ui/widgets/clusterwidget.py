@@ -182,7 +182,6 @@ class ClusterWidget(QW.QWidget):
             plotwidget.fitView()
 
     def emit_ready(self):
-        print 'ready', self.clusters[0.0][0]
         self.clusters_ready.emit(self.clusters)
 
     @timeIt

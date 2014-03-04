@@ -43,9 +43,8 @@ class Region(object):
     @property
     def data(self):
         return self._all_data[self.left:self.right]
-
-    def extra_range(self):
-        """Give an extended range of the region based on FDHM from the last fit"""
+    @property
+    def fdhm(self):
         param = self.fit_res[-1].solutions
         m2 = param['m2']
         d = param['d']
@@ -54,8 +53,12 @@ class Region(object):
         left_half = m2-d*(1+0.5*n.log((1+n.exp(-2))/2.))
         right_half = m2+d2+tau2*n.log(2)
         fdhm = right_half - left_half
+        return fdhm
+
+    def extra_range(self):
+        """Give an extended range of the region based on FDHM from the last fit"""
         amount = 0.25
-        extra = int(fdhm*amount)
+        extra = int(self.fdhm*amount)
         #print 'fdhm is:',fdhm
         return (self.left - extra, self.right+extra)
 
@@ -108,7 +111,7 @@ class Region(object):
             print 'B'
             return None
         oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
-        oo.set_parameter_range('d2',.1,100,2)
+        oo.set_parameter_range('d2',.1,51,2)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C',c_init-c_init_delta, c_init +
@@ -190,12 +193,20 @@ class Region(object):
                 self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
 
-def find_transient_boundaries2(data, min_snr ):
+def find_transient_boundaries2(data, min_snr, regions_in=None ):
     smooth_data = nd.uniform_filter(data, 25)
     #smooth_data = data
     time_data = n.arange(data.size)
     regions = []
-    peaks = rf.get_peaks(data,min_snr=min_snr)
+    if not regions_in:
+        peaks = rf.get_peaks(data,min_snr=min_snr)
+        print 'peaks', peaks
+    else:
+        peaks = {}
+        print regions_in
+        for k,r in regions_in.iteritems():
+            peaks[r.maximum] = (r.left, r.right)
+    print peaks
     for maxval, margins in peaks.iteritems():
         left = margins[0]
         right = margins[1]
@@ -204,8 +215,8 @@ def find_transient_boundaries2(data, min_snr ):
     return regions
 
 
-def fit_regs(f, min_snr, plot=False):
-    regs  = find_transient_boundaries2(f, min_snr=min_snr)
+def fit_regs(f, min_snr, plot=False, regions = None):
+    regs  = find_transient_boundaries2(f, min_snr, regions)
     #print 'regs are', regs
     time = n.arange(len(f))
     #f2= f[:]
@@ -268,7 +279,7 @@ def fit_regs(f, min_snr, plot=False):
         p.plot(time, baseline,label='bl')
         p.legend()
     #create data for each transient with the other transients removed
-    final = {'transients':{},'baseline':baseline_fit_params, 'peak_fits':{}}
+    final = {'transients':{},'baseline':baseline_fit_params, 'peak_fits':{},'regions':{}}
     if not good_regions:
         return final
     if plot:
@@ -332,6 +343,7 @@ def fit_regs(f, min_snr, plot=False):
             continue
         final['transients'][added_index] = oo.solutions
         final['peak_fits'][added_index] = r.fit_res[0]
+        final['regions'][added_index]=r
         added_index += 1
         r.fit_res.append(oo)
         if plot:
@@ -379,22 +391,24 @@ def remove_fits(vec, fitdict):
         s2-=fit
     return s2
 
-def fit_2_stage(data, plot=False, min_snr=5.0):
+def fit_2_stage(data, plot=False, min_snr=5.0, regions = None):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
 
-    res_1 = fit_regs(data,min_snr, plot)
-    cleaned = remove_fits(data, res_1)
-    res_2 = fit_regs(cleaned, min_snr-1,plot)
-    if res_2['transients'] is not {}:
-        new_res = {}
-        for k,v in res_1['transients'].iteritems():
-            new_res[k] = v
-        for k,v in res_2['transients'].iteritems():
-            new_res[k+len(res_1['transients'])] = v
-        res_1['transients'] = new_res
-        res_1['baseline'] = res_2['baseline']
+    res_1 = fit_regs(data,min_snr, plot, regions)
+    do_clean = False
+    if do_clean:
+        cleaned = remove_fits(data, res_1)
+        res_2 = fit_regs(cleaned, min_snr-1,plot)
+        if res_2['transients'] is not {}:
+            new_res = {}
+            for k,v in res_1['transients'].iteritems():
+                new_res[k] = v
+            for k,v in res_2['transients'].iteritems():
+                new_res[k+len(res_1['transients'])] = v
+            res_1['transients'] = new_res
+            res_1['baseline'] = res_2['baseline']
     #bl_1_func = n.poly1d(res_1['baseline'])
     #bl_1 = bl_1_func(time)
     #print (max(bl_1)-min(bl_1))/min(bl_1)

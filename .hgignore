@@ -24,3 +24,13 @@ LSJuicer.egg-info/*
 *.qrc
 bin/.ipynb_checkpoints
 pixfit.ipynb
+bin/Untitled0.ipynb
+bin/Untitled1.ipynb
+bin/dd.out.npy
+bin/dilation.ipynb
+bin/t.backup
+bin/t2.b
+bin/tables.backup
+bin/tables.events
+bin2/test.py
+tables2.db-journal
