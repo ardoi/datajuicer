@@ -211,7 +211,7 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
 
 def remove_overlapping_regions(regs):
     def test_overlap(a,b):
-        return not(a[3]<b[2] or b[3]<a[2])
+        return not(a[3]<=b[2] or b[3]<=a[2])
     if len(regs) == 1:
         return regs
     print 'all:',regs
@@ -227,15 +227,27 @@ def remove_overlapping_regions(regs):
             res[one]+=1
             res[two]+=1
         else:
-            #overlap so the region with the )highest score gets +1
-            res[one]+=max(0, cmp(one[4],two[4]))
-            res[two]+=max(0, cmp(two[4],one[4]))
+            #overlap so the region with the higher snr score gets +1
+            one_snr = one[4]
+            if one_snr == two[4]:
+                #same snr so we'll pick one at random by altering
+                #the snr of the first region
+                q = n.random.choice([-1,1])
+                one_snr += q
+            res[one]+=max(0, cmp(one_snr,two[4]))
+            res[two]+=max(0, cmp(two[4],one_snr))
     good=[]
     #only regions which have len(res) - 1 as score have no overlaps
-    #with higher scored regions and are kept
-    for k,v in res.iteritems():
-        if v == len(res) - 1:
-            good.append(k)
+    #with higher scored regions and are kept. If none exist then len(res)-2
+    #etc
+    print range(0, len(res))[::-1]
+    for j in range(1, len(res))[::-1]:
+        print 'j is',j
+        for k,v in res.iteritems():
+            if v == j:
+                good.append(k)
+        if good:
+            break
     print 'good:',good
     return good
 
@@ -330,6 +342,7 @@ def find_regions(peaks, cwd_data):
     return regions
 
 def get_peaks(data, min_snr=3.5, max_width=150,step=5):
+    #TODO max width should not be in pixels
     #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
     #widths=n.array(w)
     #changed 2->4 for puffs
