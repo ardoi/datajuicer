@@ -80,14 +80,16 @@ def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
         yvals,xvals = line
         amps = [] #amplitudes along the ridge
         ws=[] #w indices along the rigde
+        locs=[] #ridge locations
         for x,y in zip(xvals,yvals):
             amps.append(cwt[y,x])
             ws.append(y)
+            locs.append(x)
         print '\n',xvals[0]
-        print 'xx,yy=',ws,",",amps
+        print 'xx,yy,zz=',ws,",",amps,",",locs
         #index of the weight at ridge maximum
         max_ws_index = find_first_max(amps)
-        #print 'max',max_windex
+        print 'max',max_ws_index
         if max_ws_index is None:
             return False
         c=amps[max_ws_index]
@@ -166,6 +168,15 @@ def find_first_max(vec_in):
                 remembered = i+1
                 continue
         i+=1
+    if not remembered:
+        i = 0
+        #no maximum was found. Look for inflection point then
+        vec = n.diff(vec)
+        while i<len(vec)-2:
+            if vec[i]*vec[i+1]<0:
+                return i + 2
+            i+=1
+
     return remembered
 
 def find_peaks_cwt2(vector, widths, min_snr=1):
@@ -191,9 +202,9 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    #print '\n\ngood ones'
-    #for g in good_ones:
-    #    print g
+    print '\n\ngood ones'
+    for g in good_ones:
+        print g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -234,8 +245,8 @@ def remove_overlapping_regions(regs):
                 #the snr of the first region
                 q = n.random.choice([-1,1])
                 one_snr += q
-            res[one]+=max(0, cmp(one_snr,two[4]))
-            res[two]+=max(0, cmp(two[4],one_snr))
+            res[one] += max(0, -cmp(one_snr, two[4]))
+            res[two] += max(0, -cmp(two[4], one_snr))
     good=[]
     #only regions which have len(res) - 1 as score have no overlaps
     #with higher scored regions and are kept. If none exist then len(res)-2
@@ -366,7 +377,7 @@ def get_peaks(data, min_snr=3.5, max_width=150,step=5):
     #print 'found regions', regions
     return regions
 
-def show_peaks(data, min_snr=5.0, max_width = 50, step = 2,xmin=None, xmax=None):
+def show_peaks(data, min_snr=5.0, max_width = 150, step = 5,xmin=None, xmax=None):
     import pylab
     pylab.plot(data)
     regions = get_peaks(data, min_snr, max_width,step)

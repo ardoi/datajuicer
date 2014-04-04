@@ -460,7 +460,6 @@ def ff40_start_tau(arg, tau2, mu,d):
 
 
 def f5(arg, tau2, d,  m2, A, B):
-    """same as fit_func_4 but between has a plateau after the rising phase"""
     t=arg
     #mu1 = mu
     #mu2 = mu1 + d
