@@ -86,7 +86,7 @@ class Region(object):
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
-        self.maximum = self.time_data[self.smooth_data.argmax()]
+        self.maximum = self.time_data[self.data.argmax()]
         #print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
         #make first fit with non-convolved function
@@ -201,9 +201,7 @@ class Region(object):
                 self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
 
-def make_region_objects(data, regions):
-    #FIXME wasted time on filtering
-    smooth_data = nd.uniform_filter(data, 5)
+def make_region_objects(data, regions, smooth_data):
     #smooth_data = data
     time_data = n.arange(data.size)
     region_objects = []
@@ -221,7 +219,8 @@ def fit_regs(f, regions, plot=False):
     time = n.arange(len(f))
     z = n.zeros_like(f)
     bl = n.zeros_like(f)
-    regs = make_region_objects(f, regions)
+    smooth_data = nd.uniform_filter(f, 5)
+    regs = make_region_objects(f, regions, smooth_data)
     good_regions = []
     if plot:
         import pylab as p
