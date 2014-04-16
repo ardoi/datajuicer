@@ -202,9 +202,6 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    print '\n\ngood ones'
-    for g in good_ones:
-        print g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -220,12 +217,13 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #print 'mm',max_locs
     return sorted(max_locs, key=lambda x:x[0])
 
-def remove_overlapping_regions(regs):
+def detect_overlapping_regions(regs):
     def test_overlap(a,b):
         return not(a[3]<=b[2] or b[3]<=a[2])
     if len(regs) == 1:
         return regs
-    print 'all:',regs
+    #return regs
+    #print 'all:',regs
     ii=itertools.combinations(regs,2)
     res = defaultdict(int)
     for i in ii:
@@ -247,147 +245,63 @@ def remove_overlapping_regions(regs):
                 one_snr += q
             res[one] += max(0, -cmp(one_snr, two[4]))
             res[two] += max(0, -cmp(two[4], one_snr))
-    good=[]
+    good = defaultdict(list)
     #only regions which have len(res) - 1 as score have no overlaps
     #with higher scored regions and are kept. If none exist then len(res)-2
     #etc
-    print range(0, len(res))[::-1]
-    for j in range(1, len(res))[::-1]:
-        print 'j is',j
-        for k,v in res.iteritems():
-            if v == j:
-                good.append(k)
-        if good:
-            break
+    #print range(0, len(res))[::-1]
+    for k,v in res.iteritems():
+        good[v].append(k)
+    #for j in range(1, len(res))[::-1]:
+    #    #print 'j is',j
+    #    for k,v in res.iteritems():
+    #        if v == j:
+    #            good.append(k)
+    #    if good:
+    #        break
     print 'good:',good
     return good
 
-def find_regions3(rrr, widths, data_size):
-    regions = {}
-    #print 'all regions',rrr
-    rrr = remove_overlapping_regions(rrr)
-    #print 'nonoverlapped', rrr
-    for ri, r in enumerate(rrr):
-        p=int(r[0])
-        regions[p]=(r[2],r[3])
-    return regions
+
+#def find_regions3(rrr):
+#    regions = {}
+#    rrr = remove_overlapping_regions(rrr)
+#    for ri, r in enumerate(rrr):
+#        p = int(r[0])
+#        regions[p] = (r[2], r[3])
+#    return regions
 
 
-
-def find_regions2(rrr, widths, data_size):
-    regions = {}
-    keep_right = False
-    right_new = None
-    #print 'rrr',rrr
-    for ri, r in enumerate(rrr):
-        p=int(r[0])
-        width = widths[r[1]]
-        #print 'get width', p,r[1],width,widths
-        if keep_right:
-            left = right_new
-        else:
-            left = r[2]
-        keep_right = False
-        right = r[3]
-        #print ri,r
-        if ri<len(rrr)-1:
-            #print 'a'
-            next_left = rrr[ri+1][2]
-            next_p = rrr[ri+1][0]
-            #next_w = widths[rrr[ri+1][1]]
-            #regions[p] = (max(0, p - width/2), min(p+1*width,next_p-next_w/2))
-            #print next_left,next_p
-            if 0:#next_left < right:
-                #limit the right side to the left side of the next
-                min_next_left = next_p - 4*(next_p - next_left)/5
-                right_new = min(min_next_left, p+((right-p)+abs(p-next_left))/2)
-                #print right_new, p+2*width,right
-                regions[p] = ( max(left, p - width), min(right_new, p + 2*width))
-                if regions[p][1]==right_new:
-                    keep_right = True
-            else:
-                #print 'else'
-                regions[p] = (max(left, p - width), min(right, p+2*width))
-        else:
-            regions[p] = (max(left, p - width), min(right, p+2*width))
-            #regions[p] = (left, right)
-            #regions[p] = (max(0, p - width/2), min(p+1*width, data_size))
-        assert regions[p][0]<p and regions[p][1]>p,str(regions[p])+" "+str(p)
-    return regions
-
-def find_regions(peaks, cwd_data):
-    mins = ss._peak_finding.argrelmin(cwd_data)[0]
-    regions = {}
-
-    last = 0
-    for pi, p in enumerate(peaks):
-        p=int(p)
-        for ii in range(last,len(mins)-1):
-            if mins[ii] < p and mins[ii + 1] > p:
-                last=ii
-                if pi<len(peaks)-1 and ii<len(mins)-3 and mins[ii+2] < peaks[pi+1] :
-                    regions[p]= (mins[ii], min(mins[ii+1] + mins[ii+1] - mins[ii], mins[ii+2]))
-                else:
-                    regions[p] = (mins[ii], mins[ii+1])
-                break
-        if p not in regions:
-            #didn't find minima on both sides
-            #so let's check either side
-            #left
-            left = mins[mins<p]
-            minleft = None
-            minright = None
-            if left.any():
-                minleft = left.max()
-            #right
-            right = mins[mins>p]
-            if right.any():
-                minright = right.min()
-            if minleft and not minright:
-                minright = min(p + 2*(p-minleft), cwd_data.size)
-            elif minright and not minleft:
-                minleft = max(p - (minright - p), 0)
-            else:
-                raise RuntimeError
-            regions[p] = (minleft, minright)
-    return regions
-
-def get_peaks(data, min_snr=3.5, max_width=150,step=5):
+def get_regions(data, min_snr=3.5, max_width=150, step=5):
     #TODO max width should not be in pixels
-    #w = [1, 5, 10, 15, 20, 25, 50, 100, 150]
-    #widths=n.array(w)
-    #changed 2->4 for puffs
-    #wlist = [1] + range(2,20,4)+range(20,120,5)
-    #wlist = range(1,120,5)
-    #widths = n.array(wlist)
-    widths =  n.arange(1,max_width ,step)
+    widths = n.arange(1, max_width, step)
     peaks_all = find_peaks_cwt2(data, widths, min_snr)
     if not peaks_all:
         return {}
-    #if not peaks_all.any():
-    #    return {}
-    #peaks = peaks_all[:,0]
-    #sizes = peaks_all[:,1]
-    #wavelet width to use for estimating region sizes
-    #we use the smallest size to ensure we have no blending of regions
-    #use_size = sizes.min()/2 + 1
-    #cwd = ss.cwt(data, ss.ricker, [widths[use_size]])[0]
-    #regions = find_regions(peaks, cwd)
-    regions = find_regions3(peaks_all, widths, data.size)
-    #print 'found regions', regions
+    print 'bla'
+    regions = detect_overlapping_regions(peaks_all)
+    print 'regions', regions
     return regions
 
-def show_peaks(data, min_snr=5.0, max_width = 150, step = 5,xmin=None, xmax=None):
+
+def show_regions(data, min_snr=5.0, max_width=150, step=5, xmin=None, xmax=None):
     import pylab
     pylab.plot(data)
-    regions = get_peaks(data, min_snr, max_width,step)
-    ca=pylab.gca()
-    for r,b in regions.iteritems():
-        pylab.plot(r,data.max(),'ro')
-        ca.add_patch(pylab.Rectangle((b[0],data.min()),b[1]-b[0],
-                                data.max(),alpha=0.5,facecolor='orange'))
+    regions = get_regions(data, min_snr, max_width, step)
+    ca = pylab.gca()
+    keys = regions.keys()
+    keys.sort(reverse=True)
+    colors = iter(['orange', 'navy', 'magenta', 'lime','yellow'])
+    for k in keys:
+        b = regions[k]
+        color = colors.next()
+        for region in b:
+            pylab.plot(region[0], data.max(), 'ro')
+            print region
+            ca.add_patch(pylab.Rectangle((region[2], data.min()), region[3]-region[2],
+                            data.max(), alpha=0.5, facecolor=color))
+    pylab.show()
     if xmin and xmax:
         pylab.xlim(xmin, xmax)
-    pylab.show()
     return regions
 

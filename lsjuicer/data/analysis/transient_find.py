@@ -4,7 +4,7 @@ import logging
 from scipy import ndimage as nd
 import numpy as n
 
-from lsjuicer.data.analysis import fitfun
+import lsjuicer.data.analysis.fitfun as fitfun
 from lsjuicer.data.analysis import regionfinder as rf
 from lsjuicer.util.helpers import timeIt
 
@@ -43,6 +43,9 @@ class Region(object):
     @property
     def data(self):
         return self._all_data[self.left:self.right]
+    @property
+    def smooth_data(self):
+        return self.all_smooth_data[self.left:self.right]
     @property
     def fdhm(self):
         param = self.fit_res[-1].solutions
@@ -83,6 +86,7 @@ class Region(object):
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
+        self.maximum = self.time_data[self.smooth_data.argmax()]
         #print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
         #make first fit with non-convolved function
@@ -101,6 +105,7 @@ class Region(object):
             return None
         oo.set_parameter_range('tau2',2,100.,30.)
         mu_est = self.maximum
+        #mu_est = self.time_data[self.data.argmax()]
         oo.set_parameter_range('m2', le+1, ri-1, mu_est)
         d_est = (self.maximum-le)/2.+1.
         left_data = fu[le:self.maximum]
@@ -111,6 +116,7 @@ class Region(object):
             print 'B'
             return None
         oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
+        #FIXME why 51?
         oo.set_parameter_range('d2',.1,51,2)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
@@ -119,6 +125,8 @@ class Region(object):
         #oo.show_parameters()
         oo.optimize(max_fev = 10000)
         #optimization failed
+        print oo.parameters
+        print fu[self.maximum], b_init, self.maximum
         if not oo.solutions:
             print 'C'
             #print  self.data.tolist()
@@ -193,35 +201,27 @@ class Region(object):
                 self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
 
 
-def find_transient_boundaries2(data, min_snr, regions_in=None ):
-    smooth_data = nd.uniform_filter(data, 25)
+def make_region_objects(data, regions):
+    #FIXME wasted time on filtering
+    smooth_data = nd.uniform_filter(data, 5)
     #smooth_data = data
     time_data = n.arange(data.size)
-    regions = []
-    if not regions_in:
-        peaks = rf.get_peaks(data,min_snr=min_snr)
-        print 'peaks', peaks
-    else:
-        peaks = {}
-        print regions_in
-        for k,r in regions_in.iteritems():
-            peaks[r.maximum] = (r.left, r.right)
-    print peaks
-    for maxval, margins in peaks.iteritems():
-        left = margins[0]
-        right = margins[1]
+    region_objects = []
+    for reg in regions:
+        left = reg[2]
+        right = reg[3]
+        maxval = reg[0]
         reg = Region(left, right, maxval, data, smooth_data, time_data)
-        regions.append(reg)
-    return regions
+        region_objects.append(reg)
+    return region_objects
 
 
-def fit_regs(f, min_snr, plot=False, regions = None):
-    regs  = find_transient_boundaries2(f, min_snr, regions)
+def fit_regs(f, regions, plot=False):
     #print 'regs are', regs
     time = n.arange(len(f))
-    #f2= f[:]
     z = n.zeros_like(f)
     bl = n.zeros_like(f)
+    regs = make_region_objects(f, regions)
     good_regions = []
     if plot:
         import pylab as p
@@ -391,16 +391,24 @@ def remove_fits(vec, fitdict):
         s2-=fit
     return s2
 
-def fit_2_stage(data, plot=False, min_snr=5.0, regions = None):
+def fit_2_stage(data, plot=False, min_snr=5.0):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
-
-    res_1 = fit_regs(data,min_snr, plot, regions)
-    do_clean = False
-    if do_clean:
+    found_regions = rf.get_regions(data, min_snr=min_snr)
+    #use the regions with maximum overlap index
+    use_regions = found_regions[max(found_regions.keys())]
+    res_1 = fit_regs(data, use_regions, plot)
+    do_clean = True
+    print 'keys',found_regions.keys()
+    if do_clean and len(found_regions.keys())>1:
+        print 'do clean'
         cleaned = remove_fits(data, res_1)
-        res_2 = fit_regs(cleaned, min_snr-1,plot)
+        found_regions = rf.get_regions(cleaned, min_snr=min_snr)
+        #use the regions with maximum overlap index
+        use_regions = found_regions[max(found_regions.keys())]
+        print 'using', use_regions
+        res_2 = fit_regs(cleaned, use_regions, plot)
         if res_2['transients'] is not {}:
             new_res = {}
             for k,v in res_1['transients'].iteritems():
@@ -569,7 +577,8 @@ class SyntheticData(object):
         for i,t in enumerate(result.pixel_events):
             if self.filter:
                 #skip pixelevents that are not part of any event
-                if not t.event_id in self.filter:
+                #if not t.event_id in self.filter:
+                if not t.id in self.filter:
                     continue
             res = fitfun.ff60(self.times, **t.parameters)
             if True not in n.isnan(res):

@@ -478,7 +478,7 @@ def ff5_bl(arg, tau2, m2,d2, d,A,B,C):
     mm2 = m2+d2
     t=arg
     c1 = C*n.exp(-(t-mm2)/tau2)
-    res = n.zeros_like(arg)
+    res = n.zeros_like(arg, dtype='float64')
     res[t>mm2] = c1[t>mm2]
     res[t<=mm2] = C
     res+=B
