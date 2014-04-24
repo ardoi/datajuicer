@@ -63,7 +63,7 @@ class Region(object):
         amount = 0.25
         extra = int(self.fdhm*amount)
         #print 'fdhm is:',fdhm
-        return (self.left - extra, self.right+extra)
+        return (max(0, self.left - extra), min(self.right + extra, self._all_data.size))
 
     def __init__(self, left, right, maximum, data, smooth_data, time_data):
 
@@ -396,10 +396,12 @@ def fit_2_stage(data, plot=False, min_snr=5.0):
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
     found_regions = rf.get_regions(data, min_snr=min_snr)
     #use the regions with maximum overlap index
-    use_regions = found_regions[max(found_regions.keys())]
+    if found_regions:
+        use_regions = found_regions[max(found_regions.keys())]
+    else:
+        use_regions = []
     res_1 = fit_regs(data, use_regions, plot)
     do_clean = True
-    print 'keys',found_regions.keys()
     if do_clean and len(found_regions.keys())>1:
         print 'do clean'
         cleaned = remove_fits(data, res_1)

@@ -331,7 +331,7 @@ class MainUI(QW.QMainWindow):
 
 
         rmodel.conversion_needed[int].connect(self.set_conversion_needed)
-        self.convert_pb.clicked[()].connect(rmodel.convert)
+        self.convert_pb.clicked.connect(rmodel.convert)
 
         rmodel.omexml_maker.set_file_being_inspected_label[str].connect(self.set_file_being_inspected_label)
         rmodel.omexml_maker.filesConverted[int].connect(self.converted)
@@ -409,9 +409,9 @@ class MainUI(QW.QMainWindow):
         self.tasker.filesButton.toggled[bool].connect(lambda:self.mainStack.setCurrentIndex(0))
         self.mainStack.addWidget(self.filePickerTab)
         self.mainStack.addWidget(AnalysisWidget(parent=self))
-        self.actionSaveData.triggered[()].connect(self.on_actionSaveData_triggered)
-        self.actionHelp.triggered[()].connect(self.on_actionHelp_triggered)
-        self.actionLog.triggered[()].connect(self.on_actionLog_triggered)
+        self.actionSaveData.triggered.connect(self.on_actionSaveData_triggered)
+        self.actionHelp.triggered.connect(self.on_actionHelp_triggered)
+        self.actionLog.triggered.connect(self.on_actionLog_triggered)
 
     def recheck_from_files(self):
         self.rmodel.recheck_images()

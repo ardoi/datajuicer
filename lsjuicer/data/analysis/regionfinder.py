@@ -1,4 +1,5 @@
 import itertools
+import logging
 from collections import defaultdict
 import numpy as n
 import scipy.signal as ss
@@ -221,7 +222,7 @@ def detect_overlapping_regions(regs):
     def test_overlap(a,b):
         return not(a[3]<=b[2] or b[3]<=a[2])
     if len(regs) == 1:
-        return regs
+        return {1:regs}
     #return regs
     #print 'all:',regs
     ii=itertools.combinations(regs,2)
