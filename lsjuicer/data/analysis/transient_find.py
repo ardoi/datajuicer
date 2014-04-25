@@ -86,7 +86,7 @@ class Region(object):
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
-        self.maximum = self.time_data[self.data.argmax()]
+        self.maximum = self.time_data[self.smooth_data.argmax()]
         #print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
         #make first fit with non-convolved function
@@ -125,8 +125,6 @@ class Region(object):
         #oo.show_parameters()
         oo.optimize(max_fev = 10000)
         #optimization failed
-        print oo.parameters
-        print fu[self.maximum], b_init, self.maximum
         if not oo.solutions:
             print 'C'
             #print  self.data.tolist()
@@ -194,6 +192,14 @@ class Region(object):
         else:
             self.bad = True
             #print 'aaa'
+        #print 'test',self, aicc_line, aicc_curve
+        #params = {}
+        #for key,val in oo.parameters.iteritems():
+        #    params[key] = val['init']
+        #print 'param=',params
+        #print 'sols=',oo.solutions
+        #print self.data.tolist()
+        #print self.time_data.tolist()
         logger.debug("bad: %s"%str(self.bad))
 
     def __repr__(self):
@@ -394,41 +400,36 @@ def fit_2_stage(data, plot=False, min_snr=5.0):
     """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
-    found_regions = rf.get_regions(data, min_snr=min_snr)
-    #use the regions with maximum overlap index
-    if found_regions:
-        use_regions = found_regions[max(found_regions.keys())]
-    else:
-        use_regions = []
-    res_1 = fit_regs(data, use_regions, plot)
-    do_clean = True
-    if do_clean and len(found_regions.keys())>1:
-        print 'do clean'
-        cleaned = remove_fits(data, res_1)
+    cleaned = data
+    res_out = None
+    i=0
+    maximum_repeats = 5
+    while i < maximum_repeats:
         found_regions = rf.get_regions(cleaned, min_snr=min_snr)
+        print '\nloop',i
         #use the regions with maximum overlap index
-        use_regions = found_regions[max(found_regions.keys())]
-        print 'using', use_regions
-        res_2 = fit_regs(cleaned, use_regions, plot)
-        if res_2['transients'] is not {}:
-            new_res = {}
-            for k,v in res_1['transients'].iteritems():
-                new_res[k] = v
-            for k,v in res_2['transients'].iteritems():
-                new_res[k+len(res_1['transients'])] = v
-            res_1['transients'] = new_res
-            res_1['baseline'] = res_2['baseline']
-    #bl_1_func = n.poly1d(res_1['baseline'])
-    #bl_1 = bl_1_func(time)
-    #print (max(bl_1)-min(bl_1))/min(bl_1)
-    #print 'second',len(time), len(data), len(bl_1),
-    #print res_1
-    #data_2 = data - bl_1
-    #print res_1
-    #print "stage 2"
-    #res_2 = fit_regs(data_2, plot, baseline = bl_1)
-    #res_2['baseline'] = res_1['baseline']
-    return res_1
+        #if i==1:
+        #    print found_regions
+        #    return cleaned
+        i+=1
+        if found_regions:
+            use_regions = found_regions[max(found_regions.keys())]
+        else:
+            use_regions = []
+        res_1 = fit_regs(cleaned, use_regions, plot)
+        if res_out is None:
+            res_out = res_1
+        else:
+            if res_1['transients'] is not {}:
+                existing_count = len(res_out['transients'])
+                for k,v in res_1['transients'].iteritems():
+                    res_out['transients'][k + existing_count] = v
+                res_out['baseline'] = res_1['baseline']
+        if len(found_regions.keys())<2:
+            break
+        else:
+            cleaned = remove_fits(cleaned, res_1)
+    return res_out
 
 
 def make_data_by_size_and_time(results, key, number ):
