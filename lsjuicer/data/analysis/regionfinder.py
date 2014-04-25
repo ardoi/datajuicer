@@ -86,11 +86,11 @@ def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
             amps.append(cwt[y,x])
             ws.append(y)
             locs.append(x)
-        print '\n',xvals[0]
-        print 'xx,yy,zz=',ws,",",amps,",",locs
+        #print '\n',xvals[0]
+        #print 'xx,yy,zz=',ws,",",amps,",",locs
         #index of the weight at ridge maximum
         max_ws_index = find_first_max(amps)
-        print 'max',max_ws_index
+        #print 'max',max_ws_index
         if max_ws_index is None:
             return False
         c=amps[max_ws_index]
@@ -182,8 +182,8 @@ def find_first_max(vec_in):
 
 def find_peaks_cwt2(vector, widths, min_snr=1):
     #print vector.size, widths
-    gap_thresh = n.ceil(widths[0])
-    max_distances = widths / 3.0
+    gap_thresh = n.ceil(widths[0]) + 1
+    max_distances = widths / 2.0
     wavelet = ss.ricker
     pad = 1
     if pad:
