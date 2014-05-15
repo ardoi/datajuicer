@@ -93,7 +93,7 @@ class AnalysisPanel(ActionPanel):
                 self.analysis  = PixelByPixelAnalysis()
                 self.analysis.imagefile = self.imagedata.mimage
         else:
-            self.roi_manager = ROIManager(self.parentwidget.image_plot.fscene,
+            self.roi_manager = SnapROIManager(self.parentwidget.image_plot.fscene,
                         selection_types.data[key])
         self.selection_datamodel.set_selection_manager(self.roi_manager)
         self.selection_widget.set_model(self.selection_datamodel)

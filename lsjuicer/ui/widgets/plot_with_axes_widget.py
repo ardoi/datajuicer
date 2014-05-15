@@ -628,7 +628,6 @@ class FunctionItem(QW.QGraphicsItem):
         #points = min(h_space, viewed_right - viewed_left)
         #plot_indices = n.linspace(viewed_left, viewed_right, points).astype(int)
         plot_indices = n.arange(viewed_left, viewed_right).astype(int)
-        #print plot_indices
         for i in range(plot_indices.size):
             if i == 0:
                 continue

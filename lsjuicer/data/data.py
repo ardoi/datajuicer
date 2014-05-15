@@ -23,16 +23,16 @@ class Fl_Data:
         print 'coords',self.coords
         print 'darray', array
         if len(self.coords)==2:
-            self.data = array
+            self.data = array[0]
         elif self.coords[2] == 0 and self.coords[3]==0:
-            self.data = array[:,self.coords[0]:self.coords[1]]
+            self.data = array[0][:,self.coords[0]:self.coords[1]]
         else:
-            self.data  = array[self.coords[2]:self.coords[3],self.coords[0]:self.coords[1]]
+            self.data  = array[0][self.coords[2]:self.coords[3],self.coords[0]:self.coords[1]]
         if isinstance(av,list):
             print 'av is list',av
             if len(av) == 4:
                 if sum(av[3:4])>0:
-                    av_data  = array[av[2]:av[3],av[0]:av[1]]
+                    av_data  = array[0][av[2]:av[3],av[0]:av[1]]
                     print '2d',av_data
                     self.av_mean = n.mean(av_data)
                     if av[3]==av[2] and av[0]==av[1]:
@@ -40,7 +40,7 @@ class Fl_Data:
                         self.av_mean = 1
                 else:
                     #1d case
-                    av_data = array[:,av[0]:av[1]]
+                    av_data = array[0][:,av[0]:av[1]]
                     print array
                     print '1d',av_data
                     self.av_mean = n.mean(av_data)
@@ -58,21 +58,21 @@ class Fl_Data:
             self.calculate_bl = True
         fl_list = []
         row_len = self.data.shape[0]
-        #print 'rows',row_len,self.av_mean,self.data.shape
-        #print 'data',self.data
-        for row in self.data.transpose():
-            assert len(row)==row_len
-            fl_list.append( (sum(row) / row_len - self.av_mean) / self.av_mean + 1)
+        print 'rows',row_len,self.av_mean,self.data.shape
+        print 'data',self.data
+        #for row in self.data:#:.transpose():
+        #    assert len(row)==row_len
+        #    fl_list.append( (sum(row) / row_len - self.av_mean) / self.av_mean + 1)
         if len(self.coords)==2:
             self.x_axis_values = range(0,self.coords[1])
         else:
             self.x_axis_values  = range(self.coords[0],self.coords[1])#pixel numbers
 
-        self.fld = fl_list
+        fld = self.data.mean(axis=0)
         self.offset = self.x_axis_values[0]
         self.physical_x_axis_values  = helpers.shiftList(n.array(phys), self.offset)
         #self.phys = phys
-        self.fl_func = interp1d(self.physical_x_axis_values.data,helpers.smooth(n.array(fl_list),1),kind='slinear')
+        self.fl_func = interp1d(self.physical_x_axis_values.data,helpers.smooth(fld,1),kind='slinear')
         if 1:
             self.fl = helpers.shiftList(self.fl_func(phys),self.offset)
         #self.mx = []

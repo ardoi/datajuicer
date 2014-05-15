@@ -42,21 +42,6 @@ class SaveTracesDialog(QW.QDialog):
         exp_type_layout = QW.QHBoxLayout()
         exp_type_layout.addWidget(QW.QLabel('Experiment type:'))
         self.exp_type_combo = QW.QComboBox()
-        #key = 'experiment.types'
-        #if shelf_db.has_key(key):
-        #    types = shelf_db[key]
-        #else:
-        #    types = []
-        #exp_types = types
-        #for exp_type in exp_types:
-        #    self.exp_type_combo.addItem(exp_type)
-        #try:
-        #    key ='exp_type'
-        #    exp_type = Config.get_property(key)
-        #    index = exp_types.index(exp_type)
-        #    self.exp_type_combo.setCurrentIndex(index)
-        #except KeyError:
-        #    pass
 
 
         exp_type_layout.addWidget(self.exp_type_combo)
@@ -160,7 +145,7 @@ class TransientTab(QW.QTabWidget):
     def fl_ds(self):
         return self.channel_fl_datas[self.channel]
 
-    def __init__(self, rois, imagedata, pipechains, parent = None):
+    def __init__(self, rois, imagedata, pipechain, parent = None):
     #def __init__(self, parent = None):
         super(TransientTab, self).__init__(parent)
         self.imagedata = imagedata
@@ -174,7 +159,7 @@ class TransientTab(QW.QTabWidget):
                 int(r.x() + r.width())),
                 max(int(r.x()), int(r.x() + r.width())),\
                 min(int(r.y()), int(r.y() + r.height())),\
-                max(int(r.y()),int(r.y()+r.height()))]
+                max(int(r.y()),int(r.y() + r.height()))]
 
         if ISTN.F0 not in rois:
             bgr = None
@@ -182,17 +167,17 @@ class TransientTab(QW.QTabWidget):
         else:
             bgr = rois[ISTN.F0][0].graphic_item.rect()
             bgr_r = [min(int(bgr.x()),
-                int(bgr.x() + bgr.width())),
-                max(int(bgr.x()), int(bgr.x() + bgr.width())),\
-                min(int(bgr.y()), int(bgr.y() + bgr.height())),
-                max(int(bgr.y()), int(bgr.y()+bgr.height()))]
-
+                     int(bgr.x() + bgr.width())),
+                     max(int(bgr.x()), int(bgr.x() + bgr.width())),
+                     min(int(bgr.y()), int(bgr.y() + bgr.height())),
+                     max(int(bgr.y()), int(bgr.y() + bgr.height()))]
+        pc_data = pipechain.get_result_data()
         for channel in range(self.imagedata.channels):
             #channel_data = self.imagedata.all_image_data[channel]
-            channel_data = pipechains[channel].get_result_data()
-            fds =  Fl_Data(channel_data,
-                    self.imagedata.timestamps[r_r[0]:r_r[1]],
-                    r_r, bgr_r, True)
+            channel_data = pc_data[channel]
+            fds = Fl_Data(channel_data,
+                          self.imagedata.timestamps[r_r[0]:r_r[1]],
+                          r_r, bgr_r, True)
             #FIXME
             #fds.set_events(self.imagedata.event_times)
             #fds.set_gaps(self.imagedata.gaps)
@@ -212,31 +197,11 @@ class TransientTab(QW.QTabWidget):
         self.approved_transients = None
         self.toggling_buttons = False
         self.toggle_buttons()
+        window=QW.QApplication.activeWindow()
+        self.status = window.statusBar()
         QC.QTimer.singleShot(50, lambda :self.initialPlots())
 
-    def setName(self,name):
-        self.filename = name
 
-    def activeView(self):
-        activeIndex = self.currentIndex()
-        if activeIndex == 0:
-            widget = self.fplot
-        else:
-            widget = self.widget(activeIndex)
-        return widget.fV, self.tabText(activeIndex)
-
-    def getAllViews(self):
-        views = []
-        for tabno in range(self.count()):
-            if tabno == 0:
-                widget = self.fplot
-            else:
-                widget = self.widget(tabno)
-            views.append([widget.fV, self.tabText(tabno)])
-        return views
-
-    def setStatus(self, status):
-        self.status = status
 
     def initialPlots(self):
         def color_yield():
@@ -251,17 +216,18 @@ class TransientTab(QW.QTabWidget):
             color_lighter = QG.QColor(color)
             color_lighter.setAlpha(100)
             #print channel, min(channel_fl_data.fl.data),max(channel_fl_data.fl.data)
-            self.fplot.addPlot('Fluorescence %i'%channel, channel_fl_data.fl.data,
-                    channel_fl_data.physical_x_axis_values.data, color = color_lighter,
-                    size=1,visibility=True, physical = False)
-            channel_fl_data.smooth(times = 2, wl = [5,5])
-            self.fplot.addPlot('Smoothed %i'%channel, channel_fl_data.smoothed.data,
-                    channel_fl_data.physical_x_axis_values.data, color = color,
-                        size=2, physical = False)
-        #self.set_smooth()
-        #self.fplot.addHLines(self.ds.events,Constants.EVENTS,'navy')
-        #self.fplot.addHLines(self.ds.gaps,Constants.GAPS, 'orange')
-        self.fplot.fitView(0)
+            self.fplot.addPlot('Fluorescence {}'.format(channel),
+                               #channel_fl_data.physical_x_axis_values.data,
+                               n.arange(channel_fl_data.fl.data.size),
+                               channel_fl_data.fl.data,
+                               {'color': color_lighter, 'size': 1})
+            channel_fl_data.smooth(times=2, wl=[5, 5])
+            self.fplot.addPlot('Smoothed %i'%channel,
+                               #channel_fl_data.physical_x_axis_values.data,
+                               n.arange(channel_fl_data.smoothed.data.size),
+                               channel_fl_data.smoothed.data,
+                               {'color': color_lighter, 'size': 2})
+        #self.fplot.fitView(0)
         print 'fplot',self.fplot.size()
 
     def channel_visibility(self, state):
@@ -307,11 +273,6 @@ class TransientTab(QW.QTabWidget):
             f.close()
             QW.QMessageBox.information(self,'Done',"%i rows saved to %s"%(len(rows),fullfname))
             self.save_label.setText("Saved")
-
-
-
-
-
 
     def setup_ui(self):
         main_layout = QW.QGridLayout()
@@ -568,39 +529,7 @@ class TransientTab(QW.QTabWidget):
             self.transient_tableview.hideColumn(ci)
         self.state_matrix.update({self.transient_tableview:d})
         tool_layout.addWidget(self.transient_action_widget)
-        #
-        ####
 
-
-        ####
-        #
-        # Group widget
-        #groupW = QG.QWidget()
-        #groupW.setLayout(QG.QHBoxLayout())
-        #group_selection_widget = SelectionWidget(user_can_add_types=True, parent=self)
-        #group_selection_widget.setSizePolicy(QG.QSizePolicy.Maximum,
-        #        QG.QSizePolicy.Maximum)
-        #key = 'transienttab.groups'
-        #if shelf_db.has_key(key):
-        #    selectiontypes = shelf_db[key]
-        #else:
-        #    selectiontypes = []
-
-        #FIXME group selections
-        #self.group_manager = BoundaryManager(self.fplot.fscene,
-        #        defaults.selection_types.data['transienttab.groups'])
-        #self.group_manager = BoundaryManager(self.fplot.fscene, selectiontypes)
-        #group_datamodel = SelectionDataModel()
-        #group_datamodel.set_selection_manager(self.group_manager)
-        #group_selection_widget.set_model(group_datamodel)
-        #groupW.layout().addWidget(group_selection_widget)
-        #tool_layout.addWidget(groupW)
-
-        #pb.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
-        #groupWidget.setSizePolicy(QG.QSizePolicy.Minimum, QG.QSizePolicy.Minimum)
-        #self.fplot.extendControlArea(groupW)
-        #
-        ####
 
         tool_layout.addStretch()
 
@@ -621,11 +550,11 @@ class TransientTab(QW.QTabWidget):
         self.pb_auto.toggled[bool].connect(self.pb_auto_toggled)
         self.roi_manager.ROI_available.connect(lambda: self.enable_find(True))
         self.fplot.updateLocation.connect(self.updateCoords)
-        self.pb_find.clicked[()].connect(self.find_transients)
+        self.pb_find.clicked.connect(self.find_transients)
         self.pb_show_transients.toggled[bool].connect(self.toggleTransients)
-        self.pb_accept_transients.clicked[()].connect(self.acceptKeyPressed)
-        self.pb_reject_transients.clicked[()].connect(self.rejectPBPressed)
-        self.pb_analyze.clicked[()].connect(self.analyze)
+        self.pb_accept_transients.clicked.connect(self.acceptKeyPressed)
+        self.pb_reject_transients.clicked.connect(self.rejectPBPressed)
+        self.pb_analyze.clicked.connect(self.analyze)
 
     def transient_show_action_triggered(self):
         selected = self.transient_tableview.selectedIndexes()
@@ -1106,8 +1035,7 @@ class TransientTab(QW.QTabWidget):
     #    self.emit(QC.SIGNAL('updateLocation(float, float, float, float)'), point.x(), point.y(), x, - y)
 
     def updateCoords(self, xv, yv, xs, ys):
-        #self.status.showMessage('x: %.3f, y: %.3f, sx: %i, sy: %i'%(xv, yv, xs, ys))
-        self.positionTXT.emit('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
+        self.status.showMessage('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
 
 
 class FluorescenceTab(TransientTab):

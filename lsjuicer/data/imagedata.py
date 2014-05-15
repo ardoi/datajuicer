@@ -17,14 +17,14 @@ class ImageDataMaker(object):
         print "id class =",id_class
         imagedata = id_class(mimage)
 
-        #if mimage.timestamps is not None:
-        #    ts = mimage.timestamps
-        #    timestamps = [el - ts[0] for el in ts]
+        if mimage.timestamps is not None:
+            ts = mimage.timestamps
+            timestamps = [el - ts[0] for el in ts]
         #if mimage.event_times is not None:
         #    event_times = [el - mimage.timestamps[0] for el in mimage.event_times]
         #else:
         #    event_times = []
-        #imagedata.timestamps = timestamps
+        imagedata.timestamps = timestamps
         #imagedata.event_times = event_times
         ImageDataMaker._data_from_mimage_data(mimage_data, imagedata)
         print 'dims: x={} y={}'.format(imagedata.x_points,imagedata.y_points)
