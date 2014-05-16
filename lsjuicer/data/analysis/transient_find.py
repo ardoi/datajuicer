@@ -8,10 +8,11 @@ import lsjuicer.data.analysis.fitfun as fitfun
 from lsjuicer.data.analysis import regionfinder as rf
 from lsjuicer.util.helpers import timeIt
 
+
 def get_logger(name):
     logger = logging.getLogger(__name__)
     if not logger.root.handlers and not logger.handlers:
-    #if not logger.handlers:
+    # if not logger.handlers:
         #hh = logging.StreamHandler(sys.stdout)
         hh = logging.FileHandler("log.log")
         log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
@@ -20,9 +21,10 @@ def get_logger(name):
         logger.setLevel(logging.DEBUG)
     return logger
 
+
 class Region(object):
     minimum_size = 20
-    #maximum distance the left and right sides can be from the maximum
+    # maximum distance the left and right sides can be from the maximum
     max_dist_from_max = 250
 
     @property
@@ -32,6 +34,7 @@ class Region(object):
     @property
     def left(self):
         return max(self._left, self.maximum - self.max_dist_from_max)
+
     @property
     def right(self):
         return min(self._right, self.maximum + self.max_dist_from_max)
@@ -43,9 +46,11 @@ class Region(object):
     @property
     def data(self):
         return self._all_data[self.left:self.right]
+
     @property
     def smooth_data(self):
         return self.all_smooth_data[self.left:self.right]
+
     @property
     def fdhm(self):
         param = self.fit_res[-1].solutions
@@ -62,7 +67,7 @@ class Region(object):
         """Give an extended range of the region based on FDHM from the last fit"""
         amount = 0.25
         extra = int(self.fdhm*amount)
-        #print 'fdhm is:',fdhm
+        # print 'fdhm is:',fdhm
         return (max(0, self.left - extra), min(self.right + extra, self._all_data.size))
 
     def __init__(self, left, right, maximum, data, smooth_data, time_data):
@@ -73,68 +78,64 @@ class Region(object):
         self.bad = False
         self.aic_line = 0
         self.aic_curve = 0
-        self.fit_res=[]
-        #print '\n'+"#"*10,"new region",self
+        self.fit_res = []
+        # print '\n'+"#"*10,"new region",self
         self._all_time_data = time_data
         self._all_data = data
         self.all_smooth_data = smooth_data
         self.check()
-        #print self.bad
 
     def fit_curve(self):
-        #print '\n'
         fu = self.all_smooth_data
         ri = self.right
         le = self.left
         self.maximum = self.time_data[self.smooth_data.argmax()]
-        #print le,ri,self.maximum
         oo = fitfun.Optimizer(self.time_data, self.data)
-        #make first fit with non-convolved function
+        # make first fit with non-convolved function
         f0r = fu[ri-5:min(len(fu), ri+5)].mean()
-        f0l = fu[max(0,le-5):le+5].mean()
+        f0l = fu[max(0, le-5):le+5].mean()
         oo.set_function(fitfun.ff50)
-        b_init = (f0r+f0l)/2.
-        oo.set_parameter_range('B',b_init*0.75,b_init*1.25,b_init)
+        #b_init = (f0r+f0l)/2.
+        b_init = f0r
+        oo.set_parameter_range('B', b_init*0.75, b_init*1.5, b_init)
         min_amp = 50.0
         if fu[self.maximum]-b_init < min_amp:
-            print 'A'
-            #print f0r,f0l,b_init, fu[self.maximum]
-            #print ri,le
-            #print fu[self.maximum]-b_init
-            #self.bad=True
+            # print f0r,f0l,b_init, fu[self.maximum]
+            # print ri,le
+            # print fu[self.maximum]-b_init
+            # self.bad=True
             return None
-        oo.set_parameter_range('tau2',2,100.,30.)
+        oo.set_parameter_range('tau2', 2, 100., 30.)
         mu_est = self.maximum
         #mu_est = self.time_data[self.data.argmax()]
         oo.set_parameter_range('m2', le+1, ri-1, mu_est)
         d_est = (self.maximum-le)/2.+1.
-        left_data = fu[le:self.maximum]
         d_est = 5.0
         try:
-            oo.set_parameter_range('d',1, mu_est - le,min(0.95*(mu_est-le), d_est))
+            oo.set_parameter_range(
+                'd', 1, mu_est - le, min(0.95*(mu_est-le), d_est))
         except AssertionError:
-            print 'B'
             return None
-        oo.set_parameter_range('A',min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
-        #FIXME why 51?
-        oo.set_parameter_range('d2',.1,51,2)
+        oo.set_parameter_range(
+            'A', min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
+        # FIXME why 51?
+        oo.set_parameter_range('d2', .1, 51, 2)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
-        oo.set_parameter_range('C',c_init-c_init_delta, c_init +
-                c_init_delta, c_init)
-        #oo.show_parameters()
-        oo.optimize(max_fev = 10000)
-        #optimization failed
+        oo.set_parameter_range('C', c_init-c_init_delta, c_init +
+                               c_init_delta, c_init)
+        oo.show_parameters()
+        oo.optimize(max_fev=10000)
+        # optimization failed
         if not oo.solutions:
-            print 'C'
-            #print  self.data.tolist()
-            #print self.time_data.tolist()
-            #for p in oo.parameters:
-            #    print p, oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
+            # print  self.data.tolist()
+            # print self.time_data.tolist()
+            # for p in oo.parameters:
+            # print p,
+            # oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
             return None
-        #skip transients which start before the recording
+        # skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
-            print 'D'
             return None
         return oo
 
@@ -142,15 +143,14 @@ class Region(object):
         """Checks the validity of the region, first by looking for simple criteria and then by fitting the region with a transient function and line. If the line has a lower AICc score than the transient function then the region is considered not to contain an event"""
         try:
             assert (self.left < self.right) and (self.left < self.maximum) \
-                    and (self.right > self.maximum), "Assert failed: %s"%self
+                and (self.right > self.maximum), "Assert failed: %s" % self
             assert self.size > self.minimum_size, "Assert failed: Size is %i, \
-                minimum size is %i"%(self.size, self.minimum_size)
+                minimum size is %i" % (self.size, self.minimum_size)
         except AssertionError:
-            #print 'a0'
-            self.bad=True
+            self.bad = True
             return
         logger = get_logger(__name__)
-        logger.debug("\nregion:%s"%self)
+        logger.debug("\nregion:%s" % self)
         try:
             oo = self.fit_curve()
             if not oo:
@@ -159,7 +159,7 @@ class Region(object):
             self.bad = True
             return
         aicc_curve = oo.aicc()
-        logger.debug("AICc curve1 %f"%aicc_curve)
+        logger.debug("AICc curve1 %f" % aicc_curve)
 
        # new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
        # if new_right < self.right:
@@ -168,43 +168,43 @@ class Region(object):
        #     oo=self.fit_curve()
        #     if not oo:
        #         self.bad = True
-       #         #print 'aa'
        #         return
        #     aicc_curve = oo.aicc()
        #     logger.debug("AICc curve %f"%aicc_curve)
 
-        #fit the line
+        # fit the line
         oo2 = fitfun.Optimizer(self.time_data, self.data)
         oo2.set_function(fitfun.linear)
-        oo2.set_parameter_range('a',-500, 500, 0)
-        oo2.set_parameter_range('b',-1e5, 1e5, self.data.mean())
-        oo2.optimize(max_fev = 1000)
+        oo2.set_parameter_range('a', -500, 500, 0)
+        oo2.set_parameter_range('b', -1e5, 1e5, self.data.mean())
+        oo2.optimize(max_fev=1000)
         aicc_line = oo2.aicc()
-        #print "AICc line",aicc_line
-        logger.debug("AICc line %f"%aicc_line)
+        # print "AICc line",aicc_line
+        logger.debug("AICc line %f" % aicc_line)
         self.aic_line = aicc_line
         self.aic_curve = aicc_curve
         if aicc_curve < 1.00 * aicc_line:
-        #if aicc_line/aicc_curve < 0.99:
+        # if aicc_line/aicc_curve < 0.99:
             self.bad = False
             self.fit_res = [oo]
 
         else:
             self.bad = True
-            #print 'aaa'
-        #print 'test',self, aicc_line, aicc_curve
+            # print 'aaa'
+        # print 'test',self, aicc_line, aicc_curve
         #params = {}
-        #for key,val in oo.parameters.iteritems():
+        # for key,val in oo.parameters.iteritems():
         #    params[key] = val['init']
-        #print 'param=',params
-        #print 'sols=',oo.solutions
-        #print self.data.tolist()
-        #print self.time_data.tolist()
-        logger.debug("bad: %s"%str(self.bad))
+        # print 'param=',params
+        # print 'sols=',oo.solutions
+        # print self.data.tolist()
+        # print self.time_data.tolist()
+        logger.debug("bad: %s" % str(self.bad))
 
     def __repr__(self):
-        return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>"%(self.left, self.right,
-                self.maximum, self.size, str(self.bad), self.aic_line, self.aic_curve)
+        return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>" %\
+            (self.left, self.right, self.maximum, self.size, str(self.bad),
+             self.aic_line, self.aic_curve)
 
 
 def make_region_objects(data, regions, smooth_data):
@@ -220,274 +220,296 @@ def make_region_objects(data, regions, smooth_data):
     return region_objects
 
 
-def fit_regs(f, regions, plot=False):
-    #print 'regs are', regs
+def fit_regs(f, all_ranges, plot=False):
+    #
+    # Make initial regions (each region tests its own goodness)
+    #
     time = n.arange(len(f))
-    smooth_data = nd.uniform_filter(f, 5)
-    regs = make_region_objects(f, regions, smooth_data)
-    good_regions = []
-    if plot:
-        import pylab as p
-        p.figure(1)
-        p.plot(f,marker='o',ls='None',ms=4,mec='None',alpha=.5)
-        p.xlim(0, len(f))
-        ax=p.gca()
-    for i,r in enumerate(regs):
-        if not r.bad:
-            oo = r.fit_res[-1]
-            if not oo.solutions:
-                r.bad = True
-            else:
-                good_regions.append(r)
-            if plot:
-                fcolor = 'orange'
-                if r.bad:
-                    fcolor = 'salmon'
-                le = r.left
-                ri = r.right
-                transient_t = time[le:ri]
-                fmin=f.min()
-                fmax=f.max()
-                ax.add_patch(p.Rectangle((le,fmin),r.size,fmax-fmin,facecolor=fcolor,alpha=0.1))
-                if oo.solutions:
-                    p.plot(transient_t, oo.function(transient_t, **oo.solutions),lw=2,color='red')
+    f_cleaned = f.copy()
+    range_keys = all_ranges.keys()
+    range_keys.sort(reverse=True)
+    all_good_regions = []
+    event_fits = {}
+    i = 0
+    for key in range_keys:
+        ranges = all_ranges[key]
+        i += 1
+        smooth_data = nd.uniform_filter(f_cleaned, 5)
+        regs = make_region_objects(f, ranges, smooth_data)
+        good_regions = []
+        if plot:
+            import pylab as p
+            p.figure(1)
+            p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
+            p.xlim(0, len(f))
+            ax = p.gca()
+        for r in regs:
+            if not r.bad:
+                oo = r.fit_res[-1]
+                if not oo.solutions:
+                    r.bad = True
+                else:
+                    good_regions.append(r)
+                if plot:
+                    fcolor = 'orange'
+                    if r.bad:
+                        fcolor = 'salmon'
+                    transient_t = time[r.left:r.right]
+                    fmin = f.min()
+                    fmax = f.max()
+                    ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
+                                              facecolor=fcolor, alpha=0.1))
+                    if oo.solutions:
+                        p.plot(transient_t, oo.function(transient_t, **oo.solutions),
+                            lw=2, color='red')
+        z = n.zeros_like(f)
+        all_good_regions.extend(good_regions)
+        for r in good_regions:
+            sol = r.fit_res[-1].solutions
+            fit_vals = fitfun.ff50(time, **sol)
+            event_fit = fit_vals - fitfun.ff5_bl(arg=time, **sol)
+            event_fits[id(r)] = event_fit
+            z += event_fit
 
-    i=0
-    #print '\n\n'
-    z = n.zeros_like(f)
-    #bl = n.zeros_like(f)
-    while i<len(good_regions):
-        r = good_regions[i]
-        #le = r.left
-        #ri = r.right
-        le,ri = r.extra_range()
-        #print '\nranges',le,ri,r.left,r.right
-        #transient_t = time[le:ri]
-        transient_t = time
-        sol = r.fit_res[-1].solutions
-        #print r,sol,r.extra_range()
-        fit_vals = fitfun.ff50(transient_t, **sol)
-        #print 'sol',sol
-        z += 1*fit_vals - fitfun.ff5_bl(arg=transient_t, **sol)
-        #bl[le:ri] = fitfun.ff5_bl(arg=transient_t, **sol)
-        i+=1
-    f2 = f-z
+        f_cleaned -= z
+        #n.savetxt('f_cleaned_{}.dat'.format(i), f_cleaned)
+    f2 = f_cleaned
     baseline_fit_params = n.polyfit(time, f2, 4)
     pf_fun = n.poly1d(baseline_fit_params)
     baseline = pf_fun(time)
+
     fullres = n.zeros_like(baseline)
+    events = f - f2
     if plot:
         p.figure(2)
-        p.plot(time, f-z,color='orange',label='signal - fits')
+        p.plot(time, f2, color='orange', label='signal - fits')
         p.plot(time, f, label='signal')
-        p.plot(time, z,label='fit - bl')
-        p.plot(time, baseline,label='bl')
+        p.plot(time, events, label='event fit')
+        p.plot(time, baseline, label='bl')
         p.legend()
-    #create data for each transient with the other transients removed
-    final = {'transients':{},'baseline':baseline_fit_params, 'peak_fits':{},'regions':{}}
-    print 'good regions', good_regions
-    if not good_regions:
+    # create data for each transient with the other transients removed
+    final = {'transients': {}, 'baseline':
+             baseline_fit_params, 'peak_fits': {}, 'regions': {}}
+    if not all_good_regions:
         return final
     if plot:
         p.figure(3)
-        rows = int(n.ceil(n.sqrt(len(good_regions))))
-        cols = int(n.ceil(float(len(good_regions))/rows))
-        assert rows*cols >= len(good_regions)
+        rows = int(n.ceil(n.sqrt(len(all_good_regions))))
+        cols = int(n.ceil(float(len(all_good_regions))/rows))
+        assert rows*cols >= len(all_good_regions)
     #do_last_fit = False
     do_last_fit = True
+
     added_index = 0
-    for i,r in enumerate(good_regions):
-        #print '\n',i
+    event_fits_new = {}
+    for i, r in enumerate(all_good_regions):
         if plot:
             p.figure(3)
             p.subplot(rows, cols, i+1)
-        #le = r.left
-        #ri = r.right
-        le,ri = r.extra_range()
-        transient_f = f[le:ri]
-        #transient_t = time[le:ri]
-        ff = n.zeros_like(f)
-        ff[:le] = f2[:le]
-        ff[ri:] = f2[ri:]
-        ff[le:ri] = transient_f
-        #use transient as 50% of data. add 25% of transient duration from left and right sides
-        #as extra data for fitting (good for cases where the baseline is cut off by a
-        #close-by transient
-        #points = len(transient_f)
-        #end = min(len(ff), ri + points/2)
-        #start = max(0,le-points/2)
-        start,end = r.extra_range()
-        #nprint 'extra range',(le,ri),(start,end)
-        fff = ff[start:end]
-        time_new = time[start:end]
-        #subtract fit of baseline from fff
-        fff = fff-baseline[start:end]
+
+        #remove all other regions  and baseline from the signal
+        corrected_f  = f - baseline
+        for reg in all_good_regions:
+            #only remove OTHER regions
+            if id(reg) != id(r):
+                corrected_f -= event_fits[id(reg)]
+
+        le, ri = r.extra_range()
+        fff = corrected_f[le:ri]
+        time_new = time[le:ri]
+        n.savetxt('correct_{}.dat'.format(id(r)), corrected_f)
         if plot:
-            p.plot(time_new, fff,'-o',ms=4,mec='None',alpha=.5)
+            p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
         oo = fitfun.Optimizer(time_new, fff)
         oo.set_function(fitfun.ff60)
-        #copy fit parameter ranges from previous fit
+        # copy fit parameter ranges from previous fit
         oo.parameters = r.fit_res[-1].parameters.copy()
         previous_sol = r.fit_res[-1].solutions
         oo.rerange_parameters(previous_sol)
-        #remove B and C since we have already corrected the baseline
+        # remove B and C since we have already corrected the baseline
         del(oo.parameters['C'])
         del(oo.parameters['B'])
         oo.optimize()
         if not oo.solutions:
-            r.bad=True
+            r.bad = True
             continue
         peak = oo.solutions['A']*(1-n.exp(-2.0))
         peak_loc = oo.solutions['m2'] + oo.solutions['d']
         baseline_at_peak = pf_fun(peak_loc)
-        #dF/F0 = (F-F0)/F0 = F/F0 -1
-        #here F = S + BL and F0=BL, so F/F0 - 1 = (S + BL)/BL - 1 = S/BL = dF/F0
+        # dF/F0 = (F-F0)/F0 = F/F0 -1
+        # here F = S + BL and F0=BL, so F/F0 - 1 = (S + BL)/BL - 1 = S/BL =
+        # dF/F0
         f_over_f0_max = peak / baseline_at_peak
         min_f_over_f0_max = 0.1
-        if f_over_f0_max<min_f_over_f0_max:
+        if f_over_f0_max < min_f_over_f0_max:
+            r.bad = True
+            continue
+        #final['transients'][added_index] = oo.solutions
+        #final['peak_fits'][added_index] = r.fit_res[0]
+        #final['regions'][added_index] = r
+        #added_index += 1
+        r.fit_res.append(oo)
+        event_fit = oo.function(time, **oo.solutions)
+        event_fits_new[id(r)] = event_fit
+        #if plot:
+        #    fullres += oo.function(time, **oo.solutions)
+        if plot:
+            #p.plot(time_new, event_fit,lw=2,color='brown')
+            p.plot(time_new, oo.function(time_new, **oo.solutions), lw=2, color='brown')
+            p.xlim(time_new[0], time_new[-1])
+        #    fullres += oo.function(time, **oo.solutions)
+
+    added_index = 0
+
+    #estimate baseline again
+    baseline_f = f.copy()
+    for ef in event_fits_new.values():
+        baseline_f -= ef
+    baseline_fit_params = n.polyfit(time, baseline_f, 4)
+    pf_fun = n.poly1d(baseline_fit_params)
+    baseline = pf_fun(time)
+    final['baseline'] = baseline_fit_params
+    for i, r in enumerate(all_good_regions):
+        if plot:
+            p.figure(3)
+            p.subplot(rows, cols, i+1)
+
+        #remove all other regions  and baseline from the signal
+        corrected_f  = f - baseline
+        for reg in all_good_regions:
+            #only remove OTHER regions
+            if id(reg) != id(r):
+                corrected_f -= event_fits_new[id(reg)]
+        le, ri = r.extra_range()
+        fff = corrected_f[le:ri]
+        time_new = time[le:ri]
+        if plot:
+            p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
+        oo = fitfun.Optimizer(time_new, fff)
+        oo.set_function(fitfun.ff60)
+        # copy fit parameter ranges from previous fit
+        oo.parameters = r.fit_res[-1].parameters.copy()
+        previous_sol = r.fit_res[-1].solutions
+        oo.rerange_parameters(previous_sol)
+        # remove B and C since we have already corrected the baseline
+        oo.optimize()
+        if not oo.solutions:
             r.bad = True
             continue
         final['transients'][added_index] = oo.solutions
         final['peak_fits'][added_index] = r.fit_res[0]
-        final['regions'][added_index]=r
+        final['regions'][added_index] = r
         added_index += 1
         r.fit_res.append(oo)
         if plot:
-            p.title("%i"%i)
-            p.plot(time_new, oo.function(time_new, **oo.solutions),lw=2,color='brown')
+            #p.title("%i"%i)
+            p.plot(time_new, oo.function(time_new, **oo.solutions), lw=2, color='red')
             p.xlim(time_new[0], time_new[-1])
             fullres += oo.function(time, **oo.solutions)
-
-    #last stage
-    #estimate baseline again
-    very_good_regions = []
-    for region in good_regions:
-        if region.bad:
-            #print 'found bad'
-            continue
-        else:
-            very_good_regions.append(region)
-    #print 'very good', very_good_regions
-    if do_last_fit:
-        baseline_f = f.copy()
-        for i,r in enumerate(very_good_regions):
-            sol = r.fit_res[-1].solutions
-            res = oo.function(time, **sol)
-            baseline_f -= res
-        baseline_fit_params = n.polyfit(time, baseline_f, 4)
-        if n.isnan(baseline_fit_params).any():
-            baseline_fit_params = n.zeros_like(baseline_fit_params)
-        pf_fun = n.poly1d(baseline_fit_params)
-        final['baseline'] = baseline_fit_params
+    ## last stage
+    # estimate baseline again
+    # prstartint 'very good', very_good_regions
+    baseline_old = baseline
+    #do_last_fit=False
+    #if do_last_fit:
+    #    baseline_f = f.copy()
+    #    for i, r in enumerate(very_good_regions):
+    #        sol = r.fit_res[-1].solutions
+    #        res = oo.function(time, **sol)
+    #        baseline_f -= res
+    #    baseline_fit_params = n.polyfit(time, baseline_f, 4)
+    #    if n.isnan(baseline_fit_params).any():
+    #        baseline_fit_params = n.zeros_like(baseline_fit_params)
+    #    #pf_fun = n.poly1d(baseline_fit_params)
+    #    final['baseline'] = baseline_fit_params
     if plot:
         pf_fun = n.poly1d(baseline_fit_params)
         baseline = pf_fun(time)
-        fullres+=baseline
+        fullres += baseline
         p.figure(5)
-        p.plot(time,f, 'o',ms=4,mec='None',alpha=.5)
-        p.plot(time, fullres,color='red',lw=2)
+        p.plot(time, f, 'o', ms=4, mec='None', alpha=.5)
+        p.plot(time, fullres, color='red', lw=2)
+        p.plot(time, baseline, color='magenta')
+        p.plot(time, baseline_old, color='cyan')
 
     return final
 
+
 def remove_fits(vec, fitdict):
-    tt=n.arange(vec.size)
+    tt = n.arange(vec.size)
     s2 = vec.copy()
     for ev in fitdict['transients'].values():
-        fit=fitfun.ff60(tt,**ev)
-        s2-=fit
+        fit = fitfun.ff60(tt, **ev)
+        s2 -= fit
     return s2
 
-def fit_2_stage(data, plot=False, min_snr=5.0):
-    """Perform a 2 stage fitting routine. In the first stage all found events are fitted. For the second stage the baseline obtained in first stage is subtracted from the data and fit is performed again
 
-    Returns the result from the second fit call with the exception of the baseline which is taken from the first fit"""
-    cleaned = data
-    res_out = None
-    i=0
-    maximum_repeats = 1
-    while i < maximum_repeats:
-        found_regions = rf.get_regions(cleaned, min_snr=min_snr, max_width=200)
-        print '\nloop',i
-        #use the regions with maximum overlap index
-        #if i==1:
-        #    print found_regions
-        #    return cleaned
-        i+=1
-        if found_regions:
-            use_regions = found_regions[max(found_regions.keys())]
-        else:
-            use_regions = []
-        res_1 = fit_regs(cleaned, use_regions, plot)
-        print res_1
-        if res_out is None:
-            res_out = res_1
-        else:
-            if res_1['transients'] is not {}:
-                existing_count = len(res_out['transients'])
-                for k,v in res_1['transients'].iteritems():
-                    res_out['transients'][k + existing_count] = v
-                res_out['baseline'] = res_1['baseline']
-        if len(found_regions.keys())<2:
-            break
-        else:
-            cleaned = remove_fits(cleaned, res_1)
+def fit_2_stage(data, plot=False, min_snr=5.0):
+    """Perform a 2 stage fitting routine. In the first stage all found events
+    are fitted. For the second stage the baseline obtained in first stage is
+    subtracted from the data and fit is performed again
+
+    Returns the result from the second fit call with the exception of the
+    baseline which is taken from the first fit"""
+
+    found_regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
+    res_out = fit_regs(data, found_regions, plot)
     return res_out
 
 
-def make_data_by_size_and_time(results, key, number ):
+def make_data_by_size_and_time(results, key, number):
     """get data for the 'number'th transient sorted by size and then by time"""
-    out = n.zeros((results['height'], results['width']),dtype='float')
-    #print out.shape
+    out = n.zeros((results['height'], results['width']), dtype='float')
     for res in results['fits']:
         x = res[0]
         y = res[1]
         try:
             transients = results['fits'][res]['transients'].values()
-            transients.sort(key=lambda x:x['A'], reverse = True)
+            transients.sort(key=lambda x: x['A'], reverse=True)
             two_biggest = transients[:2]
-            two_biggest.sort(key = lambda x:x['m2'])
+            two_biggest.sort(key=lambda x: x['m2'])
             transient = two_biggest[number]
             val = transient[key]
-            out[y,x]=val
+            out[y, x] = val
         except:
-            #traceback.print_exc()
-            out[y,x]=None
+            out[y, x] = None
             pass
     return out
 
+
 @timeIt
-def make_data_by_size(results, key, number ):
+def make_data_by_size(results, key, number):
     """get data for the 'number'th biggest transient"""
-    out = n.zeros((results['height'], results['width']),dtype='float')
+    out = n.zeros((results['height'], results['width']), dtype='float')
     print '\n make data'
     for res in results['fits']:
         x = res.x
         y = res.y
         try:
             transients = res.pixel_events
-            transients.sort(key=lambda x:x.parameters['A'], reverse = True)
+            transients.sort(key=lambda x: x.parameters['A'], reverse=True)
             transient = transients[number]
             val = transient.parameters[key]
-            out[y,x]=val
+            out[y, x] = val
         except:
-            #traceback.print_exc()
-            out[y,x] = None
+            # traceback.print_exc()
+            out[y, x] = None
             pass
     return out
 
+
 def make_data(results, key, transient_no):
     """get data for the 'transient_no'-th transient"""
-    out = n.zeros((results['height'], results['width']),dtype='float')
-    #print out.shape
+    out = n.zeros((results['height'], results['width']), dtype='float')
     for res in results['fits']:
         x = res[0]
         y = res[1]
         try:
             transient = results['fits'][res]['transients'][transient_no]
             val = transient[key]
-            out[y,x]=val
+            out[y, x] = val
         except:
-            out[y,x]=None
+            out[y, x] = None
     return out
 
 
@@ -495,12 +517,14 @@ def get_res(fit_result):
     import inout.sqla as sa
     results = {}
     session = sa.dbmaster.get_session()
-    #session.add(self.fit_result)
+    # session.add(self.fit_result)
     fitted_pixels = fit_result.pixels
-    #print "get res", self.fit_result.region.width, self.fit_result.region.height
-    results['width'] = fit_result.region.width - 2*fit_result.fit_settings['padding']
-    results['height'] = fit_result.region.height - 2*fit_result.fit_settings['padding']
-    #FIXME
+    # self.fit_result.region.height
+    results['width'] = fit_result.region.width - \
+        2*fit_result.fit_settings['padding']
+    results['height'] = fit_result.region.height - \
+        2*fit_result.fit_settings['padding']
+    # FIXME
     #results['frames'] = self.fit_result.region.analysis.imagefile.image_frames
     #results['frames'] = self.acquisitions
     results['dx'] = fit_result.fit_settings['padding']
@@ -511,43 +535,42 @@ def get_res(fit_result):
     session.close()
     return results
 
+
 def data_events(results):
-    out = n.zeros((results['height'], results['width']),dtype='float')
-    #print out.shape
+    out = n.zeros((results['height'], results['width']), dtype='float')
     for res in results['fits']:
         x = res.x
         y = res.y
         val = res.event_count
         if val is not None:
-            out[y, x]=val
+            out[y, x] = val
         else:
-            out[y, x]=0#None
+            out[y, x] = 0  # None
     return out
+
 
 def make_raw(res):
     import sqlb2
     sess = sqlb2.dbmaster.get_session()
     jobs = sess.query(sqlb2.Job).all()
-    #print len(jobs)
-    shape = (res['frames'],res['height'],res['width'])
+    shape = (res['frames'], res['height'], res['width'])
     out = n.zeros(shape)
     for j in jobs:
-        x,y = j.params['coords']
-        out[:,y,x] = j.params['data']
+        x, y = j.params['coords']
+        out[:, y, x] = j.params['data']
     sess.close()
     return out
 
 
-
-
 class SyntheticData(object):
+
     def __init__(self, result=None):
         if result:
             self.result = result
             self.region = result.region
             self.times = n.arange(int(self.region.frames))
-            print 'times shape is',self.times.shape, self.region.frames
-            if self.region.width==1:
+            print 'times shape is', self.times.shape, self.region.frames
+            if self.region.width == 1:
                 self.linescan = True
             else:
                 self.linescan = False
@@ -556,12 +579,13 @@ class SyntheticData(object):
 
     def _zeros(self):
         if self.linescan:
-            out = n.zeros((1, self.region.height, int(self.region.frames)),dtype='float')
-            print 'out shape is',out.shape,self.region.frames
+            out = n.zeros(
+                (1, self.region.height, int(self.region.frames)), dtype='float')
+            print 'out shape is', out.shape, self.region.frames
         else:
-            out = n.zeros((self.region.frames, self.region.height, self.region.width),dtype='float')
+            out = n.zeros(
+                (self.region.frames, self.region.height, self.region.width), dtype='float')
         return out
-
 
     def _make_res(self):
         out = self._zeros()
@@ -569,24 +593,24 @@ class SyntheticData(object):
             x = res.x
             y = res.y
             if not self.linescan:
-                out[:,y,x] = self.func(res)
+                out[:, y, x] = self.func(res)
             else:
-                out[0,y,:] = self.func(res)
+                out[0, y, :] = self.func(res)
         self.filter = None
         self.func = None
         return out
 
     def func_fit(self, result):
         f = n.zeros_like(self.times, dtype='float')
-        for i,t in enumerate(result.pixel_events):
+        for i, t in enumerate(result.pixel_events):
             if self.filter:
-                #skip pixelevents that are not part of any event
-                #if not t.event_id in self.filter:
+                # skip pixelevents that are not part of any event
+                # if not t.event_id in self.filter:
                 if not t.id in self.filter:
                     continue
             res = fitfun.ff60(self.times, **t.parameters)
             if True not in n.isnan(res):
-                f+=res
+                f += res
             else:
                 print "NAN for", t
         return f
@@ -628,25 +652,25 @@ def get_job(joblist, coords):
 
 def redo(jobs, res):
     bad_jobs = []
-    for i,j in enumerate(jobs):
+    for i, j in enumerate(jobs):
         j_res = j.result
         transients = j_res['transients']
         bad = False
         if len(transients) == 0:
             bad = True
         for t in transients.values():
-            if t['d']==100:
+            if t['d'] == 100:
                 bad = True
                 break
         if bad:
             bad_jobs.append(j)
-    print "%i jobs to redo"%(len(bad_jobs))
-    for i,bj in enumerate(bad_jobs):
+    print "%i jobs to redo" % (len(bad_jobs))
+    for i, bj in enumerate(bad_jobs):
        # print i
         result = fit_regs(bj.params[0])
         bj.result = result
 
-    fit_dict={}
+    fit_dict = {}
     for job in jobs:
         jres = job.result
         params = job.params
@@ -655,69 +679,72 @@ def redo(jobs, res):
             fit_dict[(xy[0], xy[1])] = jres
         else:
             fit_dict[(xy[0], xy[1])] = None
-    ff = open("fit_results.pickle",'w')
+    ff = open("fit_results.pickle", 'w')
     res["fits"] = fit_dict
     import pickle
-    pickle.dump(res,ff)
+    pickle.dump(res, ff)
     ff.close()
 
-def fitted_pixel_ff0(pixel, event = 0):
-    #possible bug if baseline is higher than A
+
+def fitted_pixel_ff0(pixel, event=0):
+    # possible bug if baseline is higher than A
     region = pixel.result.region
     #times = n.arange(region.start_frame, region.end_frame,1.0)
-    #FIXME probably has to be changed to actual time
-    times = n.arange(0, region.end_frame-region.start_frame,1.0)
+    # FIXME probably has to be changed to actual time
+    times = n.arange(0, region.end_frame-region.start_frame, 1.0)
     param = pixel.pixel_events[event].parameters
     f_vals = fitfun.ff60(times, **param)
     baseline_f = n.poly1d(pixel.baseline)
     baseline = baseline_f(times)
     return f_vals/baseline + 1
 
-def fitted_pixel_max(pixel, event = 0):
+
+def fitted_pixel_max(pixel, event=0):
     param = pixel.pixel_events[event].parameters
     maxval = param['A']*(1-n.exp(-2.0))
     baseline_f = n.poly1d(pixel.baseline)
     baseline = baseline_f(param['m2'])
     #vals = fitted_pixel_ff0(pixel, event)
-    #if n.isnan(maxval):
-        #print 'max is nan'
-        #print param
-    #elif n.isnan(baseline):
-        #print 'base is nan'
-        #print param
-        #print pixel.baseline, pixel.id
-    #elif n.isinf(baseline):
-        #print 'base is inf'
-        #print param
-    f_max = maxval/baseline + 1 #F/F0 not dF/F0
+    # if n.isnan(maxval):
+        # print 'max is nan'
+        # print param
+    # elif n.isnan(baseline):
+        # print 'base is nan'
+        # print param
+        # print pixel.baseline, pixel.id
+    # elif n.isinf(baseline):
+        # print 'base is inf'
+        # print param
+    f_max = maxval/baseline + 1  # F/F0 not dF/F0
     return f_max
 
+
 def do_event_list(pixs):
-    events=[]
+    events = []
     for p in pixs:
-        for i, pixel_event in  enumerate(p.pixel_events):
-            event={}
-            event['pixel']=p
-            event['n']= i
+        for i, pixel_event in enumerate(p.pixel_events):
+            event = {}
+            event['pixel'] = p
+            event['n'] = i
             event['x'] = p.x
             event['y'] = p.y
-            event['id']= pixel_event.id
+            event['id'] = pixel_event.id
             ep = pixel_event.parameters
             for param in ep:
-                if param=='A':
-                    #use dF/F0 instead of raw A value
+                if param == 'A':
+                    # use dF/F0 instead of raw A value
                     # -1 because fitted_pixel_max returns F/F0
-                    event[param]=fitted_pixel_max(p, i) - 1
+                    event[param] = fitted_pixel_max(p, i) - 1
                 else:
                     event[param] = ep[param]
             events.append(event)
-            #break
+            # break
     return events
 
-def do_event_array(elist, names):
-    out = n.zeros((len(elist),len(names)))
-    for i,e in enumerate(elist):
-        for j,name in enumerate(names):
-            out[i,j] = e[name]
-    return out
 
+def do_event_array(elist, names):
+    out = n.zeros((len(elist), len(names)))
+    for i, e in enumerate(elist):
+        for j, name in enumerate(names):
+            out[i, j] = e[name]
+    return out
