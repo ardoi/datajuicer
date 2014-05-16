@@ -5,12 +5,12 @@ from PyQt5 import QtCore as QC
 from collections import defaultdict
 
 from actionpanel import ActionPanel
-from lsjuicer.ui.items.selection import ROIManager, SelectionDataModel
+from lsjuicer.ui.items.selection import SelectionDataModel
 from lsjuicer.ui.items.selection import SelectionWidget, LineManager, SnapROIManager
 from lsjuicer.inout.db.sqla import SparkAnalysis, PixelByPixelAnalysis
 from lsjuicer.static import selection_types
 from lsjuicer.data.imagedata import ImageDataLineScan
-from lsjuicer.ui.tabs.transienttab import FluorescenceTab
+from lsjuicer.ui.tabs.autofittransienttab import AutoFitTransientTab
 from lsjuicer.data.imagedata import ImageDataMaker
 from lsjuicer.data.pipes.tools import PipeChain
 
@@ -154,7 +154,7 @@ class AnalysisPanel(ActionPanel):
         #        self.removeTab(self.count() - 1)
         #        del(w)
         if self.analysis_mode == "Transients":
-            next_tab =FluorescenceTab(selections_by_type_name, self.imagedata, self.pipechain, self.parentwidget.aw)
+            next_tab = AutoFitTransientTab(selections_by_type_name, self.imagedata, self.pipechain, self.parentwidget.aw)
             #next_tab.setName(self.data.name)
             #self.connect(self.fltab,QC.SIGNAL('positionTXT(QString)'),
             #        self.emitStatusTXT)
@@ -195,7 +195,7 @@ class AnalysisPanel(ActionPanel):
                 pc.set_source_data(new_data.all_image_data[channel])
                 pcs[channel] = pc
             selections_by_type = defaultdict(list)
-            next_tab = FluorescenceTab(selections_by_type, new_data, pcs, self.parentwidget.aw)
+            next_tab = AutoFitTransientTab(selections_by_type, new_data, pcs, self.parentwidget.aw)
         #self.setCurrentIndex(1)
         #if self.analysis_mode != "PseudoLineScan":
         if 1:

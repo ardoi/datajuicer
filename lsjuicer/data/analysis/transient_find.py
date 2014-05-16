@@ -223,8 +223,6 @@ def make_region_objects(data, regions, smooth_data):
 def fit_regs(f, regions, plot=False):
     #print 'regs are', regs
     time = n.arange(len(f))
-    z = n.zeros_like(f)
-    bl = n.zeros_like(f)
     smooth_data = nd.uniform_filter(f, 5)
     regs = make_region_objects(f, regions, smooth_data)
     good_regions = []
@@ -256,6 +254,8 @@ def fit_regs(f, regions, plot=False):
 
     i=0
     #print '\n\n'
+    z = n.zeros_like(f)
+    #bl = n.zeros_like(f)
     while i<len(good_regions):
         r = good_regions[i]
         #le = r.left
@@ -285,6 +285,7 @@ def fit_regs(f, regions, plot=False):
         p.legend()
     #create data for each transient with the other transients removed
     final = {'transients':{},'baseline':baseline_fit_params, 'peak_fits':{},'regions':{}}
+    print 'good regions', good_regions
     if not good_regions:
         return final
     if plot:
@@ -403,9 +404,9 @@ def fit_2_stage(data, plot=False, min_snr=5.0):
     cleaned = data
     res_out = None
     i=0
-    maximum_repeats = 5
+    maximum_repeats = 1
     while i < maximum_repeats:
-        found_regions = rf.get_regions(cleaned, min_snr=min_snr)
+        found_regions = rf.get_regions(cleaned, min_snr=min_snr, max_width=200)
         print '\nloop',i
         #use the regions with maximum overlap index
         #if i==1:
@@ -417,6 +418,7 @@ def fit_2_stage(data, plot=False, min_snr=5.0):
         else:
             use_regions = []
         res_1 = fit_regs(cleaned, use_regions, plot)
+        print res_1
         if res_out is None:
             res_out = res_1
         else:
