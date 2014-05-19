@@ -9,6 +9,7 @@ from PyQt5 import QtCore as QC
 from roi import ROIItem
 from boundary import BoundaryItem
 from line import LineItem
+from measure_line import MeasureLineItem
 from snaproi import SnapROIItem
 
 from lsjuicer.util.helpers import round_point, floor_point_x
@@ -556,6 +557,23 @@ class Line(Selection):
         self._name = "Line"
         self.number = number
 
+class MeasureLine(Selection):
+    @property
+    def name(self):
+        r = self.graphic_item.line()
+        n = self._name+": dx=%i dy=%i length=%i"%(abs(r.dx()), abs(r.dy()),r.length())
+        return n
+    def __init__(self, start_point, scene_rect, selection_type, number):
+        super(MeasureLine, self).__init__(None)
+        print 'making MeasureLine with', start_point, scene_rect
+        end_point = start_point + QC.QPointF(1, 1)
+        self.linef = QC.QLineF(start_point, end_point)
+        self.selection_type = selection_type
+        self.graphic_item  = MeasureLineItem(selection_type, number, parent=self.linef)
+        self.graphic_item.sender.selection_changed.connect(self.selection_changed)
+        self._name = "MeasureLine"
+        self.number = number
+
 class ROI(Selection):
     """Selection with size in x and y"""
     def __init__(self, start_point, scene_rect, selection_type, number):
@@ -706,7 +724,6 @@ class SelectionManager(QC.QObject):
     def builders_from_selection_types(self):
         for selection_type in self.selection_types:
             self.new_builder(selection_type)
-        print self.builders
 
     def new_builder(self, selection_type):
         builder = SelectionBuilder(self.selection_class, self.scene, selection_type)
@@ -718,18 +735,16 @@ class SelectionManager(QC.QObject):
         self.activate_builder_by_type_name(selection_type_name)
 
     def activate_builder_by_type_name(self, selection_type_name):
-        print "activate by name", selection_type_name
-        print "types", self.selection_types
         for selection_type in self.selection_types:
-            print "name",selection_type.selection_type_name
             if selection_type.selection_type_name == selection_type_name:
                 self.builder = self.builders[selection_type]
                 self.builder.activate()
                 self.builder.selection_added.connect(self.sc)
                 self.builder.selection_changed.connect(self.selection_changed)
                 self.builder.selection_changed.connect(self.alert_selection_change)
-                print "active builder", self.builder
                 return
+
+
     def alert_selection_change(self, selection):
         self.selection_update.emit()
     def remove_selections(self):
@@ -754,6 +769,10 @@ class SelectionManager(QC.QObject):
 
     def sub_init(self):
         pass
+
+class MeasureLineManager(SelectionManager):
+    def sub_init(self):
+        self.selection_class = MeasureLine
 
 class LineManager(SelectionManager):
     def sub_init(self):

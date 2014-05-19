@@ -14,6 +14,8 @@ from lsjuicer.ui.widgets.axiswidget import VerticalAxisWidget, HorizontalAxisWid
 from lsjuicer.ui.plot.plotteddata import PlottedData
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import timeIt
+from lsjuicer.ui.items.selection import SelectionWidget, MeasureLineManager, SnapROIManager
+from lsjuicer.static import selection_types
 
 class PlotWithAxesWidget(QW.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
@@ -40,6 +42,8 @@ class PlotWithAxesWidget(QW.QWidget):
         # fill view by default
         self.aspect_ratio = QC.Qt.IgnoreAspectRatio
         self.Hlines = {Constants.EVENTS: [], Constants.GAPS: []}
+        self.measure_roi_manager = MeasureLineManager(self.fscene,
+                                 selection_types.data['imagetab.pseudolinescan'])
 
     def addHLines(self, locs, linetype, color='lime'):
         # check if there is anything to add first
@@ -156,11 +160,14 @@ class PlotWithAxesWidget(QW.QWidget):
             QG.QIcon("://arrow_right.png"), "Fit width")
         fit_height_action = fit_menu.addAction(
             QG.QIcon("://arrow_up.png"), "Fit height")
+        measure_action = menu.addAction(QG.QIcon("://help.png"), "Measure")
+        measure_action.setCheckable(True)
         help_action = menu.addAction(QG.QIcon("://help.png"), "Help")
         action_toolbutton.setMenu(menu)
 
         reset_zoom_action.triggered.connect(self.fV.reset_zoom)
         reset_zoom_action.setEnabled(False)
+        measure_action.toggled.connect(self.measure)
         self.reset_zoom_action = reset_zoom_action
 
         fit_width_action.triggered.connect(
@@ -252,6 +259,17 @@ class PlotWithAxesWidget(QW.QWidget):
 
         self.fscene.setLocation.connect(self.updateCoords)
         QW.QApplication.processEvents()
+
+    def measure(self, state):
+        print "Measure",state
+        if state:
+            #disable move
+            self.measure_roi_manager.activate_builder(0)
+        else:
+            self.measure_roi_manager.remove_selections()
+            self.measure_roi_manager.disable_builder()
+
+
 
     def zoom_level_changed(self, h_zoom, v_zoom):
         #t= self.fV.transform()
