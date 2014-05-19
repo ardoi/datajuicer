@@ -1,9 +1,6 @@
 from PyQt5 import QtCore as QC
-from PyQt5 import QtGui as QG
 
 from PyQt5 import QtWidgets as QW
-
-from lsjuicer.util.helpers import timeIt
 
 
 class ZoomView(QW.QGraphicsView):
@@ -13,6 +10,7 @@ class ZoomView(QW.QGraphicsView):
     ver_range_changed = QC.pyqtSignal(float, float)
     zoom_level = QC.pyqtSignal(float, float)
     v_axis_param = QC.pyqtSignal(int, int)
+    right_click = QC.pyqtSignal(QC.QPoint)
     #scaleSignal = QC.pyqtSignal(float)
     #centerSignal = QC.pyqtSignal(float)
     #visibleRectSignal = QC.pyqtSignal(QC.QRectF)
@@ -211,8 +209,11 @@ class ZoomView(QW.QGraphicsView):
 
     #    QG.QGraphicsView.mousePressEvent(self,event)
 
-    #def mouseReleaseEvent(self, event):
-    #    QG.QGraphicsView.mouseReleaseEvent(self,event)
+    def mouseReleaseEvent(self, event):
+        if event.button() == QC.Qt.RightButton:
+            print 'right click',event.pos()
+            self.right_click.emit(event.globalPos())
+        QW.QGraphicsView.mouseReleaseEvent(self,event)
 
     #def mouseMoveEvent(self, event):
     ##    if self.dragging:

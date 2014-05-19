@@ -164,6 +164,8 @@ class PlotWithAxesWidget(QW.QWidget):
         measure_action.setCheckable(True)
         help_action = menu.addAction(QG.QIcon("://help.png"), "Help")
         action_toolbutton.setMenu(menu)
+        self.menu = menu
+        self.fV.right_click.connect(self.menu.exec_)
 
         reset_zoom_action.triggered.connect(self.fV.reset_zoom)
         reset_zoom_action.setEnabled(False)

@@ -99,7 +99,9 @@ class MeasureLineItem(QW.QGraphicsLineItem):
 
             if not self.info_box:
                 self.info_box = QW.QGraphicsRectItem(self)
-                self.info_box.setBrush(QG.QBrush(QG.QColor('greenyellow')))
+                color = QG.QColor('greenyellow')
+                color.setAlphaF(0.7)
+                self.info_box.setBrush(QG.QBrush(color))
                 pen = QG.QPen(QG.QColor('black'))
                 pen.setCosmetic(True)
                 self.info_box.setPen(pen)

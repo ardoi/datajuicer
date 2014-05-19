@@ -41,7 +41,7 @@ data['imagetab.sparkdetect'] = selections_000
 
 selections_001 = []
 PSEUDO_LINESCAN_LINE_appearance = SelectionAppearance()
-PSEUDO_LINESCAN_LINE_appearance.set_line_params('lime', 4)
+PSEUDO_LINESCAN_LINE_appearance.set_line_params('limegreen', 4)
 PSEUDO_LINESCAN_LINE_appearance.set_active_line_params()
 PSEUDO_LINESCAN_LINE_appearance.add_state_color('saved', 'orange')
 selections_001.append(SelectionType(
