@@ -220,7 +220,7 @@ def make_region_objects(data, regions, smooth_data):
     return region_objects
 
 
-def fit_regs(f, all_ranges, plot=False):
+def fit_regs(f, all_ranges, plot=False, second_fit = True):
     #
     # Make initial regions (each region tests its own goodness)
     #
@@ -297,8 +297,6 @@ def fit_regs(f, all_ranges, plot=False):
         rows = int(n.ceil(n.sqrt(len(all_good_regions))))
         cols = int(n.ceil(float(len(all_good_regions))/rows))
         assert rows*cols >= len(all_good_regions)
-    #do_last_fit = False
-    do_last_fit = True
 
     added_index = 0
     event_fits_new = {}
@@ -317,7 +315,6 @@ def fit_regs(f, all_ranges, plot=False):
         le, ri = r.extra_range()
         fff = corrected_f[le:ri]
         time_new = time[le:ri]
-        n.savetxt('correct_{}.dat'.format(id(r)), corrected_f)
         if plot:
             p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
         oo = fitfun.Optimizer(time_new, fff)
@@ -344,10 +341,11 @@ def fit_regs(f, all_ranges, plot=False):
         if f_over_f0_max < min_f_over_f0_max:
             r.bad = True
             continue
-        #final['transients'][added_index] = oo.solutions
-        #final['peak_fits'][added_index] = r.fit_res[0]
-        #final['regions'][added_index] = r
-        #added_index += 1
+        if not second_fit:
+            final['transients'][added_index] = oo.solutions
+            final['peak_fits'][added_index] = r.fit_res[0]
+            final['regions'][added_index] = r
+            added_index += 1
         r.fit_res.append(oo)
         event_fit = oo.function(time, **oo.solutions)
         event_fits_new[id(r)] = event_fit
@@ -357,71 +355,69 @@ def fit_regs(f, all_ranges, plot=False):
             #p.plot(time_new, event_fit,lw=2,color='brown')
             p.plot(time_new, oo.function(time_new, **oo.solutions), lw=2, color='brown')
             p.xlim(time_new[0], time_new[-1])
-        #    fullres += oo.function(time, **oo.solutions)
+            if not second_fit:
+                fullres += oo.function(time, **oo.solutions)
 
-    added_index = 0
+    if second_fit:
+        added_index = 0
+        #estimate baseline again
+        baseline_f = f.copy()
+        for ef in event_fits_new.values():
+            baseline_f -= ef
+        baseline_fit_params = n.polyfit(time, baseline_f, 4)
+        pf_fun = n.poly1d(baseline_fit_params)
+        baseline = pf_fun(time)
+        final['baseline'] = baseline_fit_params
+        for i, r in enumerate(all_good_regions):
+            if plot:
+                p.figure(3)
+                p.subplot(rows, cols, i+1)
 
-    #estimate baseline again
-    baseline_f = f.copy()
-    for ef in event_fits_new.values():
-        baseline_f -= ef
-    baseline_fit_params = n.polyfit(time, baseline_f, 4)
-    pf_fun = n.poly1d(baseline_fit_params)
-    baseline = pf_fun(time)
-    final['baseline'] = baseline_fit_params
-    for i, r in enumerate(all_good_regions):
-        if plot:
-            p.figure(3)
-            p.subplot(rows, cols, i+1)
-
-        #remove all other regions  and baseline from the signal
-        corrected_f  = f - baseline
-        for reg in all_good_regions:
-            #only remove OTHER regions
-            if id(reg) != id(r):
-                corrected_f -= event_fits_new[id(reg)]
-        le, ri = r.extra_range()
-        fff = corrected_f[le:ri]
-        time_new = time[le:ri]
-        if plot:
-            p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
-        oo = fitfun.Optimizer(time_new, fff)
-        oo.set_function(fitfun.ff60)
-        # copy fit parameter ranges from previous fit
-        oo.parameters = r.fit_res[-1].parameters.copy()
-        previous_sol = r.fit_res[-1].solutions
-        oo.rerange_parameters(previous_sol)
-        # remove B and C since we have already corrected the baseline
-        oo.optimize()
-        if not oo.solutions:
-            r.bad = True
-            continue
-        final['transients'][added_index] = oo.solutions
-        final['peak_fits'][added_index] = r.fit_res[0]
-        final['regions'][added_index] = r
-        added_index += 1
-        r.fit_res.append(oo)
-        if plot:
-            #p.title("%i"%i)
-            p.plot(time_new, oo.function(time_new, **oo.solutions), lw=2, color='red')
-            p.xlim(time_new[0], time_new[-1])
-            fullres += oo.function(time, **oo.solutions)
+            #remove all other regions  and baseline from the signal
+            corrected_f = f - baseline
+            for reg in all_good_regions:
+                #only remove OTHER regions
+                if id(reg) != id(r):
+                    corrected_f -= event_fits_new[id(reg)]
+            le, ri = r.extra_range()
+            fff = corrected_f[le:ri]
+            time_new = time[le:ri]
+            if plot:
+                p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
+            oo = fitfun.Optimizer(time_new, fff)
+            oo.set_function(fitfun.ff60)
+            # copy fit parameter ranges from previous fit
+            oo.parameters = r.fit_res[-1].parameters.copy()
+            previous_sol = r.fit_res[-1].solutions
+            oo.rerange_parameters(previous_sol)
+            oo.optimize()
+            if not oo.solutions:
+                r.bad = True
+                continue
+            final['transients'][added_index] = oo.solutions
+            final['peak_fits'][added_index] = r.fit_res[0]
+            final['regions'][added_index] = r
+            added_index += 1
+            r.fit_res.append(oo)
+            if plot:
+                p.plot(time_new, oo.function(time_new, **oo.solutions), lw=2, color='red')
+                p.xlim(time_new[0], time_new[-1])
+                fullres += oo.function(time, **oo.solutions)
     ## last stage
     # estimate baseline again
-    # prstartint 'very good', very_good_regions
     baseline_old = baseline
-    #do_last_fit=False
-    #if do_last_fit:
-    #    baseline_f = f.copy()
-    #    for i, r in enumerate(very_good_regions):
-    #        sol = r.fit_res[-1].solutions
-    #        res = oo.function(time, **sol)
-    #        baseline_f -= res
-    #    baseline_fit_params = n.polyfit(time, baseline_f, 4)
-    #    if n.isnan(baseline_fit_params).any():
-    #        baseline_fit_params = n.zeros_like(baseline_fit_params)
-    #    #pf_fun = n.poly1d(baseline_fit_params)
-    #    final['baseline'] = baseline_fit_params
+    do_last_fit = True
+    if do_last_fit:
+        baseline_f = f.copy()
+        for i, r in enumerate(all_good_regions):
+            sol = r.fit_res[-1].solutions
+            res = oo.function(time, **sol)
+            baseline_f -= res
+        baseline_fit_params = n.polyfit(time, baseline_f, 4)
+        if n.isnan(baseline_fit_params).any():
+            baseline_fit_params = n.zeros_like(baseline_fit_params)
+        #pf_fun = n.poly1d(baseline_fit_params)
+        final['baseline'] = baseline_fit_params
     if plot:
         pf_fun = n.poly1d(baseline_fit_params)
         baseline = pf_fun(time)
@@ -431,7 +427,6 @@ def fit_regs(f, all_ranges, plot=False):
         p.plot(time, fullres, color='red', lw=2)
         p.plot(time, baseline, color='magenta')
         p.plot(time, baseline_old, color='cyan')
-
     return final
 
 
@@ -444,7 +439,7 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=5.0):
+def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again
@@ -453,7 +448,7 @@ def fit_2_stage(data, plot=False, min_snr=5.0):
     baseline which is taken from the first fit"""
 
     found_regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
-    res_out = fit_regs(data, found_regions, plot)
+    res_out = fit_regs(data, found_regions, plot, two_stage)
     return res_out
 
 
