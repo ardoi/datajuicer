@@ -289,7 +289,8 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         p.legend()
     # create data for each transient with the other transients removed
     final = {'transients': {}, 'baseline':
-             baseline_fit_params, 'peak_fits': {}, 'regions': {}}
+             baseline_fit_params, 'peak_fits': {}, 'regions': {},
+             'xrange':(min(time),max(time))}
     if not all_good_regions:
         return final
     if plot:
@@ -343,7 +344,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             continue
         if not second_fit:
             final['transients'][added_index] = oo.solutions
-            final['peak_fits'][added_index] = r.fit_res[0]
+            final['peak_fits'][added_index] = r.fit_res[-1]
             final['regions'][added_index] = r
             added_index += 1
         r.fit_res.append(oo)
@@ -357,6 +358,16 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             p.xlim(time_new[0], time_new[-1])
             if not second_fit:
                 fullres += oo.function(time, **oo.solutions)
+
+    print 'all regs'
+    old_good_regions = all_good_regions
+    all_good_regions = []
+    for r in old_good_regions:
+        if r.bad is not True:
+            all_good_regions.append(r)
+
+    if not all_good_regions:
+        return final
 
     if second_fit:
         added_index = 0
@@ -375,8 +386,10 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
 
             #remove all other regions  and baseline from the signal
             corrected_f = f - baseline
+            print 'correct'
             for reg in all_good_regions:
                 #only remove OTHER regions
+                print id(reg),reg.bad, id(r),r.bad
                 if id(reg) != id(r):
                     corrected_f -= event_fits_new[id(reg)]
             le, ri = r.extra_range()
@@ -395,7 +408,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
                 r.bad = True
                 continue
             final['transients'][added_index] = oo.solutions
-            final['peak_fits'][added_index] = r.fit_res[0]
+            final['peak_fits'][added_index] = r.fit_res[-1]
             final['regions'][added_index] = r
             added_index += 1
             r.fit_res.append(oo)
@@ -679,6 +692,18 @@ def redo(jobs, res):
     import pickle
     pickle.dump(res, ff)
     ff.close()
+
+def reconstruct_signal(result):
+    """Take result dictionary given by fit_2_stage and return
+    baseline and event fits"""
+    xvals = n.arange(result['xrange'][0], result['xrange'][1], 1.0)
+    events = n.zeros_like(xvals)
+    for key, region in result['regions'].iteritems():
+        opt = region.fit_res[-1]
+        signal = opt.function(xvals, **opt.solutions)
+        events += signal
+    baseline = n.poly1d(result['baseline'])(xvals)
+    return events, baseline
 
 
 def fitted_pixel_ff0(pixel, event=0):

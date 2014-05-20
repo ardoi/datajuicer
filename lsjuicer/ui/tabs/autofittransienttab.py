@@ -113,20 +113,11 @@ class AutoFitTransientTab(QW.QTabWidget):
     def setup_ui(self):
         main_layout = QW.QGridLayout()
         self.setLayout(main_layout)
-        #closeIcon = QG.QIcon(":/cancel.png")
-        #self.closePB = QG.QPushButton(closeIcon, 'Close tabs')
-        #self.setCornerWidget(self.closePB)
-        #self.closePB.setEnabled(False)
 
         self.fplot = TracePlotWidget(sceneClass = FDisplay, antialias = True, parent = None)
-        #self.plotAndZoomLayout = QG.QVBoxLayout()
-        #self.zoomButtonLayout  = QG.QHBoxLayout()
-        #self.plotAndZoomLayout.addWidget(self.fplot)
-        #self.plotAndZoomLayout.addLayout(self.zoomButtonLayout)
         main_layout.addWidget(self.fplot,0,0)
 
         #Widget for transient group selection
-
 
         main_layout.setSpacing(2)
 
@@ -287,12 +278,14 @@ class AutoFitTransientTab(QW.QTabWidget):
     def find_transients(self):
         print 'find transient'
         channel_fl_data = self.channel_fl_datas[0]
-        xvals = n.arange(channel_fl_data.fl.data.size),
+        xvals = n.arange(channel_fl_data.fl.data.size)
         yvals = channel_fl_data.fl.data
-        #res = tf.fit_2_stage(yvals)
         n.savetxt("linefit.dat",yvals)
-
-        print res
+        res = tf.fit_2_stage(yvals)
+        events, baseline = tf.reconstruct_signal(res)
+        signal = baseline + events
+        self.fplot.addPlot('Fit', xvals, signal, {'color': 'black', 'size': 2})
+        self.fplot.addPlot('Baseline', xvals, baseline, {'color': 'green', 'size': 2})
 
     def updateCoords(self, xv, yv, xs, ys):
         self.status.showMessage('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
