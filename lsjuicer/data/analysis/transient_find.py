@@ -2,6 +2,7 @@ import traceback
 import logging
 
 from scipy import ndimage as nd
+import scipy.stats as ss
 import numpy as n
 
 import lsjuicer.data.analysis.fitfun as fitfun
@@ -118,8 +119,14 @@ class Region(object):
             return None
         oo.set_parameter_range(
             'A', min_amp, 1.5*(self.data.max()-b_init), fu[self.maximum]-b_init)
-        # FIXME why 51?
-        oo.set_parameter_range('d2', .1, 51, 2)
+        # FIXME why 101?
+        data_mean = self.data.mean()
+        greater_than_mean = self.data[self.data > data_mean]
+        cutoff = 99.0
+        multiplier = 0.95
+        cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
+        plateau_length = float(self.data[self.data > cutoff_value].size)
+        oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C', c_init-c_init_delta, c_init +
