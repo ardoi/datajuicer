@@ -160,7 +160,7 @@ class PlotWithAxesWidget(QW.QWidget):
             QG.QIcon("://arrow_right.png"), "Fit width")
         fit_height_action = fit_menu.addAction(
             QG.QIcon("://arrow_up.png"), "Fit height")
-        measure_action = menu.addAction(QG.QIcon("://help.png"), "Measure")
+        measure_action = menu.addAction(QG.QIcon("://ruler.png"), "Measure")
         measure_action.setCheckable(True)
         help_action = menu.addAction(QG.QIcon("://help.png"), "Help")
         action_toolbutton.setMenu(menu)
