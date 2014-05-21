@@ -112,7 +112,7 @@ class AxisWidget(QW.QWidget):
                 #    pass
                 #label_val = label_val_on_scene
                 # print "lv",label_val
-                self.tick_labels.append("%.2f" % label_val)
+                self.tick_labels.append("{:.4g}".format(label_val))
                 val += tick_gap_pix
                 # print val,label_val,
         else:
