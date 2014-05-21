@@ -13,6 +13,136 @@ from lsjuicer.inout.db.sqla import ImageMaker
 import lsjuicer.inout.db.sqla as sa
 from lsjuicer.static.constants import ImageStates
 from lsjuicer.util.helpers import timeIt
+import lsjuicer.data.analysis.transient_find as tf
+
+class FitResultDataModel(QC.QAbstractTableModel):
+    """Model for non-db fit results"""
+    def __init__(self, parent = None):
+        super(FitResultDataModel, self).__init__(parent)
+        self.fit_result = None
+        self.columns = 7
+
+    @property
+    def regions(self):
+        if self.fit_result:
+            return self.fit_result['regions']
+        else:
+            return {}
+
+    @property
+    def rows(self):
+        return len(self.regions)
+
+    def set_fit_result(self, fit_result):
+        print 'set res', fit_result
+        self.layoutAboutToBeChanged.emit((),0)
+        self.fit_result= fit_result
+        self.ff0_func = tf.FF0(fit_result)
+        self.layoutChanged.emit((),0)
+
+    #def remove_transients(self, indexes):
+    #    self.layoutAboutToBeChanged.emit((),0)
+    #    transients_to_remove = []
+    #    for index in indexes:
+
+    #        transient_key = self.visual_transient_collection.transient_group.order[index.row()]
+    #        if transient_key not in transients_to_remove:
+    #            transients_to_remove.append(transient_key)
+    #        #vtr = self.visual_transient_collection[transient_key]
+    #    for key in transients_to_remove:
+    #        print 'remove', key
+    #        self.visual_transient_collection.remove_transient(key)
+    #    self.layoutChanged.emit((),0)
+
+
+    #def set_transients_state(self, attrib, indexes):
+    #    function = {'visible':'set_visible', 'editable':'set_editable'}
+    #    assert attrib in function
+    #    self.layoutAboutToBeChanged.emit((),0)
+    #    transients_to_modify_keys = []
+    #    states = []
+    #    for index in indexes:
+    #        transient_key = self.visual_transient_collection.transient_group.order[index.row()]
+    #        vtr = self.visual_transient_collection[transient_key]
+    #        if transient_key not in transients_to_modify_keys:
+    #            transients_to_modify_keys.append(transient_key)
+    #            states.append(not getattr(vtr,attrib))
+    #    print 'set state', attrib, indexes
+    #    f = getattr(self.visual_transient_collection, function[attrib])
+    #    f(transients_to_modify_keys, states)
+    #    self.layoutChanged.emit((),0)
+
+    #def set_transients_visible(self, indexes):
+    #    self.set_transients_state('visible', indexes)
+
+    #def set_transients_editable(self, indexes):
+    #    self.set_transients_state('editable', indexes)
+
+    def rowCount(self, parent):
+        return self.rows
+
+    def columnCount(self, parent):
+        return self.columns
+
+    def headerData(self, section, orientation, role):
+        if role == QC.Qt.DisplayRole:
+            if orientation == QC.Qt.Horizontal:
+                if section == 0:
+                    return "Event"
+                elif section == 1:
+                    return "A"
+                elif section == 2:
+                    return 'mu'
+                elif section == 3:
+                    return 'rise'
+                elif section == 4:
+                    return 'd'
+                elif section == 5:
+                    return 'decay'
+                elif section == 6:
+                    return 'dF/F0'
+                else:
+                    return QC.QVariant()
+            else:
+#                return 'Transient %i'%(section+1)
+                QC.QVariant()
+        else:
+            return QC.QVariant()
+
+    def data(self, index, role):
+        if self.regions:
+            row = index.row()
+            keys = self.regions.keys()
+            keys.sort()
+            key = keys[row]
+            col = index.column()
+            region = self.regions[key]
+            sol = region.fit_res[-1].solutions
+            if role == QC.Qt.DisplayRole:
+                    if col == 0:
+                        return "%i"%key
+                    elif col == 1:
+                        return "%.4g"%sol['A']
+                    elif col==2:
+                        return "%i"%sol['m2']
+                    elif col==3:
+                        return "%i"%sol['d']
+                    elif col==4:
+                        return "%i"%sol['d2']
+                    elif col==5:
+                        return "%i"%sol['tau2']
+                    elif col==6:
+                        return "%.3f"%self.ff0_func(sol['m2'])
+                    else:
+                        return QC.QVariant()
+
+            elif role==QC.Qt.TextAlignmentRole:
+                return QC.Qt.AlignCenter
+
+            else:
+                return QC.QVariant()
+        else:
+            return QC.QVariant()
 
 class TransientDataModel(QC.QAbstractTableModel):
     def __init__(self, parent = None):

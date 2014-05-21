@@ -1,4 +1,3 @@
-import traceback
 import logging
 
 from scipy import ndimage as nd
@@ -126,7 +125,8 @@ class Region(object):
         multiplier = 0.95
         cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
         plateau_length = float(self.data[self.data > cutoff_value].size)
-        oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
+        #oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
+        oo.set_parameter_range('d2', .1, plateau_length, 2.)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C', c_init-c_init_delta, c_init +
@@ -218,12 +218,15 @@ def make_region_objects(data, regions, smooth_data):
     #smooth_data = data
     time_data = n.arange(data.size)
     region_objects = []
+    regions.sort(key=lambda x: x[0])
     for reg in regions:
         left = reg[2]
         right = reg[3]
         maxval = reg[0]
         reg = Region(left, right, maxval, data, smooth_data, time_data)
         region_objects.append(reg)
+
+
     return region_objects
 
 
@@ -243,6 +246,8 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         i += 1
         smooth_data = nd.uniform_filter(f_cleaned, 5)
         regs = make_region_objects(f, ranges, smooth_data)
+        print '\n regions'
+        print regs
         good_regions = []
         if plot:
             import pylab as p
@@ -710,7 +715,24 @@ def reconstruct_signal(result):
         signal = opt.function(xvals, **opt.solutions)
         events += signal
     baseline = n.poly1d(result['baseline'])(xvals)
-    return events, baseline
+    return xvals, events, baseline
+
+class FF0(object):
+    def __init__(self, result):
+        self.result = result
+        self.baseline_f = n.poly1d(result['baseline'])
+
+    def __call__(self, arg):
+        bl = self.baseline_f(arg)
+        f = 0.0
+        for key, region in self.result['regions'].iteritems():
+            opt = region.fit_res[-1]
+            event_f = opt.function(arg, **opt.solutions)
+            f += event_f
+        return f/bl
+
+
+
 
 
 def fitted_pixel_ff0(pixel, event=0):

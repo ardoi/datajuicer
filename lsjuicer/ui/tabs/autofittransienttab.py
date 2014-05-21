@@ -10,7 +10,7 @@ from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.scenes import FDisplay
 from lsjuicer.ui.items.selection import BoundaryManager, SelectionDataModel
 
-from lsjuicer.data.models.datamodels import TransientDataModel
+from lsjuicer.data.models.datamodels import FitResultDataModel
 from lsjuicer.ui.views.dataviews import CopyTableView
 from lsjuicer.static import selection_types
 from lsjuicer.data.data import Fl_Data
@@ -66,6 +66,7 @@ class AutoFitTransientTab(QW.QTabWidget):
         self.setup_ui()
         self.filename = None
         self.channel = 0
+        self.fit_result = {}
         self.parent = parent
         self.new_transients = None
         self.approved_transients = None
@@ -227,9 +228,9 @@ class AutoFitTransientTab(QW.QTabWidget):
         transient_action_layout = QW.QVBoxLayout()
         self.transient_action_widget.setLayout(transient_action_layout)
         self.transient_tableview = CopyTableView()
-        self.transient_datamodel = TransientDataModel()
+        self.fit_res_datamodel = FitResultDataModel()
         #boxdelegate = CheckBoxDelegate()
-        self.transient_tableview.setModel(self.transient_datamodel)
+        self.transient_tableview.setModel(self.fit_res_datamodel)
         #self.transient_tableview.setItemDelegateForColumn(9, boxdelegate)
         #transient_tableview.horizontalHeader().setSectionResizeMode(0, QG.QHeaderView.ResizeToContents)
         #transient_tableview.horizontalHeader().setSectionResizeMode(1, QG.QHeaderView.ResizeToContents)
@@ -252,8 +253,8 @@ class AutoFitTransientTab(QW.QTabWidget):
         transient_action_layout.setAlignment(transient_action_toolbar, QC.Qt.AlignCenter)
 
         self.transient_tableview.setObjectName('Transient TableView')
-        for ci in range(3,8+1):
-            self.transient_tableview.hideColumn(ci)
+        #for ci in range(3,8+1):
+        #    self.transient_tableview.hideColumn(ci)
         tool_layout.addWidget(self.transient_action_widget)
 
 
@@ -276,16 +277,20 @@ class AutoFitTransientTab(QW.QTabWidget):
 
 
     def find_transients(self):
-        print 'find transient'
         channel_fl_data = self.channel_fl_datas[0]
-        xvals = n.arange(channel_fl_data.fl.data.size)
         yvals = channel_fl_data.fl.data
-        n.savetxt("linefit.dat",yvals)
-        res = tf.fit_2_stage(yvals)
-        events, baseline = tf.reconstruct_signal(res)
-        signal = baseline + events
-        self.fplot.addPlot('Fit', xvals, signal, {'color': 'black', 'size': 2})
-        self.fplot.addPlot('Baseline', xvals, baseline, {'color': 'green', 'size': 2})
+        self.fit_result = tf.fit_2_stage(yvals)
+        self.fit_res_datamodel.set_fit_result(self.fit_result)
+        self.show_fit()
+
+
+    def show_fit(self):
+        if self.fit_result:
+            xvals, events, baseline = tf.reconstruct_signal(self.fit_result)
+            signal = baseline + events
+            self.fplot.addPlot('Fit', xvals, signal, {'color': 'black', 'size': 2})
+            self.fplot.addPlot('Baseline', xvals, baseline, {'color': 'green', 'size': 2})
+
 
     def updateCoords(self, xv, yv, xs, ys):
         self.status.showMessage('x: %.3f, y: %.2f, sx: %i, sy: %i'%(xv, yv, xs, ys))
