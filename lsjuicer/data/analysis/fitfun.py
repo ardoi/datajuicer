@@ -479,10 +479,16 @@ def ff5_bl(arg, tau2, m2,d2, d,A,B,C):
     t=arg
     c1 = C*n.exp(-(t-mm2)/tau2)
     res = n.zeros_like(arg, dtype='float64')
-    res[t>mm2] = c1[t>mm2]
-    res[t<=mm2] = C
-    res+=B
+    if res.size > 1:
+        res[t>mm2] = c1[t>mm2]
+        res[t<=mm2] = C
+    else:
+        if t>mm2:
+            res  = c1
+        else:
+            res = C
     #return C*n.exp(-(t-mm2)/tau2)*(t>mm2)+B+C*(t<=mm2)
+    res+=B
     return res
 
 def ff6(arg, tau2, d, d2, m2, s, A):
@@ -597,7 +603,10 @@ def ff5(arg, tau2, d, d2, m2, s, A, B, C):
     resmask = n.logical_or(n.isnan(res),n.isinf(res))
     if resmask.any():
         baseline = ff5_bl(arg, tau2, m2,d2,d,A,B,C)
-        res[resmask]=baseline[resmask]
+        if resmask.size > 1:
+            res[resmask] = baseline[resmask]
+        else:
+            res = baseline
     return res
 
 def ff6o(arg, tau2, d, d2, m2, s, A):
