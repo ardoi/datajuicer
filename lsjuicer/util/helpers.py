@@ -1,4 +1,5 @@
 import time
+import traceback
 
 from PyQt5 import QtGui as QG
 
@@ -11,7 +12,7 @@ import scipy.ndimage as sn
 
 from lsjuicer.resources import cm
 # from skimage.morphology import watershed
-
+from IPython import embed
 
 def round_point(point):
     point.setX(int(round(point.x())))
@@ -135,6 +136,25 @@ def timeIt(f):
             ('\t'*(timeIt.active-1)+'#', f.__name__, time.time()-t0)
         timeIt.active -= 1
         return res
+    return tt
+
+def ipython(f):
+    ipython.running = False
+
+    def tt(*args, **kwargs):
+        try:
+            res = f(*args, **kwargs)
+            return res
+        except Exception, e:
+            if not ipython.running:
+                print '\n>>>IPython shell for %s' % (f.__name__)
+                print '>>>Error was:'
+                traceback.print_exc()
+                ipython.running = True
+                embed()
+            ipython.running = False
+            raise e
+
     return tt
 
 def log(f):
