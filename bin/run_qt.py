@@ -106,6 +106,8 @@ if __name__ == "__main__":
         gui.close()
         app.exit()
     else:
+        #Remove unnecessary prompt input to avoid conflicts with embedded IPython
+        QC.pyqtRemoveInputHook()
         gui.show()
         gui.showMaximized()
         gui.raise_()
