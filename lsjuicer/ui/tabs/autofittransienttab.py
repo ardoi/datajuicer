@@ -1,3 +1,4 @@
+import datetime
 
 from PyQt5 import QtCore as QC
 
@@ -17,6 +18,8 @@ from lsjuicer.data.data import Fl_Data
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 
 import lsjuicer.data.analysis.transient_find as tf
+from lsjuicer.ui.tabs.transienttab import SaveTracesDialog
+from lsjuicer.util.helpers import ipython
 
 
 class AutoFitTransientTab(QW.QTabWidget):
@@ -75,7 +78,69 @@ class AutoFitTransientTab(QW.QTabWidget):
         self.status = window.statusBar()
         QC.QTimer.singleShot(50, lambda :self.initialPlots())
 
+    @ipython
+    def save_traces(self):
+        dialog = SaveTracesDialog(parent=self)
+        if dialog.exec_():
 
+
+            fullfname = str(dialog.save_file_name)
+            exp_type = str(dialog.exp_type)
+            comment = str(dialog.comment)
+            f = open(fullfname,'w')
+            f.write("#Saved on: %s\n"%str(datetime.datetime.now()))
+            f.write("#Comment: %s\n"%comment)
+            f.write("#Experiment type: %s\n"%exp_type)
+            f.write("#Image: %s\n"%self.imagedata.name)
+
+            if self.fit_result:
+                xvals, events, baseline = tf.reconstruct_signal(self.fit_result, event_array=True)
+                signal_fit = baseline + events.sum(axis=1)
+                fit_regions = self.fit_result['regions']
+                region_keys = fit_regions.keys()
+                region_keys.sort()
+                fit_function = fit_regions[region_keys[0]].fit_res[-1].function
+                f.write("#Events fitted with:{}\n".format(fit_function.__name__))
+
+                sol_keys = fit_regions[region_keys[0]].fit_res[-1].solutions.keys()
+                sol_keys.sort()
+
+                f.write("#Event fit parameters-->\n# number\t {}\n".format("\t ".join(sol_keys)))
+                f.write("#Events->\n")
+                for key in region_keys:
+                    optimizer = fit_regions[key].fit_res[-1]
+                    sol = optimizer.solutions
+                    event_param_string = "\t ".join(["{:.4f}".format(sol[el]) for el in sol_keys])
+                    f.write("# {}\t {}\n".format(key, event_param_string))
+
+                baseline_string = str(self.fit_result['baseline'].tolist())
+                f.write("#Baseline: {}\n".format(baseline_string))
+
+            header = "#\n#Column names follow ->\n"
+            cnames = ["# Time", "Signal"]
+            if self.fit_result:
+                cnames.extend(["Baseline", "Fit"])
+                cnames.extend(["Event {:d}".format(int(ev)) for ev in range(events.shape[1])])
+            header += ", ".join(cnames)
+            header += "\n"
+            f.write(header)
+            channel_fl_data = self.channel_fl_datas[0].fl.data
+            rows = []
+            for i in range(xvals.size):
+                rowdata = ["%.5f"%xvals[i]]
+                rowdata.append("%.5f"%channel_fl_data[i])
+                if self.fit_result:
+                    rowdata.append("%.5f"%baseline[i])
+                    rowdata.append("%.5f"%signal_fit[i])
+                    rowdata.extend(["{:.5f}".format(ev) for ev in events[i,:]])
+                row = ", ".join(rowdata)
+                row += "\n"
+                rows.append(row)
+            for row in rows:
+                f.write(row)
+            f.close()
+            QW.QMessageBox.information(self,'Done',"%i rows saved to %s"%(len(rows),fullfname))
+            self.save_label.setText("Saved")
 
     def initialPlots(self):
         def color_yield():
@@ -141,6 +206,7 @@ class AutoFitTransientTab(QW.QTabWidget):
 
         save_data_icon = QG.QIcon(':/report_disk.png')
         save_pb = QW.QPushButton(save_data_icon, "Save traces")
+        save_pb.released.connect(self.save_traces)
         save_layout = QW.QHBoxLayout()
         save_layout.addWidget(save_pb)
         channel_main_layout.addLayout(save_layout)

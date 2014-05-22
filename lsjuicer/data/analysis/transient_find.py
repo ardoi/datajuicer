@@ -705,15 +705,24 @@ def redo(jobs, res):
     pickle.dump(res, ff)
     ff.close()
 
-def reconstruct_signal(result):
+def reconstruct_signal(result, event_array=False):
     """Take result dictionary given by fit_2_stage and return
-    baseline and event fits"""
+    baseline and event fits
+    If event_array == True then send array with each event instead
+    of summed up events
+    """
     xvals = n.arange(result['xrange'][0], result['xrange'][1], 1.0)
-    events = n.zeros_like(xvals)
+    if event_array:
+        events = n.zeros(shape=(xvals.size, len(result['regions'])))
+    else:
+        events = n.zeros_like(xvals)
     for key, region in result['regions'].iteritems():
         opt = region.fit_res[-1]
         signal = opt.function(xvals, **opt.solutions)
-        events += signal
+        if event_array:
+            events[:,key] = signal
+        else:
+            events += signal
     baseline = n.poly1d(result['baseline'])(xvals)
     return xvals, events, baseline
 
@@ -727,8 +736,12 @@ class FF0(object):
         f = 0.0
         for key, region in self.result['regions'].iteritems():
             opt = region.fit_res[-1]
-            event_f = opt.function(arg, **opt.solutions)
-            f += event_f
+            try:
+                event_f = opt.function(arg, **opt.solutions)
+                f += event_f
+            except:
+                print 'failed for', arg, opt.solutions
+                continue
         return f/bl
 
 
