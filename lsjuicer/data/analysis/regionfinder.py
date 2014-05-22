@@ -1,10 +1,10 @@
 import itertools
-import logging
 from collections import defaultdict
+
 import numpy as n
 import scipy.signal as ss
 from scipy.stats import scoreatpercentile
-from lsjuicer.util.helpers import timeIt
+
 
 def pad_data(vector, pad):
     vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
@@ -14,7 +14,6 @@ def pad_data_const(vector, pad):
     av = 10
     left_av = vector[:av].mean()
     right_av=vector[-av:].mean()
-    #print vector[:av], vector[-av:]
     pad_size = vector.size/pad
     vec = n.hstack((n.ones(pad_size)*left_av, vector,n.ones(pad_size)*right_av ))
     return vec
@@ -279,7 +278,6 @@ def get_regions(data, min_snr=3.5, max_width=150, step=5):
     peaks_all = find_peaks_cwt2(data, widths, min_snr)
     if not peaks_all:
         return {}
-    print 'bla'
     regions = detect_overlapping_regions(peaks_all)
     print 'regions', regions
     return regions
@@ -298,7 +296,6 @@ def show_regions(data, min_snr=5.0, max_width=150, step=5, xmin=None, xmax=None)
         color = colors.next()
         for region in b:
             pylab.plot(region[0], data.max(), 'ro')
-            print region
             ca.add_patch(pylab.Rectangle((region[2], data.min()), region[3]-region[2],
                             data.max(), alpha=0.5, facecolor=color))
     pylab.show()

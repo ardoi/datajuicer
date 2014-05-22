@@ -2,10 +2,10 @@ import time
 import os
 import sys
 from subprocess import Popen, PIPE
-import logging
 
 from PyQt5 import QtCore as QC
 
+from lsjuicer.util import logger
 
 
 class RunnerHerder:
@@ -16,7 +16,7 @@ class RunnerHerder:
         self.running_list = []
         self.all_done = False
         self.runners = 0
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger.get_logger(__name__)
 
     def add_runner(self, runner):
         self.torun_list.append(runner)
@@ -102,13 +102,7 @@ class OMEXMLMaker(QC.QObject):
             tool_dir = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','..','..','lib','bftools'))
         self.convert_cmd = os.path.join(tool_dir,'bfconvert')+' -no-upgrade -compression zlib  "{0}" "{1}"'
         self.toconvert = {}
-        self.logger = logging.getLogger(__name__)
-        if not self.logger.root.handlers and not self.logger.handlers:
-            hh = logging.StreamHandler(sys.stdout)
-            log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
-            hh.setFormatter(logging.Formatter(log_format))
-            self.logger.addHandler(hh)
-            self.logger.setLevel(logging.DEBUG)
+        self.logger = logger.getLogger(__name__)
         self.logger.info("OMXMLMaker created")
         self.logger.info('Bioformats directory is: {}'.format(tool_dir))
         self.done = 0

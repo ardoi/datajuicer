@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 """Main execution file for the application"""
-import time
 import os
 import sys
-import logging
 from subprocess import Popen, PIPE
 
-from PyQt5 import QtGui
 from PyQt5 import QtWidgets
 from PyQt5 import QtCore as QC
 
-from lsjuicer.util import config
+from lsjuicer.util import config, logger
 from lsjuicer.ui.windows.main import MainUI
 
 
@@ -41,54 +38,14 @@ if __name__ == "__main__":
     #app.setStyle(QtWidgets.QStyleFactory.create('Macintosh (aqua)'))
     #make sure icons are shown in menus
     app.setAttribute(QC.Qt.AA_DontShowIconsInMenus, on = False)
-    print 'Available styles: %s' % (str(" : ".join(QtWidgets.QStyleFactory.keys())))
-    logo = QtGui.QPixmap(":/juicerlogo.png")
+
+    log = logger.get_logger(__name__)
+    log.info('Available styles: %s' % (str(" : ".join(QtWidgets.QStyleFactory.keys()))))
+
+    #logo = QtGui.QPixmap(":/juicerlogo.png")
     # splash = QtGui.QSplashScreen(logo)
     # splash.show()
     app.processEvents()
-    # time.sleep(1)
-    #screen_size = app.desktop().screenGeometry()
-    # splash.hide()
-
-    # defaults for conf file
-    # username = os.getlogin()
-    # defaults = {'basedir':'/home/%s/.config/lsjuicer'%username}
-    # cp = ConfigParser.ConfigParser(defaults)
-
-    # logging setup
-    # cp.read('config.ini')
-    # logfolder = cp.get('logging', 'logfolder')
-    # check for folder existance and create if necessary
-    # if not os.path.isdir(logfolder):
-    #    os.makedirs(logfolder)
-    # try:
-    #    loglevel = int(cp.get('logging', 'loglevel'))
-    #    assert loglevel in range(0, 60, 10)
-    # except (AssertionError, ValueError):
-    #    print 'fallback'
-    #    loglevel = logging.INFO
-    # filetype = 'csv'
-    # filetype = 'oib'
-    # util.config.Config.set_property('filetype', filetype)
-    # shelf_db = shelve.open('db.shelf',writeback = True)
-    # util.config.Config.set_property('shelf_db', shelf_db)
-    # util.config.init_config(shelf_db)
-    start_time_and_date = time.strftime("%d-%b-%Y__%H-%M-%S")
-
-    logfolder = 'log'
-    # check for folder existance and create if necessary
-    if not os.path.isdir(logfolder):
-        os.makedirs(logfolder)
-    #loglevel = logging.INFO
-    loglevel = logging.INFO
-    logfilename = "juicer_" + start_time_and_date + ".log"
-    logfilefullname = os.path.join(logfolder, logfilename)
-    log_format = "%(levelname)s:%(name)s:%(funcName)s:\
-            %(lineno)d:%(asctime)s %(message)s"
-    logging.basicConfig(filename=logfilefullname,
-                        level=loglevel, filemode='w', format=log_format)
-    logger = logging.getLogger(__name__)
-    logger.info('starting')
 
     # ome_folder = os.path.join(os.getenv('HOME'), '.JuicerTemp')
     # if not os.path.isdir(ome_folder):

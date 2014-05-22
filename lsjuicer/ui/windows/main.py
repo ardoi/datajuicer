@@ -1,6 +1,5 @@
 import os
 import traceback
-import logging
 
 from PyQt5 import QtGui as QG
 from PyQt5 import QtWidgets as QW
@@ -9,6 +8,7 @@ from PyQt5 import QtCore as QC
 
 
 from lsjuicer.util import helpers
+from lsjuicer.util import logger
 from lsjuicer.static.constants import Constants
 from lsjuicer.ui.widgets.analysiswidget import AnalysisWidget
 from lsjuicer.ui.widgets.smallwidgets import Tasker
@@ -547,16 +547,9 @@ class MainUI(QW.QMainWindow):
         self.qd.setFixedHeight(500)
         self.qd.setLayout(self.infoL)
         self.qd.show()
+
     def getLogfileName(self):
-        handlers = logging.root.handlers
-        if len(handlers)>0:
-            fileHandler = handlers[0]
-        else:
-            return None
-        if isinstance(fileHandler, logging.FileHandler):
-            return fileHandler.baseFilename
-        else:
-            return None
+        return logger.logger.logfilename
 
     def on_actionLog_triggered(self):
         tb = QW.QTextEdit(self)

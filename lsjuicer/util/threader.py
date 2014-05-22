@@ -1,6 +1,5 @@
 from multiprocessing import Process, cpu_count
 import datetime
-import logging
 import random
 import time
 import os
@@ -15,6 +14,7 @@ from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
 from lsjuicer.inout.db import sqlb2
 from lsjuicer.data.analysis import transient_find as tf
+import lsjuicer.util.logger as logger
 
 
 class Worker(Process):
@@ -30,7 +30,7 @@ class Worker(Process):
         #session.commit()
         #session.close()
         dbmaster.end_session_retry(session)
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger.getLogger(__name__)
 
     def kill(self):
         session = sqlb2.dbmaster.get_session()
@@ -356,7 +356,7 @@ class Threader(QC.QObject):
 
         self.slots = cpu_count() - 1
         self.last_started_worker_number = 0
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger.getLogger(__name__)
 
     def do(self, params, settings):
         sqlb2.dbmaster.reset_tables()

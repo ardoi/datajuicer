@@ -1,5 +1,3 @@
-import logging
-
 from scipy import ndimage as nd
 import scipy.stats as ss
 import numpy as n
@@ -7,19 +5,7 @@ import numpy as n
 import lsjuicer.data.analysis.fitfun as fitfun
 from lsjuicer.data.analysis import regionfinder as rf
 from lsjuicer.util.helpers import timeIt
-
-
-def get_logger(name):
-    logger = logging.getLogger(__name__)
-    if not logger.root.handlers and not logger.handlers:
-    # if not logger.handlers:
-        #hh = logging.StreamHandler(sys.stdout)
-        hh = logging.FileHandler("log.log")
-        log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
-        hh.setFormatter(logging.Formatter(log_format))
-        logger.addHandler(hh)
-        logger.setLevel(logging.DEBUG)
-    return logger
+from lsjuicer.util import logger
 
 
 class Region(object):
@@ -156,8 +142,8 @@ class Region(object):
         except AssertionError:
             self.bad = True
             return
-        logger = get_logger(__name__)
-        logger.debug("\nregion:%s" % self)
+        log = logger.get_logger(__name__)
+        log.debug("\nregion:%s" % self)
         try:
             oo = self.fit_curve()
             if not oo:
@@ -166,7 +152,7 @@ class Region(object):
             self.bad = True
             return
         aicc_curve = oo.aicc()
-        logger.debug("AICc curve1 %f" % aicc_curve)
+        log.debug("AICc curve1 %f" % aicc_curve)
 
        # new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
        # if new_right < self.right:
@@ -187,7 +173,7 @@ class Region(object):
         oo2.optimize(max_fev=1000)
         aicc_line = oo2.aicc()
         # print "AICc line",aicc_line
-        logger.debug("AICc line %f" % aicc_line)
+        log.debug("AICc line %f" % aicc_line)
         self.aic_line = aicc_line
         self.aic_curve = aicc_curve
         if aicc_curve < 1.00 * aicc_line:
@@ -206,7 +192,7 @@ class Region(object):
         # print 'sols=',oo.solutions
         # print self.data.tolist()
         # print self.time_data.tolist()
-        logger.debug("bad: %s" % str(self.bad))
+        log.debug("bad: %s" % str(self.bad))
 
     def __repr__(self):
         return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>" %\
