@@ -246,6 +246,16 @@ class FitAnalysisResult(dbmaster.Base):
     region_id = Column(Integer, ForeignKey("fitanalysis_regions.id"))
     region = relationship("FitAnalysisRegion",
             backref=backref("results", cascade='all, delete, delete-orphan'), order_by=id)
+    baseline = Column(PickleType)
+
+class SignalEvent(dbmaster.Base):
+    __tablename__ = "signal_events"
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("fitanalysis_results.id"))
+    result = relationship("FitAnalysisResult", backref=backref("signal_events",
+                            cascade='all, delete, delete-orphan', lazy=False), order_by=id, lazy=False)
+    parameters = Column(PickleType)
+    delta_ff0 = Column(Float)
 
 class PixelByPixelAnalysis(Analysis):
     __tablename__ = "pixelbypixel_analyses"
