@@ -169,7 +169,6 @@ class ImageData(object):
         if  data.shape[3] < data.shape[2]:
             #have to transpose frames because we want the ImageData frame to be longer in the
             #horizontal axis than in vertical (for display purposes)
-            print 'Transposing'
             channels = data.shape[0]
             frames = data.shape[1]
             width = data.shape[2]
