@@ -438,6 +438,12 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         p.plot(time, fullres, color='red', lw=2)
         p.plot(time, baseline, color='magenta')
         p.plot(time, baseline_old, color='cyan')
+    #add dF/F0 for each event
+    ff0 = FF0(final)
+    delta_Fs = {}
+    for key, transient in final['transients'].iteritems():
+        delta_Fs[key] = ff0.event_ff0(transient['m2'], key)
+    final['deltas'] = delta_Fs
     return final
 
 
@@ -718,6 +724,9 @@ class FF0(object):
         self.baseline_f = n.poly1d(result['baseline'])
 
     def __call__(self, arg):
+        """Gives dF/F0 for the the entire signal i.e., the sum of all
+        events divided by the baseline. This is NOT df/F0 for a
+        single event. For that use event_ff0"""
         bl = self.baseline_f(arg)
         f = 0.0
         for key, region in self.result['regions'].iteritems():
@@ -728,7 +737,22 @@ class FF0(object):
             except:
                 print 'failed for', arg, opt.solutions
                 continue
-        return f/bl
+        return f / bl
+
+    def event_ff0(self, arg, event):
+        """Calculate per event dF/F0. This is the same as __call__ for
+        events which are not on top of other events. For those that are
+        the underlying event has to be added to baseline as well"""
+        dff0 = self(arg)
+        bl = self.baseline_f(arg)
+        event_opt = self.result['regions'][event].fit_res[-1]
+        event_f0 = event_opt.function(arg, **event_opt.solutions)
+        #F_n/(bl + sum(F_i) - F_n)
+        #sum(F_i) = dff0*bl
+        event_dff0 = event_f0 / (bl * (dff0 + 1) - event_f0)
+        return event_dff0
+
+
 
 
 
