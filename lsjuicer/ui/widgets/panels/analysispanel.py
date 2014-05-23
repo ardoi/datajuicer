@@ -8,6 +8,7 @@ from actionpanel import ActionPanel
 from lsjuicer.ui.items.selection import SelectionDataModel
 from lsjuicer.ui.items.selection import SelectionWidget, LineManager, SnapROIManager
 from lsjuicer.inout.db.sqla import SparkAnalysis, PixelByPixelAnalysis
+from lsjuicer.inout.db.sqla import TransientAnalysis
 from lsjuicer.static import selection_types
 from lsjuicer.data.imagedata import ImageDataLineScan
 from lsjuicer.ui.tabs.autofittransienttab import AutoFitTransientTab
@@ -102,7 +103,6 @@ class AnalysisPanel(ActionPanel):
                     topleft = QC.QPointF(x0, region.y0)
                     bottomright = QC.QPointF(x1, region.y1)
                     builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
-
         return
 
     def analysis_combo_changed(self, analysis_mode):
@@ -120,11 +120,15 @@ class AnalysisPanel(ActionPanel):
         self.make_next_tab(selections_by_type)
 
     def make_next_tab(self, selections_by_type_name):
+        #create new imagedata that contains data from pipes
+        idata = ImageDataMaker.from_imagedata(self.imagedata)
+        idata.replace_channels(self.pipechain.get_result_data())
         if self.analysis_mode == "Transients":
-            next_tab = AutoFitTransientTab(selections_by_type_name, self.imagedata, self.pipechain, self.parentwidget.aw)
-            #next_tab.setName(self.data.name)
-            #self.connect(self.fltab,QC.SIGNAL('positionTXT(QString)'),
-            #        self.emitStatusTXT)
+            if not self.analysis:
+                self.analysis  = TransientAnalysis()
+            next_tab = AutoFitTransientTab(idata, selections_by_type_name,
+                                           self.analysis,
+                                           parent = self.parentwidget.aw)
         elif self.analysis_mode == "Sparks":
             pass
             #fltab = SparkTab(selections_by_type_name, self.imagedata, self)
@@ -150,10 +154,7 @@ class AnalysisPanel(ActionPanel):
         elif self.analysis_mode == "PixelByPixel":
             if not self.analysis:
                 self.analysis  = SparkAnalysis()
-                self.analysis.imagefile = self.imagedata.mimage
             from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
-            idata = ImageDataMaker.from_imagedata(self.imagedata)
-            idata.replace_channels(self.pipechain.get_result_data())
             next_tab = PixelByPixelTab(idata, selections_by_type_name, self.analysis, parent = self.parentwidget.aw)
 
         if self.analysis_mode == "TimeAverage":

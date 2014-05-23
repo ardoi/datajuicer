@@ -20,24 +20,57 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.tabs.transienttab import SaveTracesDialog
 from lsjuicer.util.helpers import ipython
+from lsjuicer.inout.db.sqla import dbmaster
+from lsjuicer.inout.db.sqla import FitAnalysisRegion, SignalEvent, FitAnalysisResult
 
 
 class AutoFitTransientTab(QW.QTabWidget):
 
     @property
+    def data_width(self):
+        if self.coords:
+            x = int(self.coords.width())
+        else:
+            x = self.imagedata.x_points
+        return x
+
+    @property
+    def data_height(self):
+        if self.coords:
+            y = int(self.coords.height())
+        else:
+            y = self.imagedata.y_points
+        return y
+
+    @property
+    def x0(self):
+        if self.coords:
+            return int(self.coords.left())
+        else:
+            return 0
+
+    @property
+    def y0(self):
+        if self.coords:
+            return int(self.coords.top())
+        else:
+            return 0
+
+    @property
     def fl_ds(self):
         return self.channel_fl_datas[self.channel]
 
-    def __init__(self, rois, imagedata, pipechain, parent = None):
-    #def __init__(self, parent = None):
+    def __init__(self, imagedata, rois, analysis, parent = None):
         super(AutoFitTransientTab, self).__init__(parent)
         self.imagedata = imagedata
         self.channel_fl_datas = {}
-        print 'ROIS are', rois
+        self.analysis = analysis
         if ISTN.ROI not in rois:
             r_r = [0,self.imagedata.x_points]
+            self.coords = None
         else:
             r = rois[ISTN.ROI][0].graphic_item.rect()
+            self.coords = r
             r_r = [min(int(r.x()),
                 int(r.x() + r.width())),
                 max(int(r.x()), int(r.x() + r.width())),\
@@ -54,10 +87,8 @@ class AutoFitTransientTab(QW.QTabWidget):
                      max(int(bgr.x()), int(bgr.x() + bgr.width())),
                      min(int(bgr.y()), int(bgr.y() + bgr.height())),
                      max(int(bgr.y()), int(bgr.y() + bgr.height()))]
-        pc_data = pipechain.get_result_data()
         for channel in range(self.imagedata.channels):
-            #channel_data = self.imagedata.all_image_data[channel]
-            channel_data = pc_data[channel]
+            channel_data = self.imagedata.all_image_data[channel]
             fds = Fl_Data(channel_data,
                           self.imagedata.timestamps[r_r[0]:r_r[1]],
                           r_r, bgr_r, True)
@@ -67,23 +98,17 @@ class AutoFitTransientTab(QW.QTabWidget):
             self.channel_fl_datas[channel] = fds
 
         self.setup_ui()
-        self.filename = None
         self.channel = 0
         self.fit_result = {}
         self.parent = parent
-        self.new_transients = None
-        self.approved_transients = None
-        self.toggling_buttons = False
         window=QW.QApplication.activeWindow()
         self.status = window.statusBar()
-        QC.QTimer.singleShot(50, lambda :self.initialPlots())
+        QC.QTimer.singleShot(50, lambda: self.initialPlots())
 
     @ipython
     def save_traces(self):
         dialog = SaveTracesDialog(parent=self)
         if dialog.exec_():
-
-
             fullfname = str(dialog.save_file_name)
             exp_type = str(dialog.exp_type)
             comment = str(dialog.comment)
@@ -105,13 +130,14 @@ class AutoFitTransientTab(QW.QTabWidget):
                 sol_keys = fit_regions[region_keys[0]].fit_res[-1].solutions.keys()
                 sol_keys.sort()
 
-                f.write("#Event fit parameters-->\n# number\t {}\n".format("\t ".join(sol_keys)))
+                f.write("#Event fit parameters-->\n# number\t {}\t df/F0\n".format("\t ".join(sol_keys)))
                 f.write("#Events->\n")
                 for key in region_keys:
                     optimizer = fit_regions[key].fit_res[-1]
                     sol = optimizer.solutions
                     event_param_string = "\t ".join(["{:.4f}".format(sol[el]) for el in sol_keys])
-                    f.write("# {}\t {}\n".format(key, event_param_string))
+                    delta_f = self.fit_result['deltas'][key]
+                    f.write("# {}\t {}\t {}\n".format(key, event_param_string, delta_f))
 
                 baseline_string = str(self.fit_result['baseline'].tolist())
                 f.write("#Baseline: {}\n".format(baseline_string))
@@ -140,7 +166,36 @@ class AutoFitTransientTab(QW.QTabWidget):
                 f.write(row)
             f.close()
             QW.QMessageBox.information(self,'Done',"%i rows saved to %s"%(len(rows),fullfname))
-            self.save_label.setText("Saved")
+            self.save_label.setText("Saved to CSV")
+
+    def save_db(self):
+        #add check if analysis already in database?
+        session = dbmaster.get_session()
+        self.analysis.imagefile = self.imagedata.mimage
+        self.analysis.date = datetime.datetime.now()
+        fit_region = FitAnalysisRegion()
+        fit_region.analysis = self.analysis
+        region_coords = (self.x0, self.x0 + self.data_width,
+                self.y0, self.y0 + self.data_height)
+        fit_region.set_coords(region_coords)
+        result = FitAnalysisResult()
+        result.region = fit_region
+        result.baseline = self.fit_result['baseline']
+        session.add(fit_region)
+        session.add(result)
+        session.add(self.analysis)
+        fit_regions = self.fit_result['regions']
+        for key, region in fit_regions.iteritems():
+            optimizer = region.fit_res[-1]
+            sol = optimizer.solutions
+            s_event = SignalEvent()
+            s_event.parameters = sol
+            s_event.delta_ff0 = self.fit_result['deltas'][key]
+            s_event.result = result
+            session.add(s_event)
+        dbmaster.commit_session()
+        self.save_label.setText("Saved to DB")
+
 
     def initialPlots(self):
         def color_yield():
@@ -180,8 +235,8 @@ class AutoFitTransientTab(QW.QTabWidget):
         main_layout = QW.QGridLayout()
         self.setLayout(main_layout)
 
-        self.fplot = TracePlotWidget(sceneClass = FDisplay, antialias = True, parent = None)
-        main_layout.addWidget(self.fplot,0,0)
+        self.fplot = TracePlotWidget(sceneClass=FDisplay, antialias=True, parent=None)
+        main_layout.addWidget(self.fplot, 0, 0)
 
         #Widget for transient group selection
 
@@ -189,7 +244,7 @@ class AutoFitTransientTab(QW.QTabWidget):
 
         #main layout for right hand buttons and widgets
         tool_layout = QW.QVBoxLayout()
-        tool_layout.setContentsMargins(2, 2,2, 2)
+        tool_layout.setContentsMargins(2, 2, 2, 2)
         channel_box = QW.QGroupBox("Channels")
         channel_main_layout = QW.QVBoxLayout()
         channel_layout=QW.QVBoxLayout()
@@ -203,12 +258,15 @@ class AutoFitTransientTab(QW.QTabWidget):
             checkbox.toggled.connect(self.channel_visibility)
             self.channel_checkboxes.append(checkbox)
 
-
         save_data_icon = QG.QIcon(':/report_disk.png')
-        save_pb = QW.QPushButton(save_data_icon, "Save traces")
+        save_pb = QW.QPushButton(save_data_icon, "Save CSV")
         save_pb.released.connect(self.save_traces)
-        save_layout = QW.QHBoxLayout()
+        save_layout = QW.QVBoxLayout()
         save_layout.addWidget(save_pb)
+        save_db_icon = QG.QIcon(':/database_go.png')
+        save_db_pb = QW.QPushButton(save_db_icon, "Save DB")
+        save_db_pb.released.connect(self.save_db)
+        save_layout.addWidget(save_db_pb)
         channel_main_layout.addLayout(save_layout)
         self.save_label = QW.QLabel()
         save_layout.addWidget(self.save_label)
@@ -217,9 +275,6 @@ class AutoFitTransientTab(QW.QTabWidget):
         detection_box = QW.QGroupBox('Detection')
         detection_layout = QW.QVBoxLayout()
         detection_box.setLayout(detection_layout)
-
-
-        #detection_layout.addWidget(self.pb_manual)
 
         auto_icon = QG.QIcon(":/wand.png")
         self.pb_auto  = QW.QPushButton(auto_icon, 'Fit' )
