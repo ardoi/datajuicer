@@ -17,6 +17,7 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
 from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
 from lsjuicer.util.helpers import timeIt
+from lsjuicer.util.logger import logger
 
 class PixelByPixelTab(QW.QTabWidget):
     @property
@@ -95,12 +96,11 @@ class PixelByPixelTab(QW.QTabWidget):
 
     def threader_finished(self):
         from lsjuicer.inout.db import sqlb2
-        print "threader done. saving results"
+        logger.info("threader done. saving results")
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
         self.analysis.date = datetime.datetime.now()
         session = dbmaster.get_session()
-        #print self.analysis, session
         region = PixelByPixelFitRegion()
         region.analysis = self.analysis
         region_coords = (self.x0, self.x0+self.data_width,
