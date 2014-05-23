@@ -35,19 +35,21 @@ class AnalysisPanel(ActionPanel):
         self.analysistype_combo.currentIndexChanged[str].connect(
                 self.analysis_combo_changed)
 
-        plotIcon=QG.QIcon(":/chart_curve_go.png")
-        plotFluorescencePB  = QW.QPushButton(plotIcon,'Next')
-        plotFluorescencePB.setEnabled(False)
-        plotFluorescencePB.clicked.connect(self.on_next_PB_clicked)
-        self.plotFluorescencePB = plotFluorescencePB
-        analysistype_layout.addWidget(plotFluorescencePB)
+        next_icon = QG.QIcon(":/chart_curve_go.png")
+        goto_analysis_pb  = QW.QPushButton(next_icon,'Next')
+        goto_analysis_pb.setEnabled(False)
+        goto_analysis_pb.clicked.connect(self.on_next_PB_clicked)
+        self.goto_analysis_pb = goto_analysis_pb
+        analysistype_layout.addWidget(goto_analysis_pb)
         if self.analysis:
+            self.analysistype_combo.setEnabled(False)
             self.analysis_type_set()
 
     def analysis_type_set(self):
         layout = self.layout()
         if hasattr(self,'selection_widget'):
             layout.removeWidget(self.selection_widget)
+            self.roi_manager.remove_selections()
             del(self.selection_widget)
             del(self.selection_datamodel)
 
@@ -62,10 +64,8 @@ class AnalysisPanel(ActionPanel):
                 self.analysis_mode = "PixelByPixel"
         else:
             self.analysis_mode = self.analysistype_combo.currentText()
-        #print "set analysis mode", self.analysis_,mode, self.analysis
-        self.analysis_mode_changed(self.analysis_mode)
 
-    def analysis_mode_changed(self, analysis_mode):
+        analysis_mode = self.analysis_mode
         print 'analysis mode',analysis_mode
         if analysis_mode == "Sparks":
             key = 'imagetab.sparks'
@@ -73,49 +73,26 @@ class AnalysisPanel(ActionPanel):
             key = 'imagetab.transients'
         elif analysis_mode == "SparkDetect":
             key = 'imagetab.sparkdetect'
-            #creating analysis
-            if not self.analysis:
-                self.analysis  = SparkAnalysis()
-                self.analysis.imagefile = self.imagedata.mimage
         elif analysis_mode == "PseudoLineScan":
             key = 'imagetab.pseudolinescan'
         elif analysis_mode == "TimeAverage":
             key = 'imagetab.timeaverage'
         elif analysis_mode == "PixelByPixel":
             key = 'imagetab.timeaverage'
+
         if key == 'imagetab.pseudolinescan':
             self.roi_manager = LineManager(self.parentwidget.image_plot.fscene,
                         selection_types.data[key])
-        elif key == 'imagetab.timeaverage':
-            self.roi_manager = SnapROIManager(self.parentwidget.image_plot.fscene,
-                        selection_types.data[key])
-            if not self.analysis:
-                self.analysis  = PixelByPixelAnalysis()
-                self.analysis.imagefile = self.imagedata.mimage
         else:
             self.roi_manager = SnapROIManager(self.parentwidget.image_plot.fscene,
                         selection_types.data[key])
         self.selection_datamodel.set_selection_manager(self.roi_manager)
         self.selection_widget.set_model(self.selection_datamodel)
-        #if self.analysis:
-        #    try:
-        #        if self.analysis.searchregions:
-        #            self.roi_manager.activate_builder_by_type_name("ROI")
-        #            builder = self.roi_manager.builder
-        #            for region in self.analysis.searchregions:
-        #                #print "region",region
-        #                topleft = QC.QPointF(region._x0, region._y0)
-        #                bottomright = QC.QPointF(region._x1, region._y1)
-        #                #print topleft, bottomright
-        #                builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
-        #    except:
-        #        pass
         if self.analysis:
             if isinstance(self.analysis, PixelByPixelAnalysis):
                 self.roi_manager.activate_builder_by_type_name("ROI")
                 builder = self.roi_manager.builder
                 for region in self.analysis.fitregions:
-                    print region
                     if isinstance(self.imagedata, ImageDataLineScan):
                         x0 = region.start_frame
                         x1 = region.end_frame
@@ -125,11 +102,6 @@ class AnalysisPanel(ActionPanel):
                     topleft = QC.QPointF(x0, region.y0)
                     bottomright = QC.QPointF(x1, region.y1)
                     builder.make_selection_rect(None, QC.QRectF(topleft, bottomright))
-                #self.time_range_start = 100
-                #self.selection_slider.setValue(500)
-                #self.set_time_range_end()
-                #self.selection_slider.setValue(100)
-                #self.set_time_range_start()
 
         return
 
@@ -139,7 +111,7 @@ class AnalysisPanel(ActionPanel):
                     self.analysis_mode == analysis_mode)
 
     def makeButtons(self):
-        self.plotFluorescencePB.setEnabled(True)
+        self.goto_analysis_pb.setEnabled(True)
 
     def on_next_PB_clicked(self):
         selections_by_type = self.roi_manager.selections_by_type
@@ -148,11 +120,6 @@ class AnalysisPanel(ActionPanel):
         self.make_next_tab(selections_by_type)
 
     def make_next_tab(self, selections_by_type_name):
-        #if self.count() > 1:
-        #    while self.count() != 1:
-        #        w = self.widget(self.count() - 1)
-        #        self.removeTab(self.count() - 1)
-        #        del(w)
         if self.analysis_mode == "Transients":
             next_tab = AutoFitTransientTab(selections_by_type_name, self.imagedata, self.pipechain, self.parentwidget.aw)
             #next_tab.setName(self.data.name)
@@ -181,6 +148,9 @@ class AnalysisPanel(ActionPanel):
             linescan_image = idata.get_pseudo_linescan(selections_by_type_name)
             next_tab.showData(linescan_image)
         elif self.analysis_mode == "PixelByPixel":
+            if not self.analysis:
+                self.analysis  = SparkAnalysis()
+                self.analysis.imagefile = self.imagedata.mimage
             from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
             idata = ImageDataMaker.from_imagedata(self.imagedata)
             idata.replace_channels(self.pipechain.get_result_data())
@@ -196,8 +166,5 @@ class AnalysisPanel(ActionPanel):
                 pcs[channel] = pc
             selections_by_type = defaultdict(list)
             next_tab = AutoFitTransientTab(selections_by_type, new_data, pcs, self.parentwidget.aw)
-        #self.setCurrentIndex(1)
-        #if self.analysis_mode != "PseudoLineScan":
-        if 1:
-            next_icon = QG.QIcon(':/chart_curve.png')
+        next_icon = QG.QIcon(':/chart_curve.png')
         self.parentwidget.aw.add_tab(next_tab, next_icon, self.analysis_mode)
