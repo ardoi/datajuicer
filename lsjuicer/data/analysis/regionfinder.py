@@ -259,7 +259,7 @@ def detect_overlapping_regions(regs):
     #            good.append(k)
     #    if good:
     #        break
-    print 'good:',good
+    #print 'good:',good
     return good
 
 
@@ -279,7 +279,7 @@ def get_regions(data, min_snr=3.5, max_width=150, step=5):
     if not peaks_all:
         return {}
     regions = detect_overlapping_regions(peaks_all)
-    print 'regions', regions
+    #print 'regions', regions
     return regions
 
 
