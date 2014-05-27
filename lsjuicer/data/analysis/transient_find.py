@@ -2,6 +2,8 @@ from scipy import ndimage as nd
 import scipy.stats as ss
 import numpy as n
 
+import lsjuicer.data.analysis.fitfun_ns as fitfun_ns
+#import lsjuicer.data.analysis.fitfun as fitfun_ns
 import lsjuicer.data.analysis.fitfun as fitfun
 from lsjuicer.data.analysis import regionfinder as rf
 from lsjuicer.util.helpers import timeIt
@@ -91,7 +93,7 @@ class Region(object):
             # print fu[self.maximum]-b_init
             # self.bad=True
             return None
-        oo.set_parameter_range('tau2', 2, 100., 30.)
+        oo.set_parameter_range('tau2', 2, 100.,30.)
         mu_est = self.maximum
         #mu_est = self.time_data[self.data.argmax()]
         oo.set_parameter_range('m2', le+1, ri-1, mu_est)
@@ -112,21 +114,26 @@ class Region(object):
         cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
         plateau_length = float(self.data[self.data > cutoff_value].size)
         #oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
-        oo.set_parameter_range('d2', .1, plateau_length, 2.)
+        minimum_d2 = 5.0
+        oo.set_parameter_range('d2', .1, max(minimum_d2, plateau_length), 2.)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C', c_init-c_init_delta, c_init +
                                c_init_delta, c_init)
-        oo.show_parameters()
         oo.optimize(max_fev=10000)
         # optimization failed
         if not oo.solutions:
-            # print  self.data.tolist()
-            # print self.time_data.tolist()
-            # for p in oo.parameters:
-            # print p,
-            # oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
-            return None
+            #try the other optimizer
+            oo2 = fitfun_ns.Optimizer(self.time_data, self.data)
+            oo2.set_function(oo.function)
+            oo2.parameters = oo.parameters
+            oo2.show_parameters()
+            oo2.optimize()
+            if not oo2.solutions:
+                #maybe give back initial conditions and check if AIC is ok?
+                return None
+            else:
+                oo = oo2
         # skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
             return None
@@ -232,8 +239,8 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         i += 1
         smooth_data = nd.uniform_filter(f_cleaned, 5)
         regs = make_region_objects(f, ranges, smooth_data)
-        print '\n regions'
-        print regs
+        #print '\n regions'
+        #print regs
         good_regions = []
         if plot:
             import pylab as p
@@ -316,7 +323,9 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         time_new = time[le:ri]
         if plot:
             p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
-        oo = fitfun.Optimizer(time_new, fff)
+        #use the optimizer that was used in the Region
+        optimizer = r.fit_res[-1].__class__
+        oo = optimizer(time_new, fff)
         oo.set_function(fitfun.ff60)
         # copy fit parameter ranges from previous fit
         oo.parameters = r.fit_res[-1].parameters.copy()
@@ -357,7 +366,6 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             if not second_fit:
                 fullres += oo.function(time, **oo.solutions)
 
-    print 'all regs'
     old_good_regions = all_good_regions
     all_good_regions = []
     for r in old_good_regions:
@@ -384,10 +392,9 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
 
             #remove all other regions  and baseline from the signal
             corrected_f = f - baseline
-            print 'correct'
             for reg in all_good_regions:
                 #only remove OTHER regions
-                print id(reg),reg.bad, id(r),r.bad
+                #print id(reg),reg.bad, id(r),r.bad
                 if id(reg) != id(r):
                     corrected_f -= event_fits_new[id(reg)]
             le, ri = r.extra_range()
@@ -395,7 +402,8 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             time_new = time[le:ri]
             if plot:
                 p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
-            oo = fitfun.Optimizer(time_new, fff)
+            optimizer = r.fit_res[-1].__class__
+            oo = optimizer(time_new, fff)
             oo.set_function(fitfun.ff60)
             # copy fit parameter ranges from previous fit
             oo.parameters = r.fit_res[-1].parameters.copy()
@@ -444,6 +452,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     for key, transient in final['transients'].iteritems():
         delta_Fs[key] = ff0.event_ff0(transient['m2'], key)
     final['deltas'] = delta_Fs
+    final['initial_regs'] = all_ranges
     return final
 
 
@@ -493,7 +502,6 @@ def make_data_by_size_and_time(results, key, number):
 def make_data_by_size(results, key, number):
     """get data for the 'number'th biggest transient"""
     out = n.zeros((results['height'], results['width']), dtype='float')
-    print '\n make data'
     for res in results['fits']:
         x = res.x
         y = res.y
@@ -581,7 +589,7 @@ class SyntheticData(object):
             self.result = result
             self.region = result.region
             self.times = n.arange(int(self.region.frames))
-            print 'times shape is', self.times.shape, self.region.frames
+            #print 'times shape is', self.times.shape, self.region.frames
             if self.region.width == 1:
                 self.linescan = True
             else:
@@ -593,7 +601,7 @@ class SyntheticData(object):
         if self.linescan:
             out = n.zeros(
                 (1, self.region.height, int(self.region.frames)), dtype='float')
-            print 'out shape is', out.shape, self.region.frames
+            #print 'out shape is', out.shape, self.region.frames
         else:
             out = n.zeros(
                 (self.region.frames, self.region.height, self.region.width), dtype='float')
@@ -676,7 +684,7 @@ def redo(jobs, res):
                 break
         if bad:
             bad_jobs.append(j)
-    print "%i jobs to redo" % (len(bad_jobs))
+    #print "%i jobs to redo" % (len(bad_jobs))
     for i, bj in enumerate(bad_jobs):
        # print i
         result = fit_regs(bj.params[0])
