@@ -10,6 +10,6 @@
 
 
 **This project is currently under heavy development and not recommended for
-everyday use (unless you feel adventurous). **
+everyday use (unless you feel adventurous).**
 
 
