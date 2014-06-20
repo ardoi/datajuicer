@@ -703,3 +703,6 @@ def ff6o(arg, tau2, d, d2, m2, s, A):
 
 def linear(arg, a, b):
     return a*arg + b
+
+def constant(arg, c):
+    return 0*arg + c

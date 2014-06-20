@@ -286,6 +286,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     fullres = n.zeros_like(baseline)
     events = f - f2
     if plot:
+        import pylab as p
         p.figure(2)
         p.plot(time, f2, color='orange', label='signal - fits')
         p.plot(time, f, label='signal')
@@ -295,7 +296,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     # create data for each transient with the other transients removed
     final = {'transients': {}, 'baseline':
              baseline_fit_params, 'peak_fits': {}, 'regions': {},
-             'xrange':(min(time),max(time))}
+             'xrange':(min(time),max(time)),'deltas':{}, 'initial_regs':all_ranges}
     if not all_good_regions:
         return final
     if plot:
@@ -452,7 +453,6 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     for key, transient in final['transients'].iteritems():
         delta_Fs[key] = ff0.event_ff0(transient['m2'], key)
     final['deltas'] = delta_Fs
-    final['initial_regs'] = all_ranges
     return final
 
 
