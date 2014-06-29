@@ -336,6 +336,7 @@ class Threader(QC.QObject):
             # qc=QC.QCoreApplication.instance()
             # qc.exit()
             self.threads_done.emit()
+            self.done = True
         session.commit()
         session.close()
 
@@ -357,6 +358,7 @@ class Threader(QC.QObject):
         self.slots = cpu_count() - 1
         self.last_started_worker_number = 0
         self.logger = logging.getLogger(__name__)
+        self.done = False
 
     def do(self, params, settings):
         sqlb2.dbmaster.reset_tables()
