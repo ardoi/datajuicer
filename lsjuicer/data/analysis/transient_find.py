@@ -183,7 +183,7 @@ class Region(object):
         log.debug("AICc line %f" % aicc_line)
         self.aic_line = aicc_line
         self.aic_curve = aicc_curve
-        if aicc_curve < 1.00 * aicc_line:
+        if aicc_curve < 1.50 * aicc_line:
         # if aicc_line/aicc_curve < 0.99:
             self.bad = False
             self.fit_res = [oo]
@@ -248,7 +248,10 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
             p.xlim(0, len(f))
             ax = p.gca()
+        fmin = f.min()
+        fmax = f.max()
         for r in regs:
+            print r
             if not r.bad:
                 oo = r.fit_res[-1]
                 if not oo.solutions:
@@ -257,16 +260,17 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
                     good_regions.append(r)
                 if plot:
                     fcolor = 'orange'
-                    if r.bad:
-                        fcolor = 'salmon'
                     transient_t = time[r.left:r.right]
-                    fmin = f.min()
-                    fmax = f.max()
                     ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
                                               facecolor=fcolor, alpha=0.1))
                     if oo.solutions:
                         p.plot(transient_t, oo.function(transient_t, **oo.solutions),
                             lw=2, color='red')
+            else:
+                fcolor = 'red'
+                ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
+                                              facecolor=fcolor, alpha=0.1))
+
         z = n.zeros_like(f)
         all_good_regions.extend(good_regions)
         for r in good_regions:
@@ -465,16 +469,17 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True):
+def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True, regions = None):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the
     baseline which is taken from the first fit"""
-
-    found_regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
-    res_out = fit_regs(data, found_regions, plot, two_stage)
+    if not regions:
+        #regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
+        regions = rf.get_regions(data, min_snr=min_snr, max_width=60, step=2)
+    res_out = fit_regs(data, regions, plot, two_stage)
     return res_out
 
 

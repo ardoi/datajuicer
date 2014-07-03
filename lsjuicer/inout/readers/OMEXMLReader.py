@@ -282,7 +282,10 @@ class OMEXMLReader(AbstractReader):
             self.raw_annotation[key] = element.find(self.fulltags["MDValue"]).text
             #raw_keys = self.raw_annotation.keys()
         #raw_keys.sort()
-        self._get_typespecific_extra_info()
+        try:
+            self._get_typespecific_extra_info()
+        except:
+            pass
 
 
 class LSMReader(OMEXMLReader):

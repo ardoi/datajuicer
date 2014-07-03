@@ -3,6 +3,7 @@ import traceback
 #from collections import defaultdict
 
 from PyQt5 import QtGui as QG
+from PyQt5 import QtCore as QC
 from PyQt5 import QtWidgets as QW
 
 
@@ -96,7 +97,8 @@ class PixelByPixelTab(QW.QTabWidget):
 
     def threader_finished(self):
         from lsjuicer.inout.db import sqlb2
-        logger.info("threader done. saving results")
+        logr = logger.get_logger(__name__)
+        logr.info("threader done. saving results")
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
         self.analysis.date = datetime.datetime.now()
@@ -139,7 +141,7 @@ class PixelByPixelTab(QW.QTabWidget):
         session2.close()
         #print self.analysis, session
         session.commit()
-        print 'saving done'
+        logr.info("saving done")
 
     @property
     def x0(self):
@@ -183,14 +185,17 @@ class PixelByPixelTab(QW.QTabWidget):
         super(PixelByPixelTab, self).__init__(parent)
         self.imagedata = imagedata
         self.parent = parent
-        print "PBPT", parent
-        roi = selections[ISTN.ROI][0]
-        self.coords = roi.graphic_item.rect()
+        try:
+            roi = selections[ISTN.ROI][0]
+            self.coords = roi.graphic_item.rect()
+        except IndexError:
+            #FIXME only works for linescans
+            self.coords = QC.QRectF(0,0,imagedata.x_points, imagedata.y_points)
         self.fit = False
         self.analysis  = analysis
         if isinstance(imagedata, ImageDataLineScan):
-            self.start_frame = self.coords.left()
-            self.end_frame=self.coords.right()
+            self.start_frame = int(self.coords.left())
+            self.end_frame = int(self.coords.right())
         else:
             time_range = selections[ISTN.TIMERANGE]
             self.start_frame = time_range['start']

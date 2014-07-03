@@ -153,7 +153,7 @@ class AnalysisPanel(ActionPanel):
             next_tab.showData(linescan_image)
         elif self.analysis_mode == "PixelByPixel":
             if not self.analysis:
-                self.analysis  = SparkAnalysis()
+                self.analysis  = PixelByPixelAnalysis()
             from lsjuicer.ui.tabs.pixelbypixeltab import PixelByPixelTab
             next_tab = PixelByPixelTab(idata, selections_by_type_name, self.analysis, parent = self.parentwidget.aw)
 

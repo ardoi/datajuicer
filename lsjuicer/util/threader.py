@@ -30,7 +30,7 @@ class Worker(Process):
         #session.commit()
         #session.close()
         dbmaster.end_session_retry(session)
-        self.logger = logger.getLogger(__name__)
+        self.logger = logger.get_logger(__name__)
 
     def kill(self):
         session = sqlb2.dbmaster.get_session()
@@ -172,7 +172,7 @@ class Threader(QC.QObject):
         newly_finished = []
         kill_list = []
         time_limit = 30
-        jobs_per_worker = 50
+        jobs_per_worker = 10
         session = sqlb2.dbmaster.get_session()
         for i, wn in enumerate(self.running_workers):
             # w = self.workers[wn]
@@ -356,7 +356,7 @@ class Threader(QC.QObject):
 
         self.slots = cpu_count() - 1
         self.last_started_worker_number = 0
-        self.logger = logger.getLogger(__name__)
+        self.logger = logger.get_logger(__name__)
 
     def do(self, params, settings):
         sqlb2.dbmaster.reset_tables()
