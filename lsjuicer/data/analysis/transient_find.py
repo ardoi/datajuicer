@@ -109,17 +109,21 @@ class Region(object):
         # FIXME why 101?
         data_mean = self.data.mean()
         greater_than_mean = self.data[self.data > data_mean]
-        cutoff = 99.0
-        multiplier = 0.95
-        cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
-        plateau_length = float(self.data[self.data > cutoff_value].size)
+        cutoff = 90.0
+        multiplier = 0.5
+        frange = - ss.scoreatpercentile(self.data, 5.) + ss.scoreatpercentile(self.data, 95.)
+        cutoff_value = ss.scoreatpercentile(self.data, 5.) + frange*multiplier
+        #cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
+        #plateau_length = float(self.data[self.data > cutoff_value].size)
+        plateau_length = float((self.data>cutoff_value).sum())
         #oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
         minimum_d2 = 5.0
-        oo.set_parameter_range('d2', .1, max(minimum_d2, plateau_length), 2.)
+        oo.set_parameter_range('d2', .1, max(minimum_d2, plateau_length*1), plateau_length/2.)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C', c_init-c_init_delta, c_init +
                                c_init_delta, c_init)
+        #oo.show_parameters()
         oo.optimize(max_fev=10000)
         # optimization failed
         if not oo.solutions:
@@ -127,7 +131,7 @@ class Region(object):
             oo2 = fitfun_ns.Optimizer(self.time_data, self.data)
             oo2.set_function(oo.function)
             oo2.parameters = oo.parameters
-            oo2.show_parameters()
+            #oo2.show_parameters()
             oo2.optimize()
             if not oo2.solutions:
                 #maybe give back initial conditions and check if AIC is ok?
@@ -234,24 +238,26 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     all_good_regions = []
     event_fits = {}
     i = 0
+    if plot:
+        import pylab as p
+        p.figure(1)
+        p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
+        p.xlim(0, len(f))
+        ax = p.gca()
     for key in range_keys:
+    #if 1:
+        #ranges = all_ranges#[key]
         ranges = all_ranges[key]
         i += 1
         smooth_data = nd.uniform_filter(f_cleaned, 5)
-        regs = make_region_objects(f, ranges, smooth_data)
+        regs = make_region_objects(f_cleaned, ranges, smooth_data)
         #print '\n regions'
         #print regs
         good_regions = []
-        if plot:
-            import pylab as p
-            p.figure(1)
-            p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
-            p.xlim(0, len(f))
-            ax = p.gca()
         fmin = f.min()
         fmax = f.max()
         for r in regs:
-            print r
+            #print 'r=',r
             if not r.bad:
                 oo = r.fit_res[-1]
                 if not oo.solutions:
@@ -267,9 +273,10 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
                         p.plot(transient_t, oo.function(transient_t, **oo.solutions),
                             lw=2, color='red')
             else:
-                fcolor = 'red'
-                ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
-                                              facecolor=fcolor, alpha=0.1))
+                if plot:
+                    fcolor = 'red'
+                    ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
+                                                facecolor=fcolor, alpha=0.1))
 
         z = n.zeros_like(f)
         all_good_regions.extend(good_regions)
@@ -281,6 +288,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             z += event_fit
 
         f_cleaned -= z
+        #print 'next'
         #n.savetxt('f_cleaned_{}.dat'.format(i), f_cleaned)
     f2 = f_cleaned
     baseline_fit_params = n.polyfit(time, f2, 4)
@@ -469,7 +477,7 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True, regions = None):
+def fit_2_stage(data, plot=False, min_snr=3.50, two_stage=True, regions = None):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again
@@ -479,6 +487,7 @@ def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True, regions = None):
     if not regions:
         #regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
         regions = rf.get_regions(data, min_snr=min_snr, max_width=60, step=2)
+    #res_out = fit_regs(data, regions[max(regions.keys())], plot, two_stage)
     res_out = fit_regs(data, regions, plot, two_stage)
     return res_out
 

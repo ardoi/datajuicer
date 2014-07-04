@@ -87,7 +87,7 @@ def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
             ws.append(y)
             locs.append(x)
         #print '\n',xvals[0]
-        print 'xx,yy,zz=',ws,",",amps,",",locs
+        #print 'xx,yy,zz=',ws,",",amps,",",locs
         #index of the weight at ridge maximum
         max_ws_index = find_first_max(amps)
         #print 'max',max_ws_index
@@ -204,8 +204,8 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
-    for g in good_ones:
-        print 'g=',g
+    #for g in good_ones:
+    #    print 'g=',g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -240,7 +240,7 @@ def detect_overlapping_regions(regs):
             res[one]+=1
             res[two]+=1
         else:
-            #overlap so the region with the higher snr score gets +1
+            #overlap so the region with the smaller snr score gets +1
             one_snr = one[4]
             if one_snr == two[4]:
                 #same snr so we'll pick one at random by altering
@@ -280,7 +280,7 @@ def get_regions(data, min_snr=3.5, max_width=150, step=5):
     #TODO max width should not be in pixels
     widths = n.arange(1, max_width, step)
     peaks_all = find_peaks_cwt2(data, widths, min_snr)
-    print peaks_all
+    #print peaks_all
     if not peaks_all:
         return {}
     regions = detect_overlapping_regions(peaks_all)
@@ -292,6 +292,7 @@ def show_regions(data, min_snr=5.0, max_width=150, step=5, xmin=None, xmax=None)
     import pylab
     pylab.plot(data)
     regions = get_regions(data, min_snr, max_width, step)
+    #print regions
     ca = pylab.gca()
     keys = regions.keys()
     keys.sort(reverse=True)
