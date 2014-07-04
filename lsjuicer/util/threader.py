@@ -16,6 +16,7 @@ from lsjuicer.inout.db import sqlb2
 from lsjuicer.data.analysis import transient_find as tf
 import lsjuicer.util.logger as logger
 
+from IPython import parallel
 
 class Worker(Process):
 
@@ -63,25 +64,10 @@ class Worker(Process):
     def single(self, job_params):
         args = job_params
         data = args['data']
-        # xy = args['coords']
         self.logger.debug("job %i starting" %( self.current_job_id))
-        #self.logger.info("job %i starting, pid=%i, ppid=%i" %( self.current_job_id,os.getpid(),os.getppid()))
         try:
-            # f = tf.fit_regs(data)
             f = tf.fit_2_stage(data)
-            #rr = random.random()
-            #if rr<0.01:
-            #    duration = 10 * random.randint(1,6)
-            #    self.logger.warning("job %i LONG SLEEP %i" %( self.current_job_id,duration))
-            #    time.sleep(duration)
-            #else:
-            #    time.sleep(.1)
-            #f = 1.0
-            #if random.random()<0.01:
-            #    f = None
         except:
-            # self.logger.debug("job %i failed"%self.current_job_id)
-            #print '\n\n\nboooooo'
             self.logger.warning("job %i failed %s" % (
                 self.current_job_id, traceback.format_exc()))
             f = None
@@ -357,27 +343,44 @@ class Threader(QC.QObject):
         self.slots = cpu_count() - 1
         self.last_started_worker_number = 0
         self.logger = logger.get_logger(__name__)
+        self.client = parallel.Client()
+        self.view = self.client.direct_view()
+        self.view.execute("import lsjuicer.data.analysis.transient_find as tf")
+
 
     def do(self, params, settings):
-        sqlb2.dbmaster.reset_tables()
-        session = sqlb2.dbmaster.get_session()
+        #sqlb2.dbmaster.reset_tables()
+        #session = sqlb2.dbmaster.get_session()
         self.jobs_to_run = len(params)
         self.settings = settings
         self.state_array = np.zeros(
             shape=(settings['height'] - 2 * settings['dy'],
                    settings['width'] - 2 * settings['dx']))
-        for i, param in enumerate(params):
-            job = sqlb2.Job()
-            job.params = param
-            session.add(job)
-        session.commit()
-        session.close()
+        #for i, param in enumerate(params):
+        #    job = sqlb2.Job()
+        #    job.params = param
+        #    session.add(job)
+        #session.commit()
+        #session.close()
         #+1 because in sql id cannot be 0
         self.waiting_jobs = set(range(1, self.jobs_to_run + 1))
         self.running_jobs = []
         self.finished_jobs = []
         self.failed_jobs = []
 
+
+
+def single(args):
+    data = args['data']
+    #self.logger.debug("job %i starting" %( self.current_job_id))
+    try:
+        f = tf.fit_2_stage(data)
+    except:
+        #self.logger.warning("job %i failed %s" % (
+        #    self.current_job_id, traceback.format_exc()))
+        f = None
+    #self.logger.debug("job %i returning" % self.current_job_id)
+    return args['coords'], f
 
 class FitDialog(QW.QDialog):
     progress_map_update = QC.pyqtSignal(np.ndarray)
