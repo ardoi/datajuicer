@@ -147,22 +147,22 @@ class PlotWithAxesWidget(QW.QWidget):
         self.fV.v_axis_param.connect(self.v_axis.param_changed)
 
         action_toolbutton = QW.QToolButton(self)
-        action_toolbutton.setIcon(QG.QIcon(QG.QPixmap("://lightbulb.png")))
+        action_toolbutton.setIcon(QG.QIcon(QG.QPixmap(":/lightbulb.png")))
         action_toolbutton.setToolTip("Actions")
         menu = QW.QMenu()
         reset_zoom_action = menu.addAction(QG.QIcon(
-            QG.QPixmap("://bomb.png")), "Reset zoom levels")
+            QG.QPixmap(":/bomb.png")), "Reset zoom levels")
         fit_menu = menu.addMenu(QG.QIcon(QG.QPixmap(
-            "://monitor_edit.png")), "Change fit")
+            ":/monitor_edit.png")), "Change fit")
         fit_in_view_action = fit_menu.addAction(
-            QG.QIcon("://arrow_out.png"), "Fit in view")
+            QG.QIcon(":/arrow_out.png"), "Fit in view")
         fit_width_action = fit_menu.addAction(
-            QG.QIcon("://arrow_right.png"), "Fit width")
+            QG.QIcon(":/arrow_right.png"), "Fit width")
         fit_height_action = fit_menu.addAction(
-            QG.QIcon("://arrow_up.png"), "Fit height")
-        measure_action = menu.addAction(QG.QIcon("://ruler.png"), "Measure")
+            QG.QIcon(":/arrow_up.png"), "Fit height")
+        measure_action = menu.addAction(QG.QIcon(":/ruler.png"), "Measure")
         measure_action.setCheckable(True)
-        help_action = menu.addAction(QG.QIcon("://help.png"), "Help")
+        help_action = menu.addAction(QG.QIcon(":/help.png"), "Help")
         action_toolbutton.setMenu(menu)
         self.menu = menu
         self.fV.right_click.connect(self.menu.exec_)

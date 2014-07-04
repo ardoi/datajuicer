@@ -213,6 +213,49 @@ class TransientAnalysis(Analysis):
     __mapper_args__ = {
         'polymorphic_identity':'transient_analysis'
     }
+class FitAnalysisRegion(dbmaster.Base):
+    __tablename__ = "fitanalysis_regions"
+
+    id = Column(Integer, primary_key=True)
+    analysis_id = Column(Integer, ForeignKey('transient_analyses.id'))
+    analysis = relationship("TransientAnalysis", backref=backref('fitregions',
+        cascade='all, delete, delete-orphan', order_by=id))
+
+    x0 = Column(Integer)
+    x1 = Column(Integer)
+    y0 = Column(Integer)
+    y1 = Column(Integer)
+
+    def set_coords(self, coords):
+        self.x0 = coords[0]
+        self.x1 = coords[1]
+        self.y0 = coords[2]
+        self.y1 = coords[3]
+
+    @property
+    def width(self):
+        return abs(self.x1 - self.x0)# * self.analysis.imagefile.delta_time
+
+    @property
+    def height(self):
+        return abs(self.y1 - self.y0)# * self.analysis.imagefile.delta_space
+
+class FitAnalysisResult(dbmaster.Base):
+    __tablename__ = "fitanalysis_results"
+    id = Column(Integer, primary_key=True)
+    region_id = Column(Integer, ForeignKey("fitanalysis_regions.id"))
+    region = relationship("FitAnalysisRegion",
+            backref=backref("results", cascade='all, delete, delete-orphan'), order_by=id)
+    baseline = Column(PickleType)
+
+class SignalEvent(dbmaster.Base):
+    __tablename__ = "signal_events"
+    id = Column(Integer, primary_key=True)
+    result_id = Column(Integer, ForeignKey("fitanalysis_results.id"))
+    result = relationship("FitAnalysisResult", backref=backref("signal_events",
+                            cascade='all, delete, delete-orphan', lazy=False), order_by=id, lazy=False)
+    parameters = Column(PickleType)
+    delta_ff0 = Column(Float)
 
 class PixelByPixelAnalysis(Analysis):
     __tablename__ = "pixelbypixel_analyses"
@@ -375,7 +418,6 @@ class EventCategoryShapeType(EventCategoryType):
     __mapper_args__ = {
         'polymorphic_identity':'shape'
     }
-
 class SearchRegion(dbmaster.Base):
     """Search region for SparkDetect"""
     __tablename__ = "search_regions"

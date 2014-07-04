@@ -18,89 +18,7 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.inout.db import sqla as sa
 from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
 from lsjuicer.util.helpers import timeIt
-from lsjuicer.util.threader import Threader
-
-class PixelByPixelAnalyzer(object):
-    @property
-    def x0(self):
-        if self.coords:
-            return int(self.coords.left())
-        else:
-            return 0
-
-    @property
-    def y0(self):
-        if self.coords:
-            return int(self.coords.top())
-        else:
-            return 0
-    @property
-    def data_width(self):
-        if isinstance(self.imagedata, ImageDataLineScan):
-            return 1
-        else:
-            if self.coords:
-                x = int(self.coords.width())
-            else:
-                x = self.imagedata.x_points
-            return x
-
-    @property
-    def data_height(self):
-        if self.coords:
-            y = int(self.coords.height())
-        else:
-            y = self.imagedata.y_points
-        return y
-
-    def __init__(self, imagedata, analysis, coords=None):
-        self.imagedata = imagedata
-        self.analysis = analysis
-        if coords == None:
-            #use all image
-            self.coords = None
-        else:
-            if isinstance(coords, list):
-                #coords are list of [left,right, top, bottom]
-                self.coords = QC.QRectF(coords[0], coords[2],
-                        coords[1]-coords[0],coords[3]-coords[2])
-            self.coords = coords
-
-        if isinstance(imagedata, ImageDataLineScan):
-            self.start_frame = self.x0
-            self.end_frame = self.x0 + self.imagedata.x_points
-        else:
-            pass
-            #FIXME
-            time_range = selections[ISTN.TIMERANGE]
-            self.start_frame = time_range['start']
-            self.end_frame = time_range['end']
-        self.acquisitions = self.end_frame - self.start_frame
-        #FIXME
-        self.dx = 0
-        self.dy = 1
-    @property
-    def region_parameters(self):
-        region_parameters = {'x0':self.dx+self.x0, 'y0':self.dy + self.y0,
-                             'x1':self.x0+self.data_width - self.dx,
-                             'y1':self.y0+self.data_height - self.dy,
-                             'dx':self.dx, 'dy':self.dy,
-                             't0':self.start_frame, 't1':self.end_frame}
-        return region_parameters
-
-    def extract_pixels(self):
-        params = self.imagedata.get_traces(self.region_parameters)
-        settings = {'width':self.data_width, 'height':self.data_height,
-                    'dx':self.dx, 'dy':self.dy}
-        self.threader = Threader()
-        self.threader.do(params, settings)
-
-    def fit(self):
-       import time
-       while self.threader.done is False:
-           self.threader.update()
-           time.sleep(5)
-
+from lsjuicer.util.logger import logger
 
 class PixelByPixelTab(QW.QTabWidget):
     @property
@@ -120,6 +38,24 @@ class PixelByPixelTab(QW.QTabWidget):
                 %(self.trace_count)
         return "<br><br>".join((out_image, out_selection, out_settings))
 
+    @property
+    def data_width(self):
+        if isinstance(self.imagedata, ImageDataLineScan):
+            return 1
+        else:
+            if self.coords:
+                x = int(self.coords.width())
+            else:
+                x = self.imagedata.x_points
+            return x
+
+    @property
+    def data_height(self):
+        if self.coords:
+            y = int(self.coords.height())
+        else:
+            y = self.imagedata.y_points
+        return y
 
     @property
     def status(self):
@@ -130,6 +66,18 @@ class PixelByPixelTab(QW.QTabWidget):
         from lsjuicer.util.threader import FitDialog
         #t0 = time.time()
         #out = []
+        params = []
+        #if self.limit_checkbox.isChecked():
+        #    stdlimit = int(self.limit_spinbox.value())
+        #else:
+        #    stdlimit = None
+        region_parameters = {'x0':self.dx+self.x0, 'y0':self.dy + self.y0,
+                             'x1':self.x0+self.data_width - self.dx,
+                             'y1':self.y0+self.data_height - self.dy,
+                             'dx':self.dx, 'dy':self.dy,
+                             't0':self.start_frame, 't1':self.end_frame}
+        params = self.imagedata.get_traces(region_parameters)
+        settings = {'width':self.data_width, 'height':self.data_height, 'dx':self.dx, 'dy':self.dy}
         fit_dialog = FitDialog(params, settings, parent = self)
         fit_dialog.progress_map_update.connect(self.set_progress_map_data)
         self.threader = fit_dialog.d
@@ -149,12 +97,12 @@ class PixelByPixelTab(QW.QTabWidget):
 
     def threader_finished(self):
         from lsjuicer.inout.db import sqlb2
-        print "threader done. saving results"
+        logr = logger.get_logger(__name__)
+        logr.info("threader done. saving results")
         #analysis  = PixelByPixelAnalysis()
         self.analysis.imagefile = self.imagedata.mimage
         self.analysis.date = datetime.datetime.now()
         session = dbmaster.get_session()
-        #print self.analysis, session
         region = PixelByPixelFitRegion()
         region.analysis = self.analysis
         region_coords = (self.x0, self.x0+self.data_width,
@@ -193,9 +141,21 @@ class PixelByPixelTab(QW.QTabWidget):
         session2.close()
         #print self.analysis, session
         session.commit()
-        print 'saving done'
+        logr.info("saving done")
 
+    @property
+    def x0(self):
+        if self.coords:
+            return int(self.coords.left())
+        else:
+            return 0
 
+    @property
+    def y0(self):
+        if self.coords:
+            return int(self.coords.top())
+        else:
+            return 0
 
     @property
     def dx(self):
@@ -223,15 +183,24 @@ class PixelByPixelTab(QW.QTabWidget):
 
     def __init__(self, imagedata, selections, analysis, parent = None):
         super(PixelByPixelTab, self).__init__(parent)
-        #self.imagedata = imagedata
+        self.imagedata = imagedata
         self.parent = parent
-        print "PBPT", parent
-        roi = selections[ISTN.ROI][0]
-        coords = roi.graphic_item.rect()
-        #send to pixelbypixelanalyzer
-        pass
+        try:
+            roi = selections[ISTN.ROI][0]
+            self.coords = roi.graphic_item.rect()
+        except IndexError:
+            #FIXME only works for linescans
+            self.coords = QC.QRectF(0,0,imagedata.x_points, imagedata.y_points)
         self.fit = False
-#        self.analysis  = analysis
+        self.analysis  = analysis
+        if isinstance(imagedata, ImageDataLineScan):
+            self.start_frame = int(self.coords.left())
+            self.end_frame = int(self.coords.right())
+        else:
+            time_range = selections[ISTN.TIMERANGE]
+            self.start_frame = time_range['start']
+            self.end_frame = time_range['end']
+        self.acquisitions = self.end_frame - self.start_frame
 
         #self.coords = QC.QRectF(167, 38, 148, 22)
         #self.coords = QC.QRectF(190, 44, 60, 9)

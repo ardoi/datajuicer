@@ -1,3 +1,4 @@
+
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
@@ -6,35 +7,40 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import Column, Integer, String, PickleType
 from sqlalchemy.orm.exc import NoResultFound
 
+from lsjuicer.util import logger
 
 class DBMaster(object):
 
     def __init__(self):
-        print "starting DBMaster"
+        self.logger = logger.get_logger(__name__)
+        self.logger.info("starting DBMaster")
+        print self.logger
         self.Base = declarative_base()
         self.engine = create_engine('sqlite:///tables.db', echo=False)
         self.Session = sessionmaker(bind=self.engine)
-        self.tables_created = False
+        self.tables_checked = False
         self.session = None
 
     def make_tables(self):
-        print "making tables"
-        if not self.tables_created:
-            session = self.Session()
-            engine = session.get_bind()
-            self.Base.metadata.create_all(engine)
+        session = self.Session()
+        engine = session.get_bind()
+        self.Base.metadata.create_all(engine)
 
     def check_tables(self):
-        if not self.tables_created:
+        if not self.tables_checked:
+            #tables in database
             insp = reflection.Inspector.from_engine(self.engine)
-            table_names = insp.get_table_names()
-            print 'tables:', table_names
-            if not table_names:
+            table_names_db = insp.get_table_names()
+            #tables in metadata
+            table_names_md = self.Base.metadata.tables.keys()
+            missing = []
+            for table_name in table_names_md:
+                if table_name not in table_names_db:
+                    missing.append(table_name)
+            if missing:
+                self.logger.info('Tables {} missing. Adding to database'.format(str(missing)))
                 self.make_tables()
-                insp = reflection.Inspector.from_engine(self.engine)
-                table_names = insp.get_table_names()
-            print 'tables:', table_names
-            self.tables_created = True
+            self.tables_checked = True
 
     def get_session(self):
         if self.session:
@@ -50,28 +56,27 @@ class DBMaster(object):
             self.session.commit()
             return True
         except IntegrityError as e:
-            print e
-            print 'rolling back'
+            self.logger.error(str(e))
+            self.logger.error('rolling back')
             self.session.rollback()
             return False
 
     def end_session(self):
-        print "ending session", self.session
+        self.logger.info("ending session {}".format(self.session))
         try:
             self.session.commit()
             self.session.close()
             self.session = None
             return True
         except IntegrityError as e:
-            print e
-            print 'rolling back'
+            self.logger.error(str(e))
+            self.logger.error('rolling back')
             self.session.rollback()
             return False
 
     def object_session(self, obj):
         try:
             session = self.Session.object_session(obj)
-            # print 'session is',session
             return session
         except:
             return None
@@ -94,10 +99,7 @@ class DBMaster(object):
     def get_config_setting_value(self, name):
         session = self.get_session()
         setting = self.get_config_setting(name, session)
-        #session.close()
-        # print 'getting value',name
         if setting:
-            # print 'value is',setting.value
             return setting.value
         else:
             return None

@@ -1,10 +1,11 @@
 import itertools
-import logging
 from collections import defaultdict
+
 import numpy as n
 import scipy.signal as ss
+import scipy.ndimage as nd
 from scipy.stats import scoreatpercentile
-from lsjuicer.util.helpers import timeIt
+
 
 def pad_data(vector, pad):
     vec = n.hstack((vector[:vector.size/pad+1][::-1], vector, vector[-vector.size/pad:][::-1]))
@@ -14,7 +15,6 @@ def pad_data_const(vector, pad):
     av = 10
     left_av = vector[:av].mean()
     right_av=vector[-av:].mean()
-    #print vector[:av], vector[-av:]
     pad_size = vector.size/pad
     vec = n.hstack((n.ones(pad_size)*left_av, vector,n.ones(pad_size)*right_av ))
     return vec
@@ -150,6 +150,7 @@ def find_first_max(vec_in):
     """find the first local maximum in a vector"""
     i = 0
     threshold = 1.05#peak cannot be more than treshold x neighbour value
+#    vec_in = nd.uniform_filter(vec_in, 5)
     vec = n.diff(vec_in)
     remembered = None
     while i<len(vec)-2:
@@ -183,7 +184,7 @@ def find_first_max(vec_in):
 def find_peaks_cwt2(vector, widths, min_snr=1):
     #print vector.size, widths
     gap_thresh = n.ceil(widths[0]) + 1
-    max_distances = widths / 2.0
+    max_distances = widths / 3.0
     wavelet = ss.ricker
     pad = 1
     if pad:
@@ -203,6 +204,8 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     #                and x[1][0]<vector.size+vector.size/pad]
     #else:
     good_ones = filtered
+    #for g in good_ones:
+    #    print 'g=',g
     #adjust = vector.size/pad - 1 if pad else 0
     #find boundaries of region from its half height cwd by looking for local minima around the peak
     max_locs = []
@@ -237,15 +240,15 @@ def detect_overlapping_regions(regs):
             res[one]+=1
             res[two]+=1
         else:
-            #overlap so the region with the higher snr score gets +1
+            #overlap so the region with the smaller snr score gets +1
             one_snr = one[4]
             if one_snr == two[4]:
                 #same snr so we'll pick one at random by altering
                 #the snr of the first region
                 q = n.random.choice([-1,1])
                 one_snr += q
-            res[one] += max(0, -cmp(one_snr, two[4]))
-            res[two] += max(0, -cmp(two[4], one_snr))
+            res[one] += max(0, cmp(one_snr, two[4]))
+            res[two] += max(0, cmp(two[4], one_snr))
     good = defaultdict(list)
     #only regions which have len(res) - 1 as score have no overlaps
     #with higher scored regions and are kept. If none exist then len(res)-2
@@ -260,7 +263,7 @@ def detect_overlapping_regions(regs):
     #            good.append(k)
     #    if good:
     #        break
-    print 'good:',good
+    #print 'good:',good
     return good
 
 
@@ -277,11 +280,11 @@ def get_regions(data, min_snr=3.5, max_width=150, step=5):
     #TODO max width should not be in pixels
     widths = n.arange(1, max_width, step)
     peaks_all = find_peaks_cwt2(data, widths, min_snr)
+    #print peaks_all
     if not peaks_all:
         return {}
-    print 'bla'
     regions = detect_overlapping_regions(peaks_all)
-    print 'regions', regions
+    #print 'regions', regions
     return regions
 
 
@@ -289,6 +292,7 @@ def show_regions(data, min_snr=5.0, max_width=150, step=5, xmin=None, xmax=None)
     import pylab
     pylab.plot(data)
     regions = get_regions(data, min_snr, max_width, step)
+    #print regions
     ca = pylab.gca()
     keys = regions.keys()
     keys.sort(reverse=True)
@@ -298,7 +302,6 @@ def show_regions(data, min_snr=5.0, max_width=150, step=5, xmin=None, xmax=None)
         color = colors.next()
         for region in b:
             pylab.plot(region[0], data.max(), 'ro')
-            print region
             ca.add_patch(pylab.Rectangle((region[2], data.min()), region[3]-region[2],
                             data.max(), alpha=0.5, facecolor=color))
     pylab.show()

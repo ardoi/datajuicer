@@ -1,25 +1,13 @@
-import logging
-
 from scipy import ndimage as nd
 import scipy.stats as ss
 import numpy as n
 
+import lsjuicer.data.analysis.fitfun_ns as fitfun_ns
+#import lsjuicer.data.analysis.fitfun as fitfun_ns
 import lsjuicer.data.analysis.fitfun as fitfun
 from lsjuicer.data.analysis import regionfinder as rf
 from lsjuicer.util.helpers import timeIt
-
-
-def get_logger(name):
-    logger = logging.getLogger(__name__)
-    if not logger.root.handlers and not logger.handlers:
-    # if not logger.handlers:
-        #hh = logging.StreamHandler(sys.stdout)
-        hh = logging.FileHandler("log.log")
-        log_format = "%(levelname)s:%(name)s:%(funcName)s:%(lineno)d:%(asctime)s %(message)s"
-        hh.setFormatter(logging.Formatter(log_format))
-        logger.addHandler(hh)
-        logger.setLevel(logging.DEBUG)
-    return logger
+from lsjuicer.util import logger
 
 
 class Region(object):
@@ -105,7 +93,7 @@ class Region(object):
             # print fu[self.maximum]-b_init
             # self.bad=True
             return None
-        oo.set_parameter_range('tau2', 2, 100., 30.)
+        oo.set_parameter_range('tau2', 2, 100.,30.)
         mu_est = self.maximum
         #mu_est = self.time_data[self.data.argmax()]
         oo.set_parameter_range('m2', le+1, ri-1, mu_est)
@@ -121,26 +109,35 @@ class Region(object):
         # FIXME why 101?
         data_mean = self.data.mean()
         greater_than_mean = self.data[self.data > data_mean]
-        cutoff = 99.0
-        multiplier = 0.95
-        cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
-        plateau_length = float(self.data[self.data > cutoff_value].size)
+        cutoff = 90.0
+        multiplier = 0.5
+        frange = - ss.scoreatpercentile(self.data, 5.) + ss.scoreatpercentile(self.data, 95.)
+        cutoff_value = ss.scoreatpercentile(self.data, 5.) + frange*multiplier
+        #cutoff_value = ss.scoreatpercentile(greater_than_mean, cutoff) * multiplier
+        #plateau_length = float(self.data[self.data > cutoff_value].size)
+        plateau_length = float((self.data>cutoff_value).sum())
         #oo.set_parameter_range('d2', .1, plateau_length, plateau_length/2)
-        oo.set_parameter_range('d2', .1, plateau_length, 2.)
+        minimum_d2 = 5.0
+        oo.set_parameter_range('d2', .1, max(minimum_d2, plateau_length*1), plateau_length/2.)
         c_init = f0l - b_init
         c_init_delta = max(abs(c_init*0.5), 25)
         oo.set_parameter_range('C', c_init-c_init_delta, c_init +
                                c_init_delta, c_init)
-        oo.show_parameters()
+        #oo.show_parameters()
         oo.optimize(max_fev=10000)
         # optimization failed
         if not oo.solutions:
-            # print  self.data.tolist()
-            # print self.time_data.tolist()
-            # for p in oo.parameters:
-            # print p,
-            # oo.parameters[p]['min'],oo.parameters[p]['max'],oo.parameters[p]['init']
-            return None
+            #try the other optimizer
+            oo2 = fitfun_ns.Optimizer(self.time_data, self.data)
+            oo2.set_function(oo.function)
+            oo2.parameters = oo.parameters
+            #oo2.show_parameters()
+            oo2.optimize()
+            if not oo2.solutions:
+                #maybe give back initial conditions and check if AIC is ok?
+                return None
+            else:
+                oo = oo2
         # skip transients which start before the recording
         if oo.solutions['m2'] - oo.solutions['d'] < 0:
             return None
@@ -156,8 +153,8 @@ class Region(object):
         except AssertionError:
             self.bad = True
             return
-        logger = get_logger(__name__)
-        logger.debug("\nregion:%s" % self)
+        log = logger.get_logger(__name__)
+        log.debug("\nregion:%s" % self)
         try:
             oo = self.fit_curve()
             if not oo:
@@ -166,7 +163,7 @@ class Region(object):
             self.bad = True
             return
         aicc_curve = oo.aicc()
-        logger.debug("AICc curve1 %f" % aicc_curve)
+        log.debug("AICc curve1 %f" % aicc_curve)
 
        # new_right = oo.solutions['tau2']*(9.0 + n.log(1-n.exp(-2.)))+oo.solutions['m2']
        # if new_right < self.right:
@@ -187,10 +184,10 @@ class Region(object):
         oo2.optimize(max_fev=1000)
         aicc_line = oo2.aicc()
         # print "AICc line",aicc_line
-        logger.debug("AICc line %f" % aicc_line)
+        log.debug("AICc line %f" % aicc_line)
         self.aic_line = aicc_line
         self.aic_curve = aicc_curve
-        if aicc_curve < 1.00 * aicc_line:
+        if aicc_curve < 1.50 * aicc_line:
         # if aicc_line/aicc_curve < 0.99:
             self.bad = False
             self.fit_res = [oo]
@@ -206,7 +203,7 @@ class Region(object):
         # print 'sols=',oo.solutions
         # print self.data.tolist()
         # print self.time_data.tolist()
-        logger.debug("bad: %s" % str(self.bad))
+        log.debug("bad: %s" % str(self.bad))
 
     def __repr__(self):
         return "<left:%i right:%i max:%i size:%i bad:%s AL:%.1f AC:%.1f>" %\
@@ -241,21 +238,26 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     all_good_regions = []
     event_fits = {}
     i = 0
+    if plot:
+        import pylab as p
+        p.figure(1)
+        p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
+        p.xlim(0, len(f))
+        ax = p.gca()
     for key in range_keys:
+    #if 1:
+        #ranges = all_ranges#[key]
         ranges = all_ranges[key]
         i += 1
         smooth_data = nd.uniform_filter(f_cleaned, 5)
-        regs = make_region_objects(f, ranges, smooth_data)
-        print '\n regions'
-        print regs
+        regs = make_region_objects(f_cleaned, ranges, smooth_data)
+        #print '\n regions'
+        #print regs
         good_regions = []
-        if plot:
-            import pylab as p
-            p.figure(1)
-            p.plot(f, marker='o', ls='None', ms=4, mec='None', alpha=.5)
-            p.xlim(0, len(f))
-            ax = p.gca()
+        fmin = f.min()
+        fmax = f.max()
         for r in regs:
+            #print 'r=',r
             if not r.bad:
                 oo = r.fit_res[-1]
                 if not oo.solutions:
@@ -264,16 +266,18 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
                     good_regions.append(r)
                 if plot:
                     fcolor = 'orange'
-                    if r.bad:
-                        fcolor = 'salmon'
                     transient_t = time[r.left:r.right]
-                    fmin = f.min()
-                    fmax = f.max()
                     ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
                                               facecolor=fcolor, alpha=0.1))
                     if oo.solutions:
                         p.plot(transient_t, oo.function(transient_t, **oo.solutions),
                             lw=2, color='red')
+            else:
+                if plot:
+                    fcolor = 'red'
+                    ax.add_patch(p.Rectangle((r.left, fmin), r.size, fmax - fmin,
+                                                facecolor=fcolor, alpha=0.1))
+
         z = n.zeros_like(f)
         all_good_regions.extend(good_regions)
         for r in good_regions:
@@ -284,6 +288,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             z += event_fit
 
         f_cleaned -= z
+        #print 'next'
         #n.savetxt('f_cleaned_{}.dat'.format(i), f_cleaned)
     f2 = f_cleaned
     baseline_fit_params = n.polyfit(time, f2, 4)
@@ -293,6 +298,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     fullres = n.zeros_like(baseline)
     events = f - f2
     if plot:
+        import pylab as p
         p.figure(2)
         p.plot(time, f2, color='orange', label='signal - fits')
         p.plot(time, f, label='signal')
@@ -302,7 +308,7 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
     # create data for each transient with the other transients removed
     final = {'transients': {}, 'baseline':
              baseline_fit_params, 'peak_fits': {}, 'regions': {},
-             'xrange':(min(time),max(time))}
+             'xrange':(min(time),max(time)),'deltas':{}, 'initial_regs':all_ranges}
     if not all_good_regions:
         return final
     if plot:
@@ -330,7 +336,9 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         time_new = time[le:ri]
         if plot:
             p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
-        oo = fitfun.Optimizer(time_new, fff)
+        #use the optimizer that was used in the Region
+        optimizer = r.fit_res[-1].__class__
+        oo = optimizer(time_new, fff)
         oo.set_function(fitfun.ff60)
         # copy fit parameter ranges from previous fit
         oo.parameters = r.fit_res[-1].parameters.copy()
@@ -371,7 +379,6 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             if not second_fit:
                 fullres += oo.function(time, **oo.solutions)
 
-    print 'all regs'
     old_good_regions = all_good_regions
     all_good_regions = []
     for r in old_good_regions:
@@ -398,10 +405,9 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
 
             #remove all other regions  and baseline from the signal
             corrected_f = f - baseline
-            print 'correct'
             for reg in all_good_regions:
                 #only remove OTHER regions
-                print id(reg),reg.bad, id(r),r.bad
+                #print id(reg),reg.bad, id(r),r.bad
                 if id(reg) != id(r):
                     corrected_f -= event_fits_new[id(reg)]
             le, ri = r.extra_range()
@@ -409,7 +415,8 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
             time_new = time[le:ri]
             if plot:
                 p.plot(time_new, fff, '-o', ms=4, mec='None', alpha=.5)
-            oo = fitfun.Optimizer(time_new, fff)
+            optimizer = r.fit_res[-1].__class__
+            oo = optimizer(time_new, fff)
             oo.set_function(fitfun.ff60)
             # copy fit parameter ranges from previous fit
             oo.parameters = r.fit_res[-1].parameters.copy()
@@ -452,6 +459,12 @@ def fit_regs(f, all_ranges, plot=False, second_fit = True):
         p.plot(time, fullres, color='red', lw=2)
         p.plot(time, baseline, color='magenta')
         p.plot(time, baseline_old, color='cyan')
+    #add dF/F0 for each event
+    ff0 = FF0(final)
+    delta_Fs = {}
+    for key, transient in final['transients'].iteritems():
+        delta_Fs[key] = ff0.event_ff0(transient['m2'], key)
+    final['deltas'] = delta_Fs
     return final
 
 
@@ -464,16 +477,18 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=5.0, two_stage=True):
+def fit_2_stage(data, plot=False, min_snr=3.50, two_stage=True, regions = None):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again
 
     Returns the result from the second fit call with the exception of the
     baseline which is taken from the first fit"""
-
-    found_regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
-    res_out = fit_regs(data, found_regions, plot, two_stage)
+    if not regions:
+        #regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
+        regions = rf.get_regions(data, min_snr=min_snr, max_width=60, step=2)
+    #res_out = fit_regs(data, regions[max(regions.keys())], plot, two_stage)
+    res_out = fit_regs(data, regions, plot, two_stage)
     return res_out
 
 
@@ -501,7 +516,6 @@ def make_data_by_size_and_time(results, key, number):
 def make_data_by_size(results, key, number):
     """get data for the 'number'th biggest transient"""
     out = n.zeros((results['height'], results['width']), dtype='float')
-    print '\n make data'
     for res in results['fits']:
         x = res.x
         y = res.y
@@ -589,7 +603,7 @@ class SyntheticData(object):
             self.result = result
             self.region = result.region
             self.times = n.arange(int(self.region.frames))
-            print 'times shape is', self.times.shape, self.region.frames
+            #print 'times shape is', self.times.shape, self.region.frames
             if self.region.width == 1:
                 self.linescan = True
             else:
@@ -601,7 +615,7 @@ class SyntheticData(object):
         if self.linescan:
             out = n.zeros(
                 (1, self.region.height, int(self.region.frames)), dtype='float')
-            print 'out shape is', out.shape, self.region.frames
+            #print 'out shape is', out.shape, self.region.frames
         else:
             out = n.zeros(
                 (self.region.frames, self.region.height, self.region.width), dtype='float')
@@ -684,7 +698,7 @@ def redo(jobs, res):
                 break
         if bad:
             bad_jobs.append(j)
-    print "%i jobs to redo" % (len(bad_jobs))
+    #print "%i jobs to redo" % (len(bad_jobs))
     for i, bj in enumerate(bad_jobs):
        # print i
         result = fit_regs(bj.params[0])
@@ -705,15 +719,24 @@ def redo(jobs, res):
     pickle.dump(res, ff)
     ff.close()
 
-def reconstruct_signal(result):
+def reconstruct_signal(result, event_array=False):
     """Take result dictionary given by fit_2_stage and return
-    baseline and event fits"""
+    baseline and event fits
+    If event_array == True then send array with each event instead
+    of summed up events
+    """
     xvals = n.arange(result['xrange'][0], result['xrange'][1], 1.0)
-    events = n.zeros_like(xvals)
+    if event_array:
+        events = n.zeros(shape=(xvals.size, len(result['regions'])))
+    else:
+        events = n.zeros_like(xvals)
     for key, region in result['regions'].iteritems():
         opt = region.fit_res[-1]
         signal = opt.function(xvals, **opt.solutions)
-        events += signal
+        if event_array:
+            events[:,key] = signal
+        else:
+            events += signal
     baseline = n.poly1d(result['baseline'])(xvals)
     return xvals, events, baseline
 
@@ -723,13 +746,35 @@ class FF0(object):
         self.baseline_f = n.poly1d(result['baseline'])
 
     def __call__(self, arg):
+        """Gives dF/F0 for the the entire signal i.e., the sum of all
+        events divided by the baseline. This is NOT df/F0 for a
+        single event. For that use event_ff0"""
         bl = self.baseline_f(arg)
         f = 0.0
         for key, region in self.result['regions'].iteritems():
             opt = region.fit_res[-1]
-            event_f = opt.function(arg, **opt.solutions)
-            f += event_f
-        return f/bl
+            try:
+                event_f = opt.function(arg, **opt.solutions)
+                f += event_f
+            except:
+                print 'failed for', arg, opt.solutions
+                continue
+        return f / bl
+
+    def event_ff0(self, arg, event):
+        """Calculate per event dF/F0. This is the same as __call__ for
+        events which are not on top of other events. For those that are
+        the underlying event has to be added to baseline as well"""
+        dff0 = self(arg)
+        bl = self.baseline_f(arg)
+        event_opt = self.result['regions'][event].fit_res[-1]
+        event_f0 = event_opt.function(arg, **event_opt.solutions)
+        #F_n/(bl + sum(F_i) - F_n)
+        #sum(F_i) = dff0*bl
+        event_dff0 = event_f0 / (bl * (dff0 + 1) - event_f0)
+        return event_dff0
+
+
 
 
 

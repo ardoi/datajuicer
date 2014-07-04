@@ -285,8 +285,7 @@ class OMEXMLReader(AbstractReader):
         try:
             self._get_typespecific_extra_info()
         except:
-            print "failed to get type info"
-
+            pass
 
 
 class LSMReader(OMEXMLReader):

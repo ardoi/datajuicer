@@ -132,7 +132,7 @@ class FitResultDataModel(QC.QAbstractTableModel):
                     elif col==5:
                         return "%i"%sol['tau2']
                     elif col==6:
-                        return "%.3f"%self.ff0_func(sol['m2'])
+                        return "%.3f %.3f"%(self.ff0_func(sol['m2']), self.ff0_func.event_ff0(sol['m2'], key))
                     else:
                         return QC.QVariant()
 
