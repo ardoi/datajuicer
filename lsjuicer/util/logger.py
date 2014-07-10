@@ -7,7 +7,9 @@ class Logger(object):
         start_time_and_date = time.strftime("%d-%b-%Y__%H-%M-%S")
         logfolder = 'log'
         # check for folder existance and create if necessary
+        print logfolder
         if not os.path.isdir(logfolder):
+            print 'make'
             os.makedirs(logfolder)
         loglevel = level
         logfilename = "juicer_" + start_time_and_date + ".log"
@@ -18,6 +20,7 @@ class Logger(object):
                             level=loglevel, filemode='w', format=log_format)
         logger = logging.getLogger(__name__)
         logger.info('starting')
+        print "started"
 
     def get_logger(self, name):
         return logging.getLogger(name)

@@ -12,375 +12,121 @@ from PyQt5 import QtWidgets as QW
 import numpy as np
 from sqlalchemy.orm.exc import NoResultFound, MultipleResultsFound
 
-from lsjuicer.inout.db import sqlb2
 from lsjuicer.data.analysis import transient_find as tf
 import lsjuicer.util.logger as logger
 
 from IPython import parallel
 
-class Worker(Process):
-
-    def __init__(self, args):
-        Process.__init__(self)
-        dbmaster = sqlb2.dbmaster
-        session = dbmaster.get_session()
-        self.worker = sqlb2.Worker()
-        self.worker.id = args[0]
-        self.current_job_id = None
-        session.add(self.worker)
-        #session.commit()
-        #session.close()
-        dbmaster.end_session_retry(session)
-        self.logger = logger.get_logger(__name__)
-
-    def kill(self):
-        session = sqlb2.dbmaster.get_session()
-        session.add(self.worker)
-        try:
-            current_job = session.query(sqlb2.Job).\
-                filter(sqlb2.Job.worker_id == self.worker.id).\
-                filter(sqlb2.Job.running == True).one()
-            current_job.running = False
-            current_job.timed_out = True
-            current_job.finished = True
-            current_job.end_time = datetime.datetime.now()
-            self.logger.warning("killing worker %i, job %i" % (
-                self.worker.id, current_job.id))
-        except NoResultFound:
-            self.logger.warning("killing worker %i cancelled" % self.worker.id)
-            # the job has finished so no need to kill anything
-            return False
-        except MultipleResultsFound:
-            raise RuntimeError
-        self.worker.end_time = datetime.datetime.now()
-        #session.commit()
-        #session.close()
-        sqlb2.dbmaster.end_session_retry(session)
-        # self.session.commit()
-        # self.session.close()
-        self.terminate()
-        return True
-
-    def single(self, job_params):
-        args = job_params
-        data = args['data']
-        self.logger.debug("job %i starting" %( self.current_job_id))
-        try:
-            f = tf.fit_2_stage(data)
-        except:
-            self.logger.warning("job %i failed %s" % (
-                self.current_job_id, traceback.format_exc()))
-            f = None
-        self.logger.debug("job %i returning" % self.current_job_id)
-        return f
-
-    def run(self):
-        dbmaster = sqlb2.dbmaster
-        session = dbmaster.get_session()
-        session.add(self.worker)
-        self.logger.debug('worker %i starting' % self.worker.id)
-        self.worker.start_time = datetime.datetime.now()
-        self.worker.running = True
-
-        jobs = session.query(sqlb2.Job).filter(
-            sqlb2.Job.worker_id == self.worker.id).all()
-        #session.commit()
-        #session.close()
-        dbmaster.end_session_retry(session)
-
-        for job in jobs:
-            session = dbmaster.get_session()
-            session.add(self.worker)
-            session.add(job)
-
-            self.logger.debug('worker %i, started job %i' % (
-                self.worker.id, job.id))
-            job.start_time = datetime.datetime.now()
-
-            job.running = True
-            self.worker.running_job = job.id
-            self.current_job_id = job.id
-            self.worker.job_start_time = job.start_time
-            self.worker.job_end_time = None
-            job_params = job.params
-            dbmaster.end_session_retry(session)
-            #session.commit()
-            #close session so that we dont block the db
-            #session.close()
-            result = self.single(job_params)
-            #reopen session and add job and worker
-            session = dbmaster.get_session()
-            session.add(self.worker)
-            session.add(job)
-            job.finished = True
-            job.running = False
-            if not result:
-                job.failed = True
-            job.result = result
-            job.end_time = datetime.datetime.now()
-            self.worker.job_end_time = job.end_time
-            #session.commit()p
-            self.logger.debug('worker %i, finished job %i' % (
-                self.worker.id, job.id))
-            #session.close()
-            dbmaster.end_session_retry(session)
-
-        session = dbmaster.get_session()
-        session.add(self.worker)
-        self.worker.finished = True
-        self.worker.running = False
-        self.worker.end_time = datetime.datetime.now()
-        self.worker.locked_errors = dbmaster.lock_errors
-        self.logger.debug('worker %i finished' % self.worker.id)
-        #session.commit()
-        #session.close()
-        dbmaster.end_session_retry(session)
-        return
+def single(args):
+    data = args['data']
+    import lsjuicer.data.analysis.transient_find as tf
+    try:
+        f = tf.fit_2_stage(data, min_snr=5.5)
+        error = None
+    except:
+        import traceback
+        error=traceback.format_exc()
+        f = None
+    return args['coords'], f, error
 
 
-class Threader(QC.QObject):
-    threads_done = QC.pyqtSignal()
-    progress_update = QC.pyqtSignal(int, int, int, int)
-    time_stats = QC.pyqtSignal(float, float, float)
-    new_progress_array = QC.pyqtSignal()
+class Threader(object):
+    #threads_done = QC.pyqtSignal()
+    #progress_update = QC.pyqtSignal(int, int, int, int)
+    #time_stats = QC.pyqtSignal(float, float, float)
+    #new_progress_array = QC.pyqtSignal()
 
-    def stop(self):
-        for wn in self.running_workers:
-            w = self.workers[wn]
-            w.kill()
 
     def update(self):
         if self.start_time is None:
             self.start_time = time.time()
-            self.run_times = []
+            #self.run_times []
 
         self.logger.info("UPDATE")
         newly_finished = []
-        kill_list = []
-        time_limit = 30
-        jobs_per_worker = 10
-        session = sqlb2.dbmaster.get_session()
-        for i, wn in enumerate(self.running_workers):
-            # w = self.workers[wn]
-            w = session.query(sqlb2.Worker).filter(sqlb2.Worker.id == wn).one()
-            if w.finished:
-                newly_finished.append(wn)
-                self.run_times.append(w.run_time)
-                continue
-            #try:
-            #    running_job = w.running_job
-            #    if running_job is  None:
-            #        running_job = 0
-            #    self.logger.debug("worker %i,%i, time %.3f, current %i" % (
-            #        w.id, wn, w.run_time, running_job))
-            #except TypeError:
-            #    import traceback
-            #    traceback.print_exc()
-            #    self.logger.error("worker %i,%i finished error" % (w.id, wn))
+        if not self.view_result:
+            self.logger.info("Start {} jobs".format(self.jobs_to_run))
+            self.view_result = self.view.map_async(single, self.params)#, chunksize=self.chunk)
+            self.waiting = set(self.view_result.msg_ids)
+            self.failed = 0
+        try:
+            self.client.wait(self.waiting, 1e-3)
+        except parallel.TimeoutError:
+            pass
+        finished = self.waiting.difference(self.client.outstanding)
+        self.waiting = self.waiting.difference(finished)
+        self.logger.info('waiting: {}'.format(len(self.waiting)*self.chunk))
+        self.logger.info('newly finished: {}'.format(len(finished)*self.chunk))
+        self.logger.info('failed: {}'.format(self.failed))
 
-            if w.job_run_time > time_limit:
-                self.logger.debug('kill %i' % wn)
-                kill_list.append(wn)
-        # session.close()
-        for wn in kill_list:
-            w = self.workers[wn]
-            self.logger.debug("killing %i" % wn)
-            status = w.kill()
-            if not status:
-                self.logger.debug("nothing to kill")
-                continue
-            # session = sqlb2.dbmaster.get_session()
-            sql_w = session.query(sqlb2.Worker).filter(
-                sqlb2.Worker.id == wn).one()
-            self.run_times.append(sql_w.run_time)
-            self.running_workers.remove(wn)
-            undone_jobs = session.query(sqlb2.Job).\
-                filter(sqlb2.Job.worker_id == wn).\
-                filter(sqlb2.Job.finished == False).\
-                filter(sqlb2.Job.timed_out == False).\
-                filter(sqlb2.Job.failed == False).all()
-            if undone_jobs:
-                for job in undone_jobs:
-                    job.worked_id = None
-                undone_job_numbers = [job.id for job in undone_jobs]
-                self.logger.debug("reinsert %i" % len(undone_job_numbers))
-                # print "waiting old",len(self.waiting_jobs)
-                # print self.waiting_jobs
-                self.waiting_jobs = self.waiting_jobs.union(undone_job_numbers)
-                self.logger.debug("after reinsert waiting  %i" % len(
-                    self.waiting_jobs))
-                # print self.waiting_jobs
-            session.commit()
-            # session.close()
-
-        # session = sqlb2.dbmaster.get_session()
-        for wn in newly_finished:
-            self.running_workers.remove(wn)
-            self.finished_workers.append(wn)
-            # for making job progress plot
-            worker_jobs = session.query(
-                sqlb2.Job).filter(sqlb2.Job.worker_id == wn)
-            for job in worker_jobs:
-                xy = job.params['coords']
+        for job_id in finished:
+            result = self.client.get_result(job_id)
+            print "job {} finished on engine {}".format(job_id, result.engine_id)
+            for res in result.result:
+                xy = res[0]
                 x = xy[0]  # - self.settings['dx']
                 y = xy[1]  # - self.settings['dy']
+                self.results[xy] = res[1]
                 try:
-                    if job.failed:
-                        self.state_array[y, x] = 2
-                    elif job.timed_out:
-                        self.state_array[y, x] = 3
-                    else:
+                    if res[1]:
                         self.state_array[y, x] = 1
+                    else:
+                        self.state_array[y, x] = 2
+                        self.failed += 1
+                        self.errors[xy] = res[2]
                 except:
                     import traceback
-                    traceback.print_exc()
-                    print self.state_array
-                    print self.state_array.shape
-                    print x, y
-        if newly_finished:
-            self.new_progress_array.emit()
-
-        # session.close()
-
-        #print "before new Remaining: %i"%(len(self.waiting_jobs))
-        running = len(self.running_workers)
-        empty_slots = self.slots - running
-        self.logger.debug("running workers before start %i %s" % (
-            running, str(self.running_workers)))
-        self.logger.debug("waiting jobs before start %i" % len(
-            self.waiting_jobs))
-        started_now = 0
-        if self.waiting_jobs:
-            for i in range(empty_slots):
-                job_numbers = self.get_job_numbers(jobs_per_worker)
-                if not job_numbers:
-                    break
-                wn = self.last_started_worker_number + 1
-                self.last_started_worker_number = wn
-                jobs = session.query(sqlb2.Job).filter(
-                    sqlb2.Job.id.in_(job_numbers)).all()
-                for job in jobs:
-                    job.worker_id = wn
-                session.commit()
-                # session.close()
-
-                worker = Worker(args=(wn,))
-                self.running_workers.append(wn)
-                self.workers[wn] = worker
-                worker.start()
-                started_now += 1
-
-        self.logger.debug(
-            "running workers after start %i %s" % (len(self.running_workers),
-                                                   str(self.running_workers)))
-        self.logger.debug("waiting jobs after start %i" % len(
-            self.waiting_jobs))
-        # session = sqlb2.dbmaster.get_session()
-        finished_jobs = session.query(sqlb2.Job).filter(
-            sqlb2.Job.finished == True).count()
-        timed_out_jobs = session.query(sqlb2.Job).filter(
-            sqlb2.Job.timed_out == True).count()
-        running_jobs = session.query(sqlb2.Job).filter(
-            sqlb2.Job.running == True).count()
-        failed_jobs = session.query(sqlb2.Job).filter(
-            sqlb2.Job.failed == True).count()
+                    self.logger.warning(traceback.format_exc())
 
         time_so_far = int(time.time() - self.start_time)
+        self.logger.info("time: {} sec".format(time_so_far))
 
-        successful_jobs = finished_jobs - timed_out_jobs - failed_jobs
-        jobs_remaining = self.jobs_to_run - finished_jobs
-        if finished_jobs:
-            mean_time_per_done_job = time_so_far / float(finished_jobs)
-            time_left = int(jobs_remaining * mean_time_per_done_job)
-            self.time_stats.emit(
-                mean_time_per_done_job, time_left, time_so_far)
-            self.progress_update.emit(jobs_remaining, finished_jobs,
-                                      timed_out_jobs, failed_jobs)
 
-        self.logger.info("Remaining: %i\t Finished:%i" % (
-            jobs_remaining, finished_jobs))
-        self.logger.info("Successful:%i\t Failed:%i" % (
-            successful_jobs, failed_jobs))
-        self.logger.info("Timed out: %i\t Running:%i" % (
-            timed_out_jobs, running_jobs))
-        if finished_jobs == self.jobs_to_run:
-            print "ALL DONE. Stopping timer"
-            total_time = time.time() - self.start_time
-            computational_time = sum(self.run_times)
-            average_comp_time = computational_time / float(len(self.run_times))
-            finished_jobs = session.query(
-                sqlb2.Job).filter(sqlb2.Job.finished == True)
-            job_run_times = np.array([job.run_time for job in finished_jobs])
-            print "TIMINGS: total:%.1f sec,\tcomputational: %.1f,\taverage per job: %.3f" %\
-                (total_time, computational_time, average_comp_time)
-            print job_run_times.mean(), job_run_times.min(), job_run_times.max()
-            error_count = 0
-            for c, in session.query(sqlb2.Worker.locked_errors).all():
-                error_count+=c
-            print 'db errors:%i'%error_count
-            # print "RESULTS ",self.out_data
-            # qc=QC.QCoreApplication.instance()
-            # qc.exit()
-            self.threads_done.emit()
-        session.commit()
-        session.close()
-
-    def get_job_numbers(self, count):
-        selection = random.sample(self.waiting_jobs, min(
-            count, len(self.waiting_jobs)))
-        self.waiting_jobs.difference_update(selection)
-        return selection
-
-    def __init__(self, parent=None):
-        QC.QObject.__init__(self, parent)
+    def __init__(self):
+        #QC.QObject.__init__(self, parent)
         self.waiting_workers = []
         self.running_workers = []
         self.finished_workers = []
         self.failed_workers = []
         self.workers = {}
         self.start_time = None
+        self.end_time = None
+        self.done = None
 
         self.slots = cpu_count() - 1
-        self.last_started_worker_number = 0
         self.logger = logger.get_logger(__name__)
         self.client = parallel.Client()
-        self.view = self.client.direct_view()
-        self.view.execute("import lsjuicer.data.analysis.transient_find as tf")
+        self.view = self.client.load_balanced_view()
+        self.logger.info("start Threader")
+        #self.view = self.client.direct_view()
+        #self.view.execute("import lsjuicer.data.analysis.transient_find as tf")
+        self.view_result = None
+        self.actual_slots = len(self.client.ids)
+        self.results = {}
+        self.errors = {}
+        self.chunk = 1
 
 
     def do(self, params, settings):
-        #sqlb2.dbmaster.reset_tables()
-        #session = sqlb2.dbmaster.get_session()
         self.jobs_to_run = len(params)
         self.settings = settings
+        self.params = params
         self.state_array = np.zeros(
             shape=(settings['height'] - 2 * settings['dy'],
                    settings['width'] - 2 * settings['dx']))
-        #for i, param in enumerate(params):
-        #    job = sqlb2.Job()
-        #    job.params = param
-        #    session.add(job)
-        #session.commit()
-        #session.close()
-        #+1 because in sql id cannot be 0
-        self.waiting_jobs = set(range(1, self.jobs_to_run + 1))
-        self.running_jobs = []
-        self.finished_jobs = []
-        self.failed_jobs = []
 
+    def run(self):
+        self.update()
+        while len(self.waiting) > 0:
+            time.sleep(5)
+            self.update()
+        self.done = True
+        self.end_time = time.time()
+        av_time = (self.end_time - self.start_time)/float(self.jobs_to_run)
+        logger.info("time per job={}".format(av_time))
+        logger.info("time per job (actual)={}".format(av_time*self.actual_slots))
+        self.client.close()
 
-
-def single(args):
-    data = args['data']
-    #self.logger.debug("job %i starting" %( self.current_job_id))
-    try:
-        f = tf.fit_2_stage(data)
-    except:
-        #self.logger.warning("job %i failed %s" % (
-        #    self.current_job_id, traceback.format_exc()))
-        f = None
-    #self.logger.debug("job %i returning" % self.current_job_id)
-    return args['coords'], f
 
 class FitDialog(QW.QDialog):
     progress_map_update = QC.pyqtSignal(np.ndarray)

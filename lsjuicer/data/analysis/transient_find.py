@@ -182,6 +182,9 @@ class Region(object):
         oo2.set_parameter_range('a', -500, 500, 0)
         oo2.set_parameter_range('b', -1e5, 1e5, self.data.mean())
         oo2.optimize(max_fev=1000)
+        if not oo2.solutions:
+            self.bad = True
+            return
         aicc_line = oo2.aicc()
         # print "AICc line",aicc_line
         log.debug("AICc line %f" % aicc_line)
@@ -477,7 +480,7 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=3.50, two_stage=True, regions = None):
+def fit_2_stage(data, plot=False, min_snr=5.50, two_stage=True, regions = None):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again

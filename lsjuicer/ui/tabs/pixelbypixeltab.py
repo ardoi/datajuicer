@@ -10,7 +10,7 @@ from PyQt5 import QtWidgets as QW
 
 from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPixelRegionFitResult
 from lsjuicer.inout.db.sqla import dbmaster
-from lsjuicer.inout.db.sqla import PixelEvent
+from lsjuicer.inout.db.sqla import PixelEvent, PixelByPixelAnalysis
 from lsjuicer.ui.widgets.clusterwidget import ClusterDialog
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
 from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
@@ -95,14 +95,47 @@ class PixelByPixelAnalyzer(object):
         settings = {'width':self.data_width, 'height':self.data_height,
                     'dx':self.dx, 'dy':self.dy}
         self.threader = Threader()
-        #self.threader.do(params, settings)
+        self.threader.do(params, settings)
 
     def fit(self):
-       import time
-       while self.threader.done is False:
-           self.threader.update()
-           time.sleep(5)
+        self.threader.run()
 
+    def make_result(self):
+        print "threader done. saving results"
+        if not self.analysis:
+            self.analysis = PixelByPixelAnalysis()
+        self.analysis.imagefile = self.imagedata.mimage
+        self.analysis.date = datetime.datetime.now()
+        session = dbmaster.get_session()
+        region = PixelByPixelFitRegion()
+        region.analysis = self.analysis
+        region_coords = (self.x0, self.x0+self.data_width,
+                self.y0, self.y0+self.data_height)
+        region.start_frame = self.start_frame
+        region.end_frame = self.end_frame
+        region.set_coords(region_coords)
+        fit_result = PixelByPixelRegionFitResult()
+        fit_result.fit_settings = {"padding":self.dx}
+        self.fit_result  = fit_result
+        self.fit_result.region = region
+        for xy, res in self.threader.results.iteritems():
+            try:
+                fitted_pixel = FittedPixel()
+                fitted_pixel.result = fit_result
+                fitted_pixel.x = xy[0]
+                fitted_pixel.y = xy[1]
+                if res:
+                    fitted_pixel.baseline = res['baseline']
+                    #fitted_pixel.event_count = len(res['transients'])
+                    for c,transient in res['transients'].iteritems():
+                        pixel_event = PixelEvent()
+                        pixel_event.pixel = fitted_pixel
+                        pixel_event.parameters = transient
+            except:
+                traceback.print_exc()
+                continue
+        session.commit()
+        print 'saving done'
 
 class PixelByPixelTab(QW.QTabWidget):
     @property
