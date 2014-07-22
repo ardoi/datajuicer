@@ -75,7 +75,7 @@ class SnapROIItem(QW.QGraphicsRectItem):
             r = self.rect()
             pos  = event.scenePos()
             if self.resizable:
-                #floor_point_x(pos)
+                floor_point_x(pos)
                 if self.state == Constants.resize_br or not self.initialized:
                     r.setBottomRight(pos)
                 elif self.state == Constants.resize_bl:

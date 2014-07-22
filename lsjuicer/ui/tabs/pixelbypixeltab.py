@@ -1,10 +1,9 @@
 from PyQt5 import QtGui as QG
-from PyQt5 import QtCore as QC
 from PyQt5 import QtWidgets as QW
 
 
 from lsjuicer.data.analysis.pixbypixanalyzer import PixelByPixelAnalyzer
-from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan
+from lsjuicer.data.imagedata import ImageDataMaker, ImageDataLineScan, ImageDataFrameScan, make_selection
 from lsjuicer.inout.db import sqla as sa
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 from lsjuicer.ui.widgets.basicpixmapplotwidget import BasicPixmapPlotWidget
@@ -13,6 +12,9 @@ from lsjuicer.ui.widgets.pixeltracesplotwidget import PixelTracesPlotWidget
 from lsjuicer.util.helpers import timeIt
 from lsjuicer.ui.dialogs.fitdialog import FitDialog
 import lsjuicer.data.analysis.transient_find as tf
+
+
+
 
 class PixelByPixelTab(QW.QTabWidget):
 
@@ -24,9 +26,9 @@ class PixelByPixelTab(QW.QTabWidget):
 
         if self.coords:
             out_selection = "<strong>Selection:</strong><br>Top left: x=%i y=%i<br>Width: %i<br>Height: %i<br>Pixels: %i<br/>Frames: %i"\
-                    %(self.coords.left(), self.coords.top(), self.analyzer.data_width,\
-                    self.analyzer.data_height, self.analyzer.data_width*self.analyzer.data_height,
-                    self.analyzer.acquisitions)
+                    %(self.coords.left, self.coords.top, self.coords.width,\
+                    self.coords.height, self.coords.width*self.coords.height,
+                    self.coords.acquisitions)
         else:
             out_selection = ""
         out_settings = "<strong>Fit settings:</strong> <br>Traces to fit: %i"\
@@ -72,17 +74,37 @@ class PixelByPixelTab(QW.QTabWidget):
         text = self.settings_text() + "<br><br>" + self.status
         self.info_widget.setHtml(text)
 
-
     def __init__(self, imagedata, selections, analysis, parent = None):
         super(PixelByPixelTab, self).__init__(parent)
         self.parent = parent
+        self.coords = make_selection(imagedata)
         try:
-            roi = selections[ISTN.ROI][0]
-            self.coords = roi.graphic_item.rect()
+            roi = selections[ISTN.ROI][0].graphic_item.rect()
+            print "**ROI IS", roi
+
+            self.coords.top = int(roi.top())
+            self.coords.bottom = int(roi.bottom())
+            if isinstance(imagedata, ImageDataFrameScan):
+                #only set the right,left bounds for framescans
+                #for linescans the right,left bounds are
+                #actually start and end frames
+                self.coords.right = int(roi.right())
+                self.coords.left = int(roi.left())
+            elif isinstance(imagedata, ImageDataLineScan):
+                self.coords.start = int(roi.left())
+                self.coords.end = int(roi.right())
         except IndexError:
-            #FIXME only works for linescans
-            self.coords = QC.QRectF(0, 0, imagedata.x_points, imagedata.y_points)
+            pass
         #send to pixelbypixelanalyzer
+        try:
+            if isinstance(imagedata, ImageDataFrameScan):
+                time_range = selections[ISTN.TIMERANGE]
+                self.coords.start = time_range['start']
+                self.coords.end = time_range['end']
+        except:
+            #no time selection made
+            pass
+
         self.fit = False
         self.analysis  = analysis
         self.imagedata = imagedata
@@ -157,7 +179,7 @@ class PixelByPixelTab(QW.QTabWidget):
         results['height'] = self.fit_result.region.height - 2*self.fit_result.fit_settings['padding']
         #FIXME
         #results['frames'] = self.fit_result.region.analysis.imagefile.image_frames
-        results['frames'] = self.analyzer.acquisitions
+        results['frames'] = self.analyzer.coords.acquisitions
         results['dx'] = self.fit_result.fit_settings['padding']
         results['dy'] = self.fit_result.fit_settings['padding']
         results['x0'] = self.fit_result.region.x0
@@ -175,7 +197,7 @@ class PixelByPixelTab(QW.QTabWidget):
         #print self.fit_result.id, max_index
         #sample_pixel = self.fit_result.get_fitted_pixel(max_index[1], max_index[0])
         #FIXME Bad bad bad
-        parameters=['A','m2', 'tau2', 'd', 'd2', 's']
+        parameters = ['A','m2', 'tau2', 'd', 'd2', 's']
         #for key in sample_pixel.pixel_events[0].parameters:
         for key in parameters:
             param_combo.addItem(key)

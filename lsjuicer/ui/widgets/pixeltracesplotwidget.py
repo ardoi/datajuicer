@@ -51,11 +51,10 @@ class PixelTracesPlotWidget(QW.QWidget):
         rect = roiitem.rect()
         y = rect.top()
         x = rect.left()
-        params = {'x': x + self.pixpixw.x0 + self.pixpixw.dx,
-                  'y': y + self.pixpixw.y0 + self.pixpixw.dy,
-                  'dx': self.pixpixw.dx, 'dy': self.pixpixw.dy,
-                  't0': self.pixpixw.start_frame, 't1': self.pixpixw.end_frame}
-        trace = self.pixpixw.imagedata.get_trace(params)
+
+        trace = self.pixpixw.imagedata.get_trace(self.pixpixw.coords,
+                                                 self.pixpixw.dx, self.pixpixw.dy,
+                                                 x, y)
         time_4_fit = numpy.arange(len(trace))
         res_4_fit = self.pixpixw.fit_result.get_fitted_pixel(x, y)
         syn_data = tf.SyntheticData()

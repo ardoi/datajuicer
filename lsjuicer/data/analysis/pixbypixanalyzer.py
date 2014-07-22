@@ -1,9 +1,7 @@
 import traceback
 import datetime
 
-from PyQt5 import QtCore as QC
-
-from lsjuicer.data.imagedata import  ImageDataLineScan
+from lsjuicer.data.imagedata import  ImageDataLineScan, make_selection
 from lsjuicer.util.threader import Threader
 from lsjuicer.inout.db.sqla import PixelEvent, PixelByPixelAnalysis
 from lsjuicer.inout.db.sqla import dbmaster
@@ -11,89 +9,45 @@ from lsjuicer.inout.db.sqla import FittedPixel, PixelByPixelFitRegion, PixelByPi
 
 class PixelByPixelAnalyzer(object):
 
-    @property
-    def x0(self):
-        if self.coords:
-            return int(self.coords.left())
-        else:
-            return 0
-
-    @property
-    def y0(self):
-        if self.coords:
-            return int(self.coords.top())
-        else:
-            return 0
-    @property
-    def data_width(self):
-        if isinstance(self.imagedata, ImageDataLineScan):
-            return 1
-        else:
-            if self.coords:
-                x = int(self.coords.width())
-            else:
-                x = self.imagedata.x_points
-            return x
-
-    @property
-    def data_height(self):
-        if self.coords:
-            y = int(self.coords.height())
-        else:
-            y = self.imagedata.y_points
-        return y
 
     def __init__(self, imagedata, analysis, coords=None):
         self.imagedata = imagedata
         self.analysis = analysis
         if coords == None:
             #use all image
-            self.coords = None
+            self.coords = make_selection(imagedata)
         else:
             if isinstance(coords, list):
                 #coords are list of [left,right, top, bottom]
-                self.coords = QC.QRectF(coords[0], coords[2],
-                        coords[1]-coords[0],coords[3]-coords[2])
+                #FIXME make work with new selection classes
+                raise NotImplementedError()
+                #self.coords = QC.QRectF(coords[0], coords[2],
+                #        coords[1]-coords[0],coords[3]-coords[2])
             self.coords = coords
-
-        print 'coords', self.coords
-        if isinstance(imagedata, ImageDataLineScan):
-            self.start_frame = self.x0
-            if self.coords:
-                self.end_frame = int(self.coords.right())
-            else:
-                self.end_frame = self.x0 + self.imagedata.x_points
-        else:
-            pass
-            #FIXME
-            #time_range = selections[ISTN.TIMERANGE]
-            #self.start_frame = time_range['start']
-            #self.end_frame = time_range['end']
-        self.acquisitions = self.end_frame - self.start_frame
         #FIXME
-        self.dx = 0
+        self.dx = 1
+        if isinstance(imagedata, ImageDataLineScan):
+            self.dx = 0
         self.dy = 1
 
     @property
     def trace_count(self):
-        x = self.data_width
-        y = self.data_height
+        x = self.coords.width
+        y = self.coords.height
         #change this if you want to use selections later
         traces = (x - 2*self.dx)*(y - 2*self.dy)
         return traces
 
     @property
     def region_parameters(self):
-        region_parameters = {'x0':self.dx+self.x0, 'y0':self.dy + self.y0,
-                             'x1':self.x0+self.data_width - self.dx,
-                             'y1':self.y0+self.data_height - self.dy,
-                             'dx':self.dx, 'dy':self.dy,
-                             't0':self.start_frame, 't1':self.end_frame}
+        region_parameters = {'selection':self.coords,
+                             'dx':self.dx, 'dy':self.dy}
         return region_parameters
 
     def extract_pixels(self):
-        params = self.imagedata.get_traces(self.region_parameters)
-        settings = {'width':self.data_width, 'height':self.data_height,
+        params = self.imagedata.get_traces(**self.region_parameters)
+        print 'pp',params[0]
+        settings = {'selection':self.coords,
                     'dx':self.dx, 'dy':self.dy}
         self.threader = Threader()
         self.threader.do(params, settings)
@@ -110,10 +64,10 @@ class PixelByPixelAnalyzer(object):
         session = dbmaster.get_session()
         region = PixelByPixelFitRegion()
         region.analysis = self.analysis
-        region_coords = (self.x0, self.x0+self.data_width,
-                self.y0, self.y0+self.data_height)
-        region.start_frame = self.start_frame
-        region.end_frame = self.end_frame
+        region_coords = (self.coords.left, self.coords.right,
+                self.coords.top, self.coords.bottom)
+        region.start_frame = self.coords.start
+        region.end_frame = self.coords.end
         region.set_coords(region_coords)
         fit_result = PixelByPixelRegionFitResult()
         fit_result.fit_settings = {"padding":self.dx}
