@@ -85,7 +85,9 @@ class SnapROIItem(QW.QGraphicsRectItem):
                 elif self.state == Constants.resize_tl:
                     r.setTopLeft(pos)
                 else:
-                    new_pos = pos-event.lastScenePos()
+                    last = event.lastScenePos()
+                    floor_point_x(last)
+                    new_pos = pos-last
                     r.translate(new_pos)
                     #new_pos = pos# - event.lastScenePos()
                     #floor_point_x(new_pos)
