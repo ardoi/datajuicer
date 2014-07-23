@@ -44,8 +44,12 @@ class Threader(object):
             pass
         just_finished = self.waiting.difference(self.client.outstanding)
         self.waiting = self.waiting.difference(just_finished)
-        self.logger.info('waiting: {}'.format(len(self.waiting)*self.chunk))
-        self.logger.info('just finished: {}'.format(len(just_finished)*self.chunk))
+        finished_now = just_finished * self.chunk
+        self.jobs_done += finished_now
+        jobs_left = self.jobs_to_run - self.jobs_done
+        self.logger.info('waiting: {}'.format(jobs_left))
+        self.logger.info('finished: {}'.format(self.jobs_done))
+        self.logger.info('just finished: {}'.format(finished_now))
         self.logger.info('failed: {}'.format(self.failed))
         self.new_finished = bool(len(just_finished))
 
@@ -70,16 +74,15 @@ class Threader(object):
                     self.logger.warning(traceback.format_exc())
 
         time_so_far = int(time.time() - self.start_time)
-        jobs_left = len(self.waiting)*self.chunk
-        jobs_done = self.jobs_to_run - jobs_left
-        if jobs_done:
-            time_per_job = time_so_far / float(jobs_done)
+        #jobs_done = self.jobs_to_run - jobs_left
+        if self.jobs_done:
+            time_per_job = time_so_far / float(self.jobs_done)
         else:
             time_per_job = 0
         time_left = int(time_per_job * jobs_left)
         self.timings = (time_per_job, time_left, time_so_far)
         print 'timings', self.timings
-        self.progress = (jobs_left, jobs_done, 0, self.failed)
+        self.progress = (jobs_left, self.jobs_done, 0, self.failed)
         print 'progress', self.progress
         self.logger.info("time: {} sec".format(time_so_far))
         if jobs_left == 0:
@@ -120,13 +123,17 @@ class Threader(object):
         self.results = {}
         self.errors = {}
         self.chunk = 10
+        self.jobs_done = 0
         self.new_finished = False
 
 
     def do(self, params, settings):
         self.jobs_to_run = len(params)
+        self.jobs_done = 0
         self.settings = settings
         self.params = params
+
+
         selection = settings['selection']
         self.state_array = np.zeros(
             shape=(selection.height - 2 * settings['dy'],
