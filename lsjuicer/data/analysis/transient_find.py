@@ -489,7 +489,7 @@ def fit_2_stage(data, plot=False, min_snr=5.50, two_stage=True, regions = None):
     baseline which is taken from the first fit"""
     if not regions:
         #regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
-        regions = rf.get_regions(data, min_snr=min_snr, max_width=60, step=2)
+        regions = rf.get_regions(data, min_snr=min_snr, max_width=120, step=2)
     #res_out = fit_regs(data, regions[max(regions.keys())], plot, two_stage)
     res_out = fit_regs(data, regions, plot, two_stage)
     return res_out
@@ -550,27 +550,27 @@ def make_data(results, key, transient_no):
     return out
 
 
-def get_res(fit_result):
-    import inout.sqla as sa
-    results = {}
-    session = sa.dbmaster.get_session()
-    # session.add(self.fit_result)
-    fitted_pixels = fit_result.pixels
-    # self.fit_result.region.height
-    results['width'] = fit_result.region.width - \
-        2*fit_result.fit_settings['padding']
-    results['height'] = fit_result.region.height - \
-        2*fit_result.fit_settings['padding']
-    # FIXME
-    #results['frames'] = self.fit_result.region.analysis.imagefile.image_frames
-    #results['frames'] = self.acquisitions
-    results['dx'] = fit_result.fit_settings['padding']
-    results['dy'] = fit_result.fit_settings['padding']
-    results['x0'] = fit_result.region.x0
-    results['y0'] = fit_result.region.y0
-    results['fits'] = fitted_pixels
-    session.close()
-    return results
+# def get_res(fit_result):
+#     import inout.sqla as sa
+#     results = {}
+#     session = sa.dbmaster.get_session()
+#     # session.add(self.fit_result)
+#     fitted_pixels = fit_result.pixels
+#     # self.fit_result.region.height
+#     results['width'] = fit_result.region.width - \
+#         2*fit_result.fit_settings['padding']
+#     results['height'] = fit_result.region.height - \
+#         2*fit_result.fit_settings['padding']
+#     # FIXME
+#     #results['frames'] = self.fit_result.region.analysis.imagefile.image_frames
+#     #results['frames'] = self.acquisitions
+#     results['dx'] = fit_result.fit_settings['padding']
+#     results['dy'] = fit_result.fit_settings['padding']
+#     results['x0'] = fit_result.region.x0
+#     results['y0'] = fit_result.region.y0
+#     results['fits'] = fitted_pixels
+#     session.close()
+#     return results
 
 
 def data_events(results):
@@ -586,17 +586,17 @@ def data_events(results):
     return out
 
 
-def make_raw(res):
-    import sqlb2
-    sess = sqlb2.dbmaster.get_session()
-    jobs = sess.query(sqlb2.Job).all()
-    shape = (res['frames'], res['height'], res['width'])
-    out = n.zeros(shape)
-    for j in jobs:
-        x, y = j.params['coords']
-        out[:, y, x] = j.params['data']
-    sess.close()
-    return out
+# def make_raw(res):
+#     #import sqlb2
+#     sess = sqlb2.dbmaster.get_session()
+#     jobs = sess.query(sqlb2.Job).all()
+#     shape = (res['frames'], res['height'], res['width'])
+#     out = n.zeros(shape)
+#     for j in jobs:
+#         x, y = j.params['coords']
+#         out[:, y, x] = j.params['data']
+#     sess.close()
+#     return out
 
 
 class SyntheticData(object):

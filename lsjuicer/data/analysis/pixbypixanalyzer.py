@@ -46,7 +46,6 @@ class PixelByPixelAnalyzer(object):
 
     def extract_pixels(self):
         params = self.imagedata.get_traces(**self.region_parameters)
-        print 'pp',params[0]
         settings = {'selection':self.coords,
                     'dx':self.dx, 'dy':self.dy}
         self.threader = Threader()

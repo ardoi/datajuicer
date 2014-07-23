@@ -21,14 +21,14 @@ class PixelByPixelTab(QW.QTabWidget):
     #@property
     def settings_text(self):
         out_image = "<strong>Image:</strong> <br>Width: %i<br>Height: %i<br>Pixels in frame: %i<br>Frames: %i"\
-                %(self.imagedata.x_points, self.imagedata.y_points, \
+                %(self.imagedata.x_points, self.imagedata.y_points,
                 self.imagedata.x_points*self.imagedata.y_points, self.imagedata.frames)
 
         if self.coords:
-            out_selection = "<strong>Selection:</strong><br>Top left: x=%i y=%i<br>Width: %i<br>Height: %i<br>Pixels: %i<br/>Frames: %i"\
-                    %(self.coords.left, self.coords.top, self.coords.width,\
-                    self.coords.height, self.coords.width*self.coords.height,
-                    self.coords.acquisitions)
+            out_selection = "<strong>Selection:</strong><br>Top left: x=%i y=%i<br>Width: %i<br>Height: %i<br>Pixels: " \
+                            "%i<br/>Frames: %i"%(self.coords.left, self.coords.top, self.coords.width,
+                                                 self.coords.height, self.coords.width*self.coords.height,
+                                                 self.coords.acquisitions)
         else:
             out_selection = ""
         out_settings = "<strong>Fit settings:</strong> <br>Traces to fit: %i"\
