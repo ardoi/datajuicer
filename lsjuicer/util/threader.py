@@ -44,20 +44,13 @@ class Threader(object):
             pass
         just_finished = self.waiting.difference(self.client.outstanding)
         self.waiting = self.waiting.difference(just_finished)
-        finished_now = just_finished * self.chunk
-        self.jobs_done += finished_now
-        jobs_left = self.jobs_to_run - self.jobs_done
-        self.logger.info('waiting: {}'.format(jobs_left))
-        self.logger.info('finished: {}'.format(self.jobs_done))
-        self.logger.info('just finished: {}'.format(finished_now))
-        self.logger.info('failed: {}'.format(self.failed))
-        self.new_finished = bool(len(just_finished))
-
+        finished_now = 0
         for job_id in just_finished:
             result = self.client.get_result(job_id)
             self.logger.info("job {} finished on engine {}".
                              format(job_id, result.engine_id))
             for res in result.result:
+                finished_now += 1
                 xy = res[0]
                 x = xy[0]  # - self.settings['dx']
                 y = xy[1]  # - self.settings['dy']
@@ -73,8 +66,17 @@ class Threader(object):
                     import traceback
                     self.logger.warning(traceback.format_exc())
 
+        self.jobs_done += finished_now
+        jobs_left = self.jobs_to_run - self.jobs_done
+        self.logger.info('ff: {} {} {}'.format(finished_now, self.jobs_done, jobs_left ))
+        self.logger.info('waiting: {}'.format(jobs_left))
+        self.logger.info('just finished: {}'.format(finished_now))
+        self.logger.info('failed: {}'.format(self.failed))
+        self.new_finished = bool(len(just_finished))
         time_so_far = int(time.time() - self.start_time)
+        #jobs_left = len(self.waiting)*self.chunk
         #jobs_done = self.jobs_to_run - jobs_left
+        #self.logger.info("qq: {} {}".format(jobs_left, jobs_done))
         if self.jobs_done:
             time_per_job = time_so_far / float(self.jobs_done)
         else:
@@ -123,17 +125,15 @@ class Threader(object):
         self.results = {}
         self.errors = {}
         self.chunk = 10
-        self.jobs_done = 0
         self.new_finished = False
+        self.jobs_done = 0
 
 
     def do(self, params, settings):
         self.jobs_to_run = len(params)
-        self.jobs_done = 0
         self.settings = settings
         self.params = params
-
-
+        self.jobs_done = 0
         selection = settings['selection']
         self.state_array = np.zeros(
             shape=(selection.height - 2 * settings['dy'],

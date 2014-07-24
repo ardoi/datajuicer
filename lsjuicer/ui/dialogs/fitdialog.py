@@ -158,6 +158,7 @@ class FitDialog(QW.QDialog):
     def stop(self):
         # when stop button is clicked
         self.timer.stop()
+        self.d.done()
         self.start_pb.setEnabled(True)
         self.stop_pb.setEnabled(False)
         self.close_pb.setEnabled(True)

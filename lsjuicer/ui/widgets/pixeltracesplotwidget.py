@@ -66,9 +66,9 @@ class PixelTracesPlotWidget(QW.QWidget):
         if self.plot_made:
             time_4_fit, trace, fit, x, y, res = self.get_time_trace_fit(selection)
             plot_number = self.plotnames[selection]
-            self.plot_widget.updatePlot('data %i'%(plot_number), trace,
+            self.plot_widget.updatePlot('data %i'% plot_number, trace,
                    time_4_fit, hold_update=True)
-            self.plot_widget.updatePlot('fit %i'%(plot_number), fit,
+            self.plot_widget.updatePlot('fit %i'% plot_number, fit,
                    time_4_fit, hold_update=True)
             #self.plot_widget.fitView()
             QC.QTimer.singleShot(5, self.plot_widget.updatePlots)
@@ -84,10 +84,10 @@ class PixelTracesPlotWidget(QW.QWidget):
             if roi not in self.plotnames:
                 time_4_fit, trace, fit,x,y,res = self.get_time_trace_fit(roi)
                 style={'color':'gray'}
-                self.plot_widget.addPlot('data %i'%(self.plotted),
+                self.plot_widget.addPlot('data %i'% self.plotted,
                        time_4_fit, trace, style)
                 style={'color':'red','size':3}
-                self.plot_widget.addPlot('fit %i'%(self.plotted),
+                self.plot_widget.addPlot('fit %i'% self.plotted,
                        time_4_fit,fit, style)
 
                 self.plotnames[roi] = self.plotted
