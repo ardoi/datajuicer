@@ -40,8 +40,14 @@ class PixelTracesPlotWidget(QW.QWidget):
         self.events_view.setModel(self.events_model)
         tables_layout.addWidget(self.selection_widget)
         tables_layout.addWidget(self.events_view)
+        self.save_trace_checkbox = QW.QCheckBox("Save trace")
+        tables_layout.addWidget(self.save_trace_checkbox)
+        tables_layout.setStretch(0,2)
+        tables_layout.setStretch(1,3)
+        tables_layout.setStretch(2,1)
         layout.setStretch(0, 2)
         layout.setStretch(1, 1)
+
         self.plot_made = False
         self.plotnames = {}
         self.plotted = 0
@@ -49,8 +55,8 @@ class PixelTracesPlotWidget(QW.QWidget):
     def get_time_trace_fit(self, selection):
         roiitem = selection.graphic_item
         rect = roiitem.rect()
-        y = rect.top()
-        x = rect.left()
+        y = int(rect.top())
+        x = int(rect.left())
 
         trace = self.pixpixw.imagedata.get_trace(self.pixpixw.coords,
                                                  self.pixpixw.dx, self.pixpixw.dy,
@@ -60,6 +66,10 @@ class PixelTracesPlotWidget(QW.QWidget):
         syn_data = tf.SyntheticData()
         syn_data.times = time_4_fit
         fit = syn_data.func_all(res_4_fit)
+        if self.save_trace_checkbox.isChecked():
+            import cPickle
+            with open("trace_x{}_y{}.dat".format(x,y),'w') as fout:
+                cPickle.dump((time_4_fit, trace, fit, x, y, res_4_fit), fout)
         return time_4_fit, trace, fit, x, y, res_4_fit
 
     def trace_plot_update(self, selection):
