@@ -165,14 +165,16 @@ class PixelByPixelTab(QW.QTabWidget):
 
     def load_analysis(self):
         if self.analysis.fitregions:
-            self.fit_result = self.analysis.fitregions[0].results[0]
             self.get_res()
 
     def get_res(self):
         results = {}
-        self.analyzer.make_result()
-        #session = dbmaster.get_session()
-        self.fit_result = self.analyzer.fit_result
+        if self.analysis.fitregions:
+            self.fit_result = self.analysis.fitregions[0].results[0]
+        else:
+            self.analyzer.make_result()
+            #session = dbmaster.get_session()
+            self.fit_result = self.analyzer.fit_result
         fitted_pixels = self.fit_result.pixels
         #print "get res", self.fit_result.region.width, self.fit_result.region.height
         results['width'] = self.fit_result.region.width - 2*self.fit_result.fit_settings['padding']
