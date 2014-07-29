@@ -3,7 +3,7 @@ import numpy
 from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
-
+from lsjuicer.inout.db.sqla import SyntheticData
 
 from lsjuicer.ui.widgets.plot_with_axes_widget import TracePlotWidget
 from lsjuicer.ui.items.selection import SelectionDataModel, SelectionWidget, FixedSizeSnapROIManager
@@ -63,7 +63,7 @@ class PixelTracesPlotWidget(QW.QWidget):
                                                  x, y)
         time_4_fit = numpy.arange(len(trace))
         res_4_fit = self.pixpixw.fit_result.get_fitted_pixel(x, y)
-        syn_data = tf.SyntheticData()
+        syn_data = SyntheticData()
         syn_data.times = time_4_fit
         fit = syn_data.func_all(res_4_fit)
         if self.save_trace_checkbox.isChecked():

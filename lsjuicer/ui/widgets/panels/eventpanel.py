@@ -1,13 +1,14 @@
 from PyQt5 import QtWidgets as QW
 
 from PyQt5 import QtCore as QC
+from lsjuicer.inout.db.sqla import SyntheticData
 
 from lsjuicer.ui.widgets.fileinfowidget import MyFormLikeLayout
 from lsjuicer.ui.widgets.clicktrees import EventClickTree, Events
 from actionpanel import ActionPanel
 from lsjuicer.ui.widgets.mergewidget import MergeDialog
 from lsjuicer.ui.widgets.deletewidget import DeleteDialog
-from lsjuicer.data.analysis.transient_find import SyntheticData
+
 
 class EventPanel(ActionPanel):
     __doc__ = """Event display panel"""

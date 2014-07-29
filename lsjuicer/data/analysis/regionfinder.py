@@ -247,8 +247,11 @@ def detect_overlapping_regions(regs):
                 #the snr of the first region
                 q = n.random.choice([-1,1])
                 one_snr += q
-            res[one] += max(0, cmp(one_snr, two[4]))
-            res[two] += max(0, cmp(two[4], one_snr))
+            #compare is -(-1) = 1 if "one" snr in smaller than than "two
+            #max(0, 1) is 1 so res[one] += 1 and res[two] += 0
+            compare = -cmp(one_snr, two[4])
+            res[one] += max(0, compare)
+            res[two] += max(0, -compare)
     good = defaultdict(list)
     #only regions which have len(res) - 1 as score have no overlaps
     #with higher scored regions and are kept. If none exist then len(res)-2

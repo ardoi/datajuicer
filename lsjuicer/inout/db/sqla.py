@@ -13,6 +13,8 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import relationship, backref
 from sqlalchemy.orm import joinedload
 
+from lsjuicer.data.analysis import fitfun as fitfun
+
 from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.static.constants import ImageStates
 import lsjuicer.data.analysis.transient_find as tf
@@ -690,7 +692,7 @@ class PixelFittedSyntheticImage(Image):
     @timeIt
     def make_image_data(self):
         print 'Making image data'
-        sd = tf.SyntheticData(self.result)
+        sd = SyntheticData(self.result)
         new_data = sd.get_fit()
         bl = sd.get_baseline()
         ch_data = [new_data, bl]
@@ -855,3 +857,96 @@ class MicroscopeImage(Image):
             rstr =  "::MicroscopeImage:: %s"%str_repr        #except TypeError:
         #    rstr = "::MicroscopeImage:: %s not in DB nor converted"%(self.file_name)
         return rstr
+
+
+class SyntheticData(object):
+
+    def __init__(self, result=None):
+        if result:
+            self.result = result
+            self.region = result.region
+            self.times = n.arange(int(self.region.frames))
+            #print 'times shape is', self.times.shape, self.region.frames
+            if self.region.width == 1:
+                self.linescan = True
+            else:
+                self.linescan = False
+        self.func = None
+        self.filter = None
+        #By default assume that filtering is done by Event id
+        self.filter_class = Event
+
+    def _zeros(self):
+        if self.linescan:
+            out = n.zeros(
+                (1, self.region.height, int(self.region.frames)), dtype='float')
+            #print 'out shape is', out.shape, self.region.frames
+        else:
+            out = n.zeros(
+                (self.region.frames, self.region.height, self.region.width), dtype='float')
+        return out
+
+    def _make_res(self):
+        out = self._zeros()
+        for res in self.result.pixels:
+            x = res.x
+            y = res.y
+            if not self.linescan:
+                out[:, y, x] = self.func(res)
+            else:
+                out[0, y, :] = self.func(res)
+        self.filter = None
+        self.func = None
+        return out
+
+    def func_fit(self, result):
+        f = n.zeros_like(self.times, dtype='float')
+        for i, t in enumerate(result.pixel_events):
+            if self.filter:
+                # skip pixelevents that are not part of any event
+                if self.filter_class is Event and t.event_id not in self.filter:
+                        continue
+                elif self.filter_class is PixelEvent and t.id not in self.filter:
+                        continue
+            res = fitfun.ff60(self.times, **t.parameters)
+            if True not in n.isnan(res):
+                f += res
+            else:
+                pass
+                #print "NAN for", t
+        return f
+
+    def func_baseline(self, result):
+        if result.baseline is None:
+            return n.array([n.nan]*self.times.size)
+        pf = n.poly1d(result.baseline)
+        baseline = pf(self.times)
+        return baseline
+
+    def func_all(self, result):
+        return self.func_fit(result) + self.func_baseline(result)
+
+    def get_fit(self):
+        self.func = self.func_fit
+        return self._make_res()
+
+    def get_events(self, filter):
+        self.func = self.func_fit
+        self.filter = filter
+        return self._make_res()
+
+    def get_events_by_eventid(self, filter):
+        self.filter_class = Event
+        return self.get_events(filter)
+
+    def get_events_by_pixeleventid(self, filter):
+        self.filter_class = PixelEvent
+        return self.get_events(filter)
+
+    def get_baseline(self):
+        self.func = self.func_baseline
+        return self._make_res()
+
+    def get_all(self):
+        self.func = self.func_all
+        return self._make_res()

@@ -14,7 +14,7 @@ def single(args):
     data = args['data']
     import lsjuicer.data.analysis.transient_find as tf
     try:
-        f = tf.fit_2_stage(data, min_snr=5.5)
+        f = tf.fit_2_stage(data, min_snr=4.00)
         error = None
     except:
         import traceback
