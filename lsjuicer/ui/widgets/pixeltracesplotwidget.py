@@ -69,7 +69,8 @@ class PixelTracesPlotWidget(QW.QWidget):
         if self.save_trace_checkbox.isChecked():
             import cPickle
             with open("trace_x{}_y{}.dat".format(x,y),'w') as fout:
-                cPickle.dump((time_4_fit, trace, fit, x, y, res_4_fit), fout)
+                for item in (time_4_fit, trace, fit, x, y, res_4_fit):
+                    cPickle.dump(item, fout)
         return time_4_fit, trace, fit, x, y, res_4_fit
 
     def trace_plot_update(self, selection):

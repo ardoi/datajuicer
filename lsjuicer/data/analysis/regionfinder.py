@@ -149,17 +149,17 @@ def _filter_ridge_lines2(cwt, ridge_lines, window_size=None, min_length=None,
 def find_first_max(vec_in):
     """find the first local maximum in a vector"""
     i = 0
-    threshold = 1.05#peak cannot be more than treshold x neighbour value
-#    vec_in = nd.uniform_filter(vec_in, 5)
+    threshold = 1.1#peak cannot be more than treshold x neighbour value
+    #vec_in = nd.uniform_filter(vec_in, 5)
     vec = n.diff(vec_in)
     remembered = None
     while i<len(vec)-2:
         if vec[i]>0 and vec[i]*vec[i+1]<0:
             check = []
-            check.append(vec[i]/vec[i+1])
-            if i>0:
-                check.append(vec[i]/vec[i-1])
-            if min(check)<threshold:
+            check.append(vec_in[i+1]/vec_in[i+2])
+            check.append(vec_in[i+1]/vec_in[i])
+            print check,i
+            if max(check)<threshold:
                 return i + 1
             else:
                 #we want the peak not to be more than 5% of neighbours
@@ -168,7 +168,7 @@ def find_first_max(vec_in):
                 #if it turns out that it is the only maximum then
                 #still want to return it
                 remembered = i+1
-                continue
+                #continue
         i+=1
     if not remembered:
         i = 0
@@ -196,7 +196,7 @@ def find_peaks_cwt2(vector, widths, min_snr=1):
     cwt_dat = cwt_dat_all[:,vector.size/pad:vector.size/pad+vector.size]
     ridge_lines = ss._peak_finding._identify_ridge_lines(cwt_dat, max_distances, gap_thresh)
     min_length = 5
-
+    #print ridge_lines
     #filtered = ss._peak_finding._filter_ridge_lines(cwt_dat, ridge_lines, min_snr=min_snr)
     filtered = _filter_ridge_lines2(cwt_dat, ridge_lines, min_snr=min_snr, min_length=min_length)
     #if pad:

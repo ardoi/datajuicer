@@ -101,6 +101,7 @@ class Threader(object):
         self.logger = logger.get_logger(__name__)
         try:
             self.client = parallel.Client()
+            self.logger.info("Cluster running already. Connecting")
         except (IOError, parallel.error.TimeoutError):
             self.logger.warn("No cluster running. Trying to start")
             timeout = 10 #how long to wait for cluster to become available. IPython default is 30
@@ -156,8 +157,13 @@ class Threader(object):
                 self.logger.info("time per job={}".format(av_time))
                 self.logger.info("time per job (actual)={}".format(av_time*self.slots))
             if self.runner:
+                self.logger.info("Shutting down cluster")
                 #self.client.shutdown(hub=True)
-                self.runner.terminate()
+                res = self.runner.terminate()
+                if res:
+                    self.logger.info("Cluster terminated")
+                else:
+                    self.logger.error("Problem shutting down cluster")
                 self.runner = None
 
 
