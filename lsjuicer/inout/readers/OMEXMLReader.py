@@ -204,10 +204,12 @@ class OMEXMLReader(AbstractReader):
         self.active_type = image_type
         if not self.metadata_loaded:
             self.read_meta()
+        self.active_type = image_type
         if self.images[image_type]:
             #print self.images[image_type]["ImageData"]
             if self.images[image_type]["ImageData"]  is None:
                 self._get_image_data(image_type)
+        self.active_type = image_type
 
 
     def _get_image_data(self, image_type):
@@ -251,8 +253,6 @@ class OMEXMLReader(AbstractReader):
                 #print 'im',image_data
             elif self.bintagname == "TiffData":
                 ifd = int(bin_attrib["IFD"])
-                #print ifd
-                #print self.pil_image
                 self.pil_image.seek(ifd)
                 image_data = numpy.array(self.pil_image.getdata(),'float')
             #Need to read image dimension from PixelAttribute as they are different for different image types
