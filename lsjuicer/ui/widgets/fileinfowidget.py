@@ -729,15 +729,17 @@ class ReferencePlot(QW.QWidget):
             try:
                 reference_imdata = reference_data["ImageData"]
                 roi_data = reference_data["ROI"]
-                self.xvals,self.yvals = reference_imdata[0].shape
-                self.pc.set_source_data(reference_imdata[0])
+                self.xvals,self.yvals = reference_imdata[0][0].shape
+                self.pc.set_source_data(reference_imdata)
                 self.pc.update_pixel_size(microscope_image.get_pixel_size("Reference"))
                 if self.vis_widget:
                     self.vis_widget.update_pipechain(self.pc)
-                    #self.vis_widget.do_histogram(pc)
+                    #self.vis_widget.do_histogram(self.pc)
                 self.roi_data = roi_data
                 self.make_new_pixmap(force=True)
             except:
+                import traceback
+                traceback.print_exc()
                 pass
 
     def show_vis_options_dialog(self):

@@ -193,8 +193,8 @@ class OMEXMLReader(AbstractReader):
             if roi_element is not None:
                 roi_attrib = roi_element.attrib
                 #print roi_attrib
-                roi = {"x2":float(roi_attrib["X2"]),"x1":float(roi_attrib["X1"]),
-                        "y2":float(roi_attrib["Y2"]), "y1":float(roi_attrib["Y1"])}
+                roi = {"y2":float(roi_attrib["X2"]),"y1":float(roi_attrib["X1"]),
+                        "x2":float(roi_attrib["Y2"]), "x1":float(roi_attrib["Y1"])}
                 images["Reference"]["ROI"] = roi
             else:
                 images["Reference"]["ROI"] = None
