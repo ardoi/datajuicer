@@ -7,6 +7,7 @@ from lsjuicer.static.constants import Constants
 from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
+from lsjuicer.data.imagedata import ImageDataLineScan, ImageDataFrameScan
 
 from lsjuicer.ui.widgets.panels import PipeChainPanel
 from lsjuicer.ui.widgets.panels import VisualizationPanel
@@ -161,8 +162,15 @@ class AnalysisImageTab(QW.QWidget):
         self.frame_widget.frame_changed.connect(self.change_frame)
         self.frame_widget.channel_changed.connect(self.change_channel)
         self.frame_widget.channel_changed.connect(self.vis_widget.channel_change)
+        if isinstance(data, ImageDataLineScan):
+            dx = data.delta_time
+            dy = data.delta_time
+        elif isinstance(data, ImageDataFrameScan):
+            pass
+        self.image_plot.set_pixel_sizes(dx, dy)
         #make sure other widgets are drawn before making pixmap
         QC.QTimer.singleShot(0,lambda: self.make_new_pixmap())
+
 
     def change_channel(self, channel):
         self.force_new_pixmap()

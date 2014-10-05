@@ -27,6 +27,7 @@ class AxisWidget(QW.QWidget):
         #    self.min_limit += 20
         self.my_init()
         super(AxisWidget, self).__init__(parent)
+
     @property
     def label_space(self):
         if self.label:
@@ -60,6 +61,7 @@ class AxisWidget(QW.QWidget):
         if self.base_min is not None:
             self.pixels_shifted = -(minimum - self.base_min)/self.pixel_size
         self.repaint()
+
 
     @property
     def tick_count(self):
@@ -103,10 +105,10 @@ class AxisWidget(QW.QWidget):
                 if 1:
                     if isinstance(self, HorizontalAxisWidget):
                         label_val = self.parent().scene2data(
-                            [label_val_on_scene, 0]).x()
+                            [label_val_on_scene, 0]).x()*self.parent().pix_size_x
                     elif isinstance(self, VerticalAxisWidget):
                         label_val = self.parent().scene2data(
-                            [0, label_val_on_scene]).y()
+                            [0, label_val_on_scene]).y()*self.parent().pix_size_y
                 # except (ValueError, IndexError, AttributeError):
                 #    print 'error'
                 #    pass

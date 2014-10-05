@@ -44,6 +44,13 @@ class PlotWithAxesWidget(QW.QWidget):
         self.Hlines = {Constants.EVENTS: [], Constants.GAPS: []}
         self.measure_roi_manager = MeasureLineManager(self.fscene,
                                  selection_types.data['imagetab.pseudolinescan'])
+        self.pix_size_x = 1.0
+        self.pix_size_y = 1.0
+
+    def set_pixel_sizes(self, dx, dy):
+        #make dx in seconds
+        self.pix_size_x = dx/1000.
+        self.pix_size_y = dy
 
     def addHLines(self, locs, linetype, color='lime'):
         # check if there is anything to add first
@@ -345,7 +352,7 @@ class PlotWithAxesWidget(QW.QWidget):
             # self.emit(QC.SIGNAL('updateLocation(float, float, float, float)'), \
             #    p.x(),p.y(),x,y)
             try:
-                self.updateLocation.emit(p.x(), p.y(), x, y)
+                self.updateLocation.emit(p.x()*self.pix_size_x, p.y()*self.pix_size_y, x, y)
             except:
                 pass
 

@@ -285,6 +285,8 @@ class OMEXMLReader(AbstractReader):
         try:
             self._get_typespecific_extra_info()
         except:
+            import traceback
+            traceback.print_exc()
             pass
 
 
