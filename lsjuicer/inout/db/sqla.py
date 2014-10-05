@@ -17,7 +17,6 @@ from lsjuicer.data.analysis import fitfun as fitfun
 
 from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.static.constants import ImageStates
-import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.inout.readers.OMEXMLReader import LSMReader, OIBReader, VTITIFReader
 from lsjuicer.util.helpers import timeIt
 
