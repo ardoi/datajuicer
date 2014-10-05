@@ -470,11 +470,14 @@ class SelfRatioPipe(SingleChannelProcessPipe):
 
     def do_processing(self,channel):
         d = self.data_in[channel]
-        array_for_mean = d[:,
+        array_for_mean = d[:,:,
                 self.values['Start']:self.values['Start']+self.values['Lines']]
-        means = array_for_mean.mean(axis=1)
-        means_array = n.column_stack((means,)*d.shape[1])
-        q = self.data_in/means_array
+        means = array_for_mean.mean(axis=2)
+        means_array = n.column_stack((means,)*d.shape[2])
+        #have to reshape with Fortran ordering to get the correct data
+        means_array = means_array.reshape(d.shape, order = 'F')
+        #FIXME 100 is to make histogram look nice
+        q = self.data_in/means_array*100
         self.selection=None
         self.roi_manager.remove_selections()
         self.roi_manager.disable_builder()
