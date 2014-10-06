@@ -86,7 +86,7 @@ class MeasureLineItem(QW.QGraphicsLineItem):
             lines = 3
             extra_padding = 0.5
             multiplier = lines + extra_padding
-            rec = view.mapToScene(QC.QRect(0, 0, 200, multiplier * line_height)).boundingRect()
+            rec = view.mapToScene(QC.QRect(0, 0, 250, multiplier * line_height)).boundingRect()
             #make sure info box does not go out of the scene
             if loc.x() + rec.width() > scene_r.right():
                 over = loc.x() + rec.width() - scene_r.right()
@@ -129,8 +129,8 @@ class MeasureLineItem(QW.QGraphicsLineItem):
             p2 = r.p2()
             info_string = format_string.format(p1.x(), p1.y(),
                                                p2.x(), p2.y(),
-                                               - (p2.x() - p1.x()),
-                                               p2.y() - p1.y())
+                                               abs(p2.x() - p1.x()),
+                                               abs(p2.y() - p1.y()))
             self.info_text.setHtml(info_string)
             if emit:
                 self.sender.selection_changed.emit()
