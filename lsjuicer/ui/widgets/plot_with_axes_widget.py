@@ -14,8 +14,9 @@ from lsjuicer.ui.widgets.axiswidget import VerticalAxisWidget, HorizontalAxisWid
 from lsjuicer.ui.plot.plotteddata import PlottedData
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import timeIt
-from lsjuicer.ui.items.selection import SelectionWidget, MeasureLineManager, SnapROIManager
+from lsjuicer.ui.items.selection import MeasureLineManager, MeasureROIManager
 from lsjuicer.static import selection_types
+from lsjuicer.data.imagedata import ImageDataLineScan, ImageDataFrameScan
 
 class PlotWithAxesWidget(QW.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
@@ -42,14 +43,24 @@ class PlotWithAxesWidget(QW.QWidget):
         # fill view by default
         self.aspect_ratio = QC.Qt.IgnoreAspectRatio
         self.Hlines = {Constants.EVENTS: [], Constants.GAPS: []}
-        self.measure_roi_manager = MeasureLineManager(self.fscene,
-                                 selection_types.data['imagetab.pseudolinescan'])
+        self.measure_line_manager = MeasureLineManager(self.fscene,
+                                 selection_types.data['imagetab.pseudolinescan'], self)
+        self.measure_roi_manager = MeasureROIManager(self.fscene,
+                                 selection_types.data['imagetab.pseudolinescan'], self)
         self.pix_size_x = 1.0
         self.pix_size_y = 1.0
 
+    def set_imagedata(self, imdata):
+        if isinstance(imdata, ImageDataLineScan):
+            #make dx in seconds
+            dx = imdata.delta_time/1000.
+            dy = imdata.delta_time
+        elif isinstance(imdata, ImageDataFrameScan):
+            pass
+        self.set_pixel_sizes(dx, dy)
+
     def set_pixel_sizes(self, dx, dy):
-        #make dx in seconds
-        self.pix_size_x = dx/1000.
+        self.pix_size_x = dx
         self.pix_size_y = dy
 
     def addHLines(self, locs, linetype, color='lime'):
@@ -167,8 +178,10 @@ class PlotWithAxesWidget(QW.QWidget):
             QG.QIcon(":/arrow_right.png"), "Fit width")
         fit_height_action = fit_menu.addAction(
             QG.QIcon(":/arrow_up.png"), "Fit height")
-        measure_action = menu.addAction(QG.QIcon(":/ruler.png"), "Measure")
-        measure_action.setCheckable(True)
+        measure_roi_action = menu.addAction(QG.QIcon(":/shape_handles.png"), "Measure area")
+        measure_roi_action.setCheckable(True)
+        measure_line_action = menu.addAction(QG.QIcon(":/ruler.png"), "Measure line")
+        measure_line_action.setCheckable(True)
         help_action = menu.addAction(QG.QIcon(":/help.png"), "Help")
         action_toolbutton.setMenu(menu)
         self.menu = menu
@@ -176,7 +189,8 @@ class PlotWithAxesWidget(QW.QWidget):
 
         reset_zoom_action.triggered.connect(self.fV.reset_zoom)
         reset_zoom_action.setEnabled(False)
-        measure_action.toggled.connect(self.measure)
+        measure_roi_action.toggled.connect(self.measure_roi)
+        measure_line_action.toggled.connect(self.measure_line)
         self.reset_zoom_action = reset_zoom_action
 
         fit_width_action.triggered.connect(
@@ -269,15 +283,23 @@ class PlotWithAxesWidget(QW.QWidget):
         self.fscene.setLocation.connect(self.updateCoords)
         QW.QApplication.processEvents()
 
-    def measure(self, state):
-        print "Measure",state
+    def measure_line(self, state):
+        print "Measure line",state
+        if state:
+            #disable move
+            self.measure_line_manager.activate_builder(0)
+        else:
+            self.measure_line_manager.remove_selections()
+            self.measure_line_manager.disable_builder()
+
+    def measure_roi(self, state):
+        print "Measure area",state
         if state:
             #disable move
             self.measure_roi_manager.activate_builder(0)
         else:
             self.measure_roi_manager.remove_selections()
             self.measure_roi_manager.disable_builder()
-
 
 
     def zoom_level_changed(self, h_zoom, v_zoom):

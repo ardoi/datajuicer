@@ -13,7 +13,6 @@ from lsjuicer.static.constants import Constants
 from lsjuicer.ui.widgets.analysiswidget import AnalysisWidget
 from lsjuicer.ui.widgets.smallwidgets import Tasker
 from lsjuicer.data.models.datamodels import MyFileSystemModel, RandomDataModel, MyProxyModel, MyFileIconProvider
-from lsjuicer.ui.views.dataviews import CopyTableView
 
 from lsjuicer.data.imagedata import ImageDataMaker
 
@@ -356,10 +355,6 @@ class MainUI(QW.QMainWindow):
         file_table_and_reference_layout.addWidget(self.tview)
         file_pick_layout.addLayout(file_action_layout)
         #infogroup = QG.QGroupBox("Experiment Info")
-        expinfo_pb = QW.QPushButton("Change info")
-        expinfo_pb.clicked.connect(self.expinfo_pb_clicked)
-        expinfo_pb.setEnabled(False)
-        self.expinfo_pb = expinfo_pb
 
         analyses_widget = AnalysesInfoWidget()
 
@@ -371,10 +366,12 @@ class MainUI(QW.QMainWindow):
         self.analyses_widget = analyses_widget
         self.reference_plot_widget = reference_plot_widget
 
+        self.expinfo_widget = ExpInfoWidget(self)
+        self.expinfo_widget.update_results.connect(self.db_data_update)
 
         edit_and_analyze_layout = QW.QHBoxLayout()
         file_pick_layout.addLayout(edit_and_analyze_layout)
-        edit_and_analyze_layout.addWidget(expinfo_pb)
+        edit_and_analyze_layout.addWidget(self.expinfo_widget)
         edit_and_analyze_layout.addWidget(analyses_widget)
         edit_and_analyze_layout.addStretch()
 
@@ -421,21 +418,6 @@ class MainUI(QW.QMainWindow):
         self.location_label.setText('Location: <b>%s</b>'%folder_name)
         QC.QTimer.singleShot(0,self.dosort)
 
-    def expinfo_pb_clicked(self):
-        expinfo_widget = ExpInfoWidget(self)
-        expinfo_widget.update_results.connect(self.db_data_update)
-        expinfo_widget.set_image(self.active_image)
-        qh = QW.QDialog(self)
-        expinfo_widget.close.connect(qh.accept)
-        layout = QW.QHBoxLayout(qh)
-        layout.addWidget(expinfo_widget)
-        qh.setWindowTitle('Change experimental info')
-        #qh.setFixedWidth(450)
-        #qh.setFixedHeight(300)
-        qh.setLayout(layout)
-        #self.qh.show()
-        if qh.exec_():
-            expinfo_widget.update_results.disconnect(self.db_data_update)
 
     def new_file_selection(self, index):
         print 'new selection',index
@@ -529,7 +511,8 @@ class MainUI(QW.QMainWindow):
             self.reference_plot_widget.set_image(toshow[0])
             self.active_image = toshow[0]
             self.analyses_widget.set_image(toshow[0])
-            self.expinfo_pb.setEnabled(True)
+            self.expinfo_widget.set_image(self.active_image)
+            self.expinfo_widget.setEnabled(True)
 
 
     def showMessageplz(self,txt):

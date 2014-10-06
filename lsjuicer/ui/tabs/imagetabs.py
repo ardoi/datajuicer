@@ -8,6 +8,7 @@ from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
 from lsjuicer.data.pipes.tools import PipeChain
 from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 from lsjuicer.data.imagedata import ImageDataLineScan, ImageDataFrameScan
+from lsjuicer.util.current import current
 
 from lsjuicer.ui.widgets.panels import PipeChainPanel
 from lsjuicer.ui.widgets.panels import VisualizationPanel
@@ -100,6 +101,10 @@ class AnalysisImageTab(QW.QWidget):
     def active_frame(self):
         return self.frame_widget.active_frame
 
+    @property
+    def current_data(self):
+        return self.pipechain.get_result_data()[self.active_channel][self.active_frame].astype('float')
+
     def force_new_pixmap(self, v = None):
         self.make_new_pixmap(force = True)
 
@@ -116,6 +121,7 @@ class AnalysisImageTab(QW.QWidget):
         #qmb.show()
         channel = self.active_channel
         frame = self.active_frame
+        current.set_displayed(self.current_data)
         pixmaker = self.pixmaker
         QC.QTimer.singleShot(0,lambda:
                 pixmaker.makeImage(channel=channel,frame = frame, image_settings=settings, force=force))
@@ -162,12 +168,7 @@ class AnalysisImageTab(QW.QWidget):
         self.frame_widget.frame_changed.connect(self.change_frame)
         self.frame_widget.channel_changed.connect(self.change_channel)
         self.frame_widget.channel_changed.connect(self.vis_widget.channel_change)
-        if isinstance(data, ImageDataLineScan):
-            dx = data.delta_time
-            dy = data.delta_time
-        elif isinstance(data, ImageDataFrameScan):
-            pass
-        self.image_plot.set_pixel_sizes(dx, dy)
+        self.image_plot.set_imagedata(data)
         #make sure other widgets are drawn before making pixmap
         QC.QTimer.singleShot(0,lambda: self.make_new_pixmap())
 

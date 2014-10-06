@@ -11,6 +11,7 @@ from boundary import BoundaryItem
 from line import LineItem
 from measure_line import MeasureLineItem
 from snaproi import SnapROIItem
+from measureroi import MeasureROIItem
 
 from lsjuicer.util.helpers import round_point, floor_point_x
 
@@ -563,6 +564,7 @@ class MeasureLine(Selection):
         r = self.graphic_item.line()
         n = self._name+": dx=%i dy=%i length=%i"%(abs(r.dx()), abs(r.dy()),r.length())
         return n
+
     def __init__(self, start_point, scene_rect, selection_type, number):
         super(MeasureLine, self).__init__(None)
         print 'making MeasureLine with', start_point, scene_rect
@@ -591,6 +593,28 @@ class ROI(Selection):
         self.number = number
 
 
+class MeasureROI(Selection):
+    @property
+    def name(self):
+        r = self.graphic_item.rect()
+        return self._name+": h=%i w=%i"%(r.height(), r.width())
+
+    """Selection with size in x and y"""
+    def __init__(self, start_point, scene_rect, selection_type, number, size=None):
+        print 'making MeasureROI with', start_point, scene_rect
+
+        super(MeasureROI, self).__init__(None)
+        if not start_point:
+            self.rectf = scene_rect
+        else:
+            round_point(start_point)
+            end_point = start_point + QC.QPointF(1, 1)
+            self.rectf = QC.QRectF(start_point, end_point)
+        self.selection_type = selection_type
+        self.graphic_item  = MeasureROIItem(selection_type, number, parent=self.rectf,size=size)
+        self.graphic_item.sender.selection_changed.connect(self.selection_changed)
+        self._name = "MeasureROI"
+
 class SnapROI(Selection):
     @property
     def name(self):
@@ -609,7 +633,7 @@ class SnapROI(Selection):
             end_point = start_point + QC.QPointF(1, 1)
             self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
-        self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf,size=size)
+        self.graphic_item  = SnapROIItem(selection_type, number, parent=self, size=size)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
         #self.name = selection_type.name
         #self.number = number
@@ -769,6 +793,10 @@ class SelectionManager(QC.QObject):
 
     def sub_init(self):
         pass
+
+class MeasureROIManager(SelectionManager):
+    def sub_init(self):
+        self.selection_class = MeasureROI
 
 class MeasureLineManager(SelectionManager):
     def sub_init(self):
