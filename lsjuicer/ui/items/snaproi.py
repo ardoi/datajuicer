@@ -6,7 +6,7 @@ from PyQt5 import QtCore as QC
 
 from lsjuicer.static.constants import Constants
 from lsjuicer.util.helpers import SenderObject
-from lsjuicer.util.helpers import floor_point_x,floor_rect_x
+from lsjuicer.util.helpers import floor_point_x
 
 class SnapROIItem(QW.QGraphicsRectItem):
 
@@ -15,20 +15,9 @@ class SnapROIItem(QW.QGraphicsRectItem):
         self.active = False
         self.pen = selection_type.appearance.pen
         self.sender = SenderObject()
-#        self.pen= QG.QPen(QC.Qt.SolidLine)
-#        self.pen.setWidth(4)
-        #self.pen.setColor(QC.Qt.white)
-#        self.pen_color = QG.QColor(selection_type.colorname)
-#        self.pen.setColor(self.pen_color)
-
- #       self.pen.setCosmetic(True)
- #       self.pen.setJoinStyle(QC.Qt.MiterJoin)
         self.active_pen = selection_type.appearance.active_pen
         self.state_colors=selection_type.appearance.state_colors
         self.setPen(self.pen)
-#        self.setBrush(QC.Qt.white)
-      #  self.setAcceptHoverEvents(True)
-        #self.setFlag(QGraphicsItem.ItemSendsGeometryChanges)
         self.setZValue(2)
         self.state = Constants.move
         self.maxResizeDistance = 50
