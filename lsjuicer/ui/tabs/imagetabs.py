@@ -73,7 +73,10 @@ class AnalysisImageTab(QW.QWidget):
         self.setLayout(layout)
         self.image_plot =self.makePlotArea()
         self.image_plot.updateLocation.connect(self.updateCoords)
-        layout.addWidget(self.image_plot)
+        splitter = QW.QSplitter()
+        splitter.setOrientation(QC.Qt.Vertical)
+        layout.addWidget(splitter)
+        splitter.addWidget(self.image_plot)
 
         panels = Panels()
         panels.add_panel("Default", PipeChainPanel)
@@ -82,9 +85,11 @@ class AnalysisImageTab(QW.QWidget):
         panels.add_panel("Default", AnalysisPanel)
         panels.add_panel("Analysis", EventPanel)
         self.control_widget = ControlWidget(panels)
-        layout.addWidget(self.control_widget)
-        layout.setStretchFactor(self.image_plot, 5)
-        layout.setStretchFactor(self.control_widget, 1)
+        splitter.addWidget(self.control_widget)
+        splitter.setStretchFactor(0,5)
+        splitter.setStretchFactor(1,1)
+        #layout.setStretchFactor(self.image_plot, 5)
+        #layout.setStretchFactor(self.control_widget, 1)
 
     def __del__(self):
         self.sess.commit()

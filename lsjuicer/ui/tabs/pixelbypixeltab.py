@@ -69,8 +69,6 @@ class PixelByPixelTab(QW.QTabWidget):
 
 
     def set_info_text(self):
-        print self.status
-        print self.settings_text()
         text = self.settings_text() + "<br><br>" + self.status
         self.info_widget.setHtml(text)
 
@@ -161,6 +159,8 @@ class PixelByPixelTab(QW.QTabWidget):
         plots_layout.addWidget(self.plot_widget)
         plots_layout.addWidget(self.pixel_trace_widget)
         layout.addLayout(plots_layout)
+        layout.setStretch(0, 1)
+        layout.setStretch(1, 2)
         self.load_analysis()
 
     def load_analysis(self):
