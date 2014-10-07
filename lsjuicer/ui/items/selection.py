@@ -633,7 +633,7 @@ class SnapROI(Selection):
             end_point = start_point + QC.QPointF(1, 1)
             self.rectf = QC.QRectF(start_point, end_point)
         self.selection_type = selection_type
-        self.graphic_item  = SnapROIItem(selection_type, number, parent=self, size=size)
+        self.graphic_item  = SnapROIItem(selection_type, number, parent=self.rectf, size=size)
         self.graphic_item.sender.selection_changed.connect(self.selection_changed)
         #self.name = selection_type.name
         #self.number = number
