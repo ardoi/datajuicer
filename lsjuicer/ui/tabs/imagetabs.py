@@ -86,7 +86,7 @@ class AnalysisImageTab(QW.QWidget):
         panels.add_panel("Analysis", EventPanel)
         self.control_widget = ControlWidget(panels)
         splitter.addWidget(self.control_widget)
-        splitter.setStretchFactor(0,5)
+        splitter.setStretchFactor(0,6)
         splitter.setStretchFactor(1,1)
         #layout.setStretchFactor(self.image_plot, 5)
         #layout.setStretchFactor(self.control_widget, 1)
