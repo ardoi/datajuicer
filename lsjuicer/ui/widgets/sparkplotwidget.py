@@ -4,6 +4,8 @@ from PyQt5 import QtGui as QG
 from PyQt5 import QtWidgets as QW
 
 
+from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
+
 class SparkFluorescencePlotWidget(PixmapPlotWidget):
 
     def __init__(self, *args, **kwargs):

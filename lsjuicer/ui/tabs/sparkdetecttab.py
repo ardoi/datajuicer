@@ -6,14 +6,15 @@ from PyQt5 import QtWidgets as QW
 import numpy
 
 from lsjuicer.data.pipes.tools import PipeChain
-from lsjuicer.data.data import PixmapMaker
+from lsjuicer.ui.plot.pixmapmaker import PixmapMaker
 from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
-from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget, SparkFluorescencePlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import PixmapPlotWidget
+from lsjuicer.ui.widgets.sparkplotwidget import SparkFluorescencePlotWidget
 from lsjuicer.util import helpers
 from lsjuicer.ui.scenes import FDisplay
 from lsjuicer.data.spark import SparkData
 from lsjuicer.ui.tabs.resulttab import SparkResultsWidget
-from lsjuicer.data.data import ImageDataMaker
+from lsjuicer.data.imagedata import ImageDataMaker
 from lsjuicer.ui.widgets.smallwidgets import VisualizationOptionsWidget
 from lsjuicer.inout.db.sqlbase import dbmaster
 from lsjuicer.inout.db.sqla import SearchRegion, Spark
@@ -233,11 +234,11 @@ class SparkDetectTab(QW.QTabWidget):
         self.load_saved = False
 
         self.search_region = None
-        for search_region in self.analysis.searchregions:
-            if search_region.check_coords(self.coords):
-                self.load_saved = True
-                self.search_region = search_region
-                break
+        #for search_region in self.analysis.searchregions:
+        #    if search_region.check_coords(self.coords):
+        #        self.load_saved = True
+        #        self.search_region = search_region
+        #        break
 
 
         self.imagedata = ImageDataMaker.from_imagedata(imagedata, cut=(l, r, b, t))

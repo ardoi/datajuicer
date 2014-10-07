@@ -8,7 +8,8 @@ from PyQt5 import QtWidgets as QW
 
 import numpy as n
 
-from lsjuicer.ui.widgets.plot_with_axes_widget import PlotWidget, SparkFluorescencePlotWidget
+from lsjuicer.ui.widgets.plot_with_axes_widget import PlotWithAxesWidget
+from lsjuicer.ui.widgets.sparkplotwidget import SparkFluorescencePlotWidget
 from lsjuicer.ui.scenes import FDisplay
 from lsjuicer.ui.items.selection import BoundaryManager
 from lsjuicer.static.constants import TransientBoundarySelectionTypeNames as TBSTN
@@ -436,7 +437,7 @@ class SparkTab(QW.QTabWidget):
         select_and_result_layout.addWidget(results_groupbox, 0, QC.Qt.AlignHCenter)
         select_and_result_layout.addStretch()
 
-        self.sparkplot = PlotWidget(self)
+        self.sparkplot = PlotWithAxesWidget(self)
 
 
         spark_plot_layout = QW.QGridLayout()

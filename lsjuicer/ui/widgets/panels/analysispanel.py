@@ -14,6 +14,8 @@ from lsjuicer.data.imagedata import ImageDataLineScan
 from lsjuicer.ui.tabs.autofittransienttab import AutoFitTransientTab
 from lsjuicer.data.imagedata import ImageDataMaker
 from lsjuicer.data.pipes.tools import PipeChain
+from lsjuicer.ui.tabs.sparktab import SparkTab
+from lsjuicer.ui.tabs.sparkdetecttab import SparkRegionsTab
 
 class AnalysisPanel(ActionPanel):
     __doc__ = """Choose analysis mode"""
@@ -130,14 +132,12 @@ class AnalysisPanel(ActionPanel):
                                            self.analysis,
                                            parent = self.parentwidget.aw)
         elif self.analysis_mode == "Sparks":
-            pass
-            #fltab = SparkTab(selections_by_type_name, self.imagedata, self)
+            next_tab = SparkTab(selections_by_type_name,idata, self)
 
         elif self.analysis_mode == "SparkDetect":
-            pass
             #idata = ImageDataMaker.from_imagedata(self.imagedata)
             #idata.replace_channel(self.pipechain.get_result_data())
-            #next_tab = SparkRegionsTab(selections_by_type_name, idata, self.analysis, self)
+            next_tab = SparkRegionsTab(selections_by_type_name, idata, self.analysis, self)
         elif self.analysis_mode == "PseudoLineScan":
             from lsjuicer.ui.tabs.imagetabs import AnalysisImageTab
             next_tab = AnalysisImageTab(parent=self.parentwidget.aw)
