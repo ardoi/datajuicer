@@ -155,8 +155,13 @@ class OMEXMLReader(AbstractReader):
                 image_stuff["PixelAttributes"] = pixel.attrib
                 if pixel.attrib["SizeX"] == pixel.attrib["SizeY"] and int(pixel.attrib['SizeT'])==1:
                     #assume that a square image is the reference image
-                    #FIXME
-                    image_type = "Reference"
+                    #assume that a square image is the reference image
+                    #if there is just 1 image then it can't be reference image
+                    #and we'll take it as the pixel image instead
+                    if len(pixels) > 1:
+                        image_type = "Reference"
+                    else:
+                        image_type = "Pixels"
                 else:
                     image_type = "Pixels"
                 break #because there should only be one Pixel element in an Image tag
@@ -172,7 +177,6 @@ class OMEXMLReader(AbstractReader):
                 self.image_step_y = float(pix_attr['PhysicalSizeX'])
             except KeyError:
                 self.image_step_y = 1.0
-        #pprint(images)
         self.images = images
         self.image_name = images["Pixels"]["Attributes"]["Name"]
         date = image_elements[0].find(self.fulltags["AcquisitionDate"]).text
