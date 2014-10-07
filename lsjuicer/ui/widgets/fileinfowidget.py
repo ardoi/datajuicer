@@ -341,7 +341,7 @@ class ResultDataModel(QC.QAbstractTableModel):
 class AnalysesDataModel(QC.QAbstractTableModel):
     def __init__(self, parent=None):
         super(AnalysesDataModel, self).__init__(parent)
-        self.columns = 2
+        self.columns = 4
         self.analyses = None
 
     def rowCount(self, parent):
@@ -360,6 +360,10 @@ class AnalysesDataModel(QC.QAbstractTableModel):
                     return "Type"
                 elif section == 1:
                     return "Info"
+                elif section == 2:
+                    return "ID"
+                elif section == 3:
+                    return "Data"
             else:
                 return section+1
         else:
@@ -375,6 +379,14 @@ class AnalysesDataModel(QC.QAbstractTableModel):
                 return str(res.__class__.__tablename__)
             elif col == 1:
                 return str(res)
+            elif col == 2:
+                return str(res.id)
+            elif col == 3:
+                fmt = '%Y-%m-%d %H:%M:%S'
+                if res.date:
+                    return res.date.strftime(fmt)
+                else:
+                    return QC.QVariant()
         elif role==QC.Qt.TextAlignmentRole:
             return QC.Qt.AlignCenter
         else:

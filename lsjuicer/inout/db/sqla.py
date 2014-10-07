@@ -20,6 +20,9 @@ from lsjuicer.static.constants import ImageStates
 from lsjuicer.inout.readers.OMEXMLReader import LSMReader, OIBReader, VTITIFReader
 from lsjuicer.util.helpers import timeIt
 
+import inflect
+ieng = inflect.engine()
+
 class ReaderFactory(object):
     readers = {('LSM','lsm'):LSMReader, ('OIB','oib'):OIBReader, ('OIF','oif'):OIBReader, ('TIF','tif'):VTITIFReader}
     @staticmethod
@@ -206,7 +209,8 @@ class SparkAnalysis(Analysis):
         'polymorphic_identity':'spark_analysis'
     }
     def __str__(self):
-        return "%i sparks"%(sum([el.spark_count() for el in self.searchregions]))
+        sparks = sum([el.spark_count() for el in self.searchregions])
+        return "%i %s"%(sparks, ieng.plural("spark", sparks))
 
 class TransientAnalysis(Analysis):
     __tablename__ = "transient_analyses"
@@ -214,6 +218,9 @@ class TransientAnalysis(Analysis):
     __mapper_args__ = {
         'polymorphic_identity':'transient_analysis'
     }
+    def __str__(self):
+        return "%i %s"%(len(self.fitregions), ieng.plural("region",len(self.fitregions)))
+
 class FitAnalysisRegion(dbmaster.Base):
     __tablename__ = "fitanalysis_regions"
 
@@ -265,7 +272,7 @@ class PixelByPixelAnalysis(Analysis):
         'polymorphic_identity':'pixelbypixel_analysis'
     }
     def __str__(self):
-        return "%i regions"%(len(self.fitregions))
+        return "%i %s"%(len(self.fitregions), ieng.plural("region",len(self.fitregions)))
 
 class PixelByPixelFitRegion(dbmaster.Base):
     __tablename__  = "pixelbypixelfit_regions"
