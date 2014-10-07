@@ -169,7 +169,7 @@ class ClusterWidget(QW.QWidget):
                 color = 'black'
             style={'style':'circles', 'color':color, 'alpha':0.250}
             if cluster == -1:
-                style.update({'size':0.5, 'alpha':0.25})
+                style.update({'size':0.5, 'alpha':0.5})
             for i, kind in enumerate(self.plot_pairs.keys()):
                 for j, spp in enumerate(self.plot_pairs[kind]):
                     x = self.key[spp[0]]
@@ -295,7 +295,11 @@ class ClusterDialog(QW.QDialog):
         session = dbmaster.get_session()
         #FIXME bad bad
         pixels=an.fitregions[0].results[0].pixels
-        el=tf.do_event_list(pixels)
+        skip_x = False
+        if an.imagefile.image_frames == 1:
+            skip_x = True
+        el=tf.do_event_list(pixels, skip_x)
+
         result = an.fitregions[0].results[0]
         self.result = result
         old_events = session.query(sa.Event).filter(sa.Event.result == result).all()
@@ -303,9 +307,13 @@ class ClusterDialog(QW.QDialog):
             session.delete(event)
         session.commit()
 
+
         #TODO these should not be hardcoded
         shape_params = ['A','tau2','d2','d']
         loc_params = ['m2','x','y']
+        if skip_x:
+            loc_params = ['m2','y']
+
         id_param = 'id'
         params = shape_params[:]
         params.extend(loc_params)
@@ -329,6 +337,8 @@ class ClusterDialog(QW.QDialog):
 
         shape_plot_pairs = [('d', 'tau2'),('tau2','A'),('A', 'd')]
         loc_plot_pairs = [('m2','x'),('x','y'),('m2','y')]
+        if skip_x:
+            loc_plot_pairs = [('m2','y')]
         self.loc_plot_pairs = loc_plot_pairs
         plot_pairs = {'shape':shape_plot_pairs, 'location':loc_plot_pairs}
         shape_cluster_tab = ClusterWidget(event_array, shape_params,

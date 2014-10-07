@@ -736,14 +736,15 @@ def fitted_pixel_max(pixel, event=0):
     return f_max
 
 
-def do_event_list(pixs):
+def do_event_list(pixs, skip_x=False):
     events = []
     for p in pixs:
         for i, pixel_event in enumerate(p.pixel_events):
             event = {}
             event['pixel'] = p
             event['n'] = i
-            event['x'] = p.x
+            if not skip_x:
+                event['x'] = p.x
             event['y'] = p.y
             event['id'] = pixel_event.id
             ep = pixel_event.parameters
