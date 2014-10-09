@@ -8,8 +8,7 @@ import pexpect
 
 import lsjuicer.util.logger as logger
 
-#from IPython import parallel
-parallel = {}
+from IPython import parallel
 
 def single(args):
     data = args['data']
