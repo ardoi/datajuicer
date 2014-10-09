@@ -104,7 +104,7 @@ class PixmapMaker(object):
 
             # saturation
             cut_max = self.pipechain.percentage_value(self.saturation)
-            dd = exposure.rescale_intensity(dd, in_range=(ddn.min(), cut_max),
+            dd = exposure.rescale_intensity(dd, in_range=(float(ddn.min()), float(cut_max)),
                                             out_range=(0.0, 1.0))
         # print '\ndd',dd,cut_max
         # colormap for image
