@@ -19,7 +19,6 @@ from lsjuicer.static.constants import ImageSelectionTypeNames as ISTN
 
 import lsjuicer.data.analysis.transient_find as tf
 from lsjuicer.ui.tabs.transienttab import SaveTracesDialog
-from lsjuicer.util.helpers import ipython
 from lsjuicer.inout.db.sqla import dbmaster
 from lsjuicer.inout.db.sqla import FitAnalysisRegion, SignalEvent, FitAnalysisResult
 
@@ -105,7 +104,6 @@ class AutoFitTransientTab(QW.QTabWidget):
         self.status = window.statusBar()
         QC.QTimer.singleShot(50, lambda: self.initialPlots())
 
-    @ipython
     def save_traces(self):
         dialog = SaveTracesDialog(parent=self)
         if dialog.exec_():

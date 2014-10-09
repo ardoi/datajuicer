@@ -35,3 +35,4 @@ bin/tables.events
 bin2/test.py
 tables2.db-journal
 tables.db.backup
+.idea

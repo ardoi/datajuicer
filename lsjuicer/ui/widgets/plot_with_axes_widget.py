@@ -54,9 +54,11 @@ class PlotWithAxesWidget(QW.QWidget):
         if isinstance(imdata, ImageDataLineScan):
             #make dx in seconds
             dx = imdata.delta_time/1000.
-            dy = imdata.delta_time
+            dy = imdata.delta_space
         elif isinstance(imdata, ImageDataFrameScan):
-            pass
+            dx = 1.0
+            dy = 1.0
+
         self.set_pixel_sizes(dx, dy)
 
     def set_pixel_sizes(self, dx, dy):

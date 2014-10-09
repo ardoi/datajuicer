@@ -158,7 +158,7 @@ class OMEXMLReader(AbstractReader):
                     #assume that a square image is the reference image
                     #if there is just 1 image then it can't be reference image
                     #and we'll take it as the pixel image instead
-                    if len(pixels) > 1:
+                    if len(image_elements) > 1:
                         image_type = "Reference"
                     else:
                         image_type = "Pixels"

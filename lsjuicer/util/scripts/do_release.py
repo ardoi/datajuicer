@@ -18,7 +18,7 @@ def do_mac_release(args):
     # if os.path.isdir(bin_dir):
     #    print "Removing existing {0}".format(bin_dir)
     #    shutil.rmtree(bin_dir)
-    cmd_template = "python {0}  -D  -n LSJuicer -w run_qt.py"
+    cmd_template = "{0}  -D  -n LSJuicer -w run_qt.py"
     # cmd_template = "python {0}  -F --clean -n LSJuicer -w run_qt.py"
     cmd = cmd_template.format(args.pyinstaller_cmd)
     print 'Executing: %s' % cmd
@@ -59,8 +59,9 @@ if __name__ == "__main__":
         "pyinstaller_dir", type=str, help="PyInstaller directory")
     parser.add_argument("tag", type=str, help="Tag to make release for")
     args = parser.parse_args()
-    if not up_to_tag(args.tag):
-        sys.exit(1)
-    pyinstaller_cmd = os.path.join(args.pyinstaller_dir, 'pyinstaller.py')
+    #if not up_to_tag(args.tag):
+    #    sys.exit(1)
+    #pyinstaller_cmd = os.path.join(args.pyinstaller_dir, 'pyinstaller.py')
+    pyinstaller_cmd = "pyinstaller"
     args.pyinstaller_cmd = pyinstaller_cmd
     do_mac_release(args)

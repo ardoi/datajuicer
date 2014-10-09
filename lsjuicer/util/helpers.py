@@ -12,7 +12,6 @@ import scipy.ndimage as sn
 
 from lsjuicer.resources import cm
 # from skimage.morphology import watershed
-from IPython import embed
 
 def round_point(point):
     point.setX(int(round(point.x())))
@@ -138,24 +137,6 @@ def timeIt(f):
         return res
     return tt
 
-def ipython(f):
-    ipython.running = False
-
-    def tt(*args, **kwargs):
-        try:
-            res = f(*args, **kwargs)
-            return res
-        except Exception, e:
-            if not ipython.running:
-                print '\n>>>IPython shell for %s' % (f.__name__)
-                print '>>>Error was:'
-                traceback.print_exc()
-                ipython.running = True
-                embed()
-            ipython.running = False
-            raise e
-
-    return tt
 
 def log(f):
    def out(*args, **kwargs):
@@ -584,12 +565,6 @@ def rect_from_dict(dict_in):
 #    else:
 #        return (intersected,
 #                [rect_l1.left(), rect_l1.right(), rect_l1.top(), rect_l1.bottom()], 0)
-def ipython_shell():
-    from IPython.frontend.terminal.embed import InteractiveShellEmbed
-    #from IPython import embed_kernel
-    QC.pyqtRemoveInputHook()
-    ipshell=InteractiveShellEmbed()
-    ipshell()
 
 @timeIt
 def evolve_in_bits(qin, a, b, times=1):
