@@ -17,6 +17,7 @@ from lsjuicer.util.helpers import timeIt
 from lsjuicer.ui.items.selection import MeasureLineManager, MeasureROIManager
 from lsjuicer.static import selection_types
 from lsjuicer.data.imagedata import ImageDataLineScan, ImageDataFrameScan
+from lsjuicer.util.logger import logger
 
 class PlotWithAxesWidget(QW.QWidget):
     updateLocation = QC.pyqtSignal(float, float, float, float)
@@ -49,6 +50,7 @@ class PlotWithAxesWidget(QW.QWidget):
                                  selection_types.data['imagetab.pseudolinescan'], self)
         self.pix_size_x = 1.0
         self.pix_size_y = 1.0
+        self.logger = logger.get_logger(__name__)
 
     def set_imagedata(self, imdata):
         if isinstance(imdata, ImageDataLineScan):
@@ -185,7 +187,9 @@ class PlotWithAxesWidget(QW.QWidget):
         measure_line_action = menu.addAction(QG.QIcon(":/ruler.png"), "Measure line")
         measure_line_action.setCheckable(True)
         help_action = menu.addAction(QG.QIcon(":/help.png"), "Help")
+        image_action = menu.addAction(QG.QIcon(":/picture_save.png"), "Save image")
         action_toolbutton.setMenu(menu)
+
         self.menu = menu
         self.fV.right_click.connect(self.menu.exec_)
 
@@ -227,6 +231,7 @@ class PlotWithAxesWidget(QW.QWidget):
         """
         help_action.triggered.connect(lambda: QW.QMessageBox.information(
             self, "Plot window actions", action_text))
+        image_action.triggered.connect(self.save_image)
 
         style = """
             QToolButton
@@ -293,6 +298,18 @@ class PlotWithAxesWidget(QW.QWidget):
         else:
             self.measure_line_manager.remove_selections()
             self.measure_line_manager.disable_builder()
+
+    def save_image(self, state):
+        save_name = QW.QFileDialog.getSaveFileName(self, "Save as", "Choose a filename", "PNG(*.png);; TIFF(*.tiff *.tif);; JPEG(*.jpg *.jpeg)")
+        save_name = save_name[0]
+        self.logger.debug("File to save to - {}".format(save_name))
+        if save_name:
+            try:
+                self.grab().save(save_name)
+                self.logger.info("Image saved - {}".format(save_name))
+            except:
+                import traceback
+                self.logger.error(traceback.format_exc())
 
     def measure_roi(self, state):
         print "Measure area",state
