@@ -956,3 +956,5 @@ class SyntheticData(object):
     def get_all(self):
         self.func = self.func_all
         return self._make_res()
+
+dbmaster.check_tables(force=True)

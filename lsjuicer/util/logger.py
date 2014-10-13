@@ -2,15 +2,13 @@ import logging
 import time
 import os
 
+import config
+
 class Logger(object):
     def __init__(self, level=logging.INFO):
         start_time_and_date = time.strftime("%d-%b-%Y__%H-%M-%S")
-        logfolder = 'log'
+        logfolder = config.folders['log_folder']
         # check for folder existance and create if necessary
-        print logfolder
-        if not os.path.isdir(logfolder):
-            print 'make'
-            os.makedirs(logfolder)
         loglevel = level
         logfilename = "juicer_" + start_time_and_date + ".log"
         logfilefullname = os.path.join(logfolder, logfilename)
@@ -19,8 +17,7 @@ class Logger(object):
         logging.basicConfig(filename=logfilefullname,
                             level=loglevel, filemode='w', format=log_format)
         logger = logging.getLogger(__name__)
-        logger.info('starting')
-        print "started"
+        logger.info('Starting logging')
 
     def get_logger(self, name):
         return logging.getLogger(name)

@@ -1,23 +1,22 @@
-from lsjuicer.inout.db.sqlbase import dbmaster
 import os
+import appdirs
 
+APPNAME = "Juicer"
+AUTHOR = "ardoi"
+user_dir = appdirs.user_data_dir(APPNAME, AUTHOR)
+db_file = os.path.join(user_dir, 'tables.db')
+folders = {'user_folder': user_dir,
+           'ome_folder': os.path.join(user_dir, 'converter'),
+           'log_folder': os.path.join(user_dir, 'log')}
 
-def default_configuration(override = False):
-    default = {
-        "visualization_options_reference":
-        {"blur": 0.3, "colormap": "gist_heat",
-         "saturation": 5, 'colormap_reverse': False},
-        #
-        "ome_folder": os.path.join(os.getenv('HOME'), '.JuicerTemp'),
-        #
-        "filetype": "oib",
-    }
-    for key in default:
-        val= dbmaster.get_config_setting_value(key)
-        if val and not override:
-            print "config value: %s=%s" % (key, str(val))
-            continue
-        else:
-            print "setting default config value: %s=%s"\
-                % (key, str(default[key]))
-            dbmaster.set_config_setting(key, default[key])
+def create_folder(folder_name):
+    folder_name = folders[folder_name]
+    if not os.path.isdir(folder_name):
+        os.makedirs(folder_name)
+
+def create_folders():
+    create_folder("user_folder")
+    create_folder("ome_folder")
+    create_folder("log_folder")
+
+create_folders()

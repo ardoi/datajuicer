@@ -7,27 +7,54 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import Column, Integer, String, PickleType
 from sqlalchemy.orm.exc import NoResultFound
 
-from lsjuicer.util import logger
+from lsjuicer.util import logger, config
 
 class DBMaster(object):
 
     def __init__(self):
         self.logger = logger.get_logger(__name__)
         self.logger.info("starting DBMaster")
-        print self.logger
         self.Base = declarative_base()
-        self.engine = create_engine('sqlite:///tables.db', echo=False)
+        self.logger.info("DB file at:{}".format(config.db_file))
+        self.engine = create_engine('sqlite:///{}'.format(config.db_file), echo=False)
         self.Session = sessionmaker(bind=self.engine)
         self.tables_checked = False
         self.session = None
+        #self.default_configuration()
+
+    def default_configuration(self, override = False):
+        default = {
+            "visualization_options_reference":
+                {"blur": 1.3,
+                "colormap": "gist_heat",
+                "saturation": 5,
+                'colormap_reverse': False},
+            #
+            "filetype": "oib",
+        }
+        default.update(config.folders)
+
+        for key in default:
+            try:
+                val= self.get_config_setting_value(key)
+            except:
+                val = None
+            if val and not override:
+                print "config value: %s=%s" % (key, str(val))
+                continue
+            else:
+                print "setting default config value: %s=%s"\
+                    % (key, str(default[key]))
+                self.set_config_setting(key, default[key])
+
 
     def make_tables(self):
         session = self.Session()
         engine = session.get_bind()
         self.Base.metadata.create_all(engine)
 
-    def check_tables(self):
-        if not self.tables_checked:
+    def check_tables(self, force=False):
+        if not self.tables_checked or force:
             #tables in database
             insp = reflection.Inspector.from_engine(self.engine)
             table_names_db = insp.get_table_names()
@@ -116,12 +143,12 @@ class DBMaster(object):
             session.add(setting)
         self.commit_session()
 
-
 dbmaster = DBMaster()
-
 
 class ConfigurationSetting(dbmaster.Base):
     __tablename__ = "configuration"
     id = Column(Integer, primary_key=True)
     name = Column(String())
     value = Column(PickleType)
+
+dbmaster.default_configuration()
