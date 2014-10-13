@@ -94,10 +94,9 @@ class OMEXMLMaker(QC.QObject):
     def __init__(self, parent = None, signals = True):
         super(OMEXMLMaker, self).__init__(parent)
         if hasattr(sys, 'frozen'):
-            #windows package created with pyinstaller. In order to access bftools a different approach is needed
-            #print sys.executable, sys.frozen, os.environ['_MEIPASS2']
-            tool_dir = os.path.normpath(os.path.join(os.path.dirname(sys.executable),'bftools'))
-            #print self.tool_dir
+            #package created with pyinstaller. In order to access bftools a different approach is needed
+            tool_dir = os.path.join(sys._MEIPASS, 'bftools')
+            print "tool dir is", tool_dir
         else:
             tool_dir = os.path.normpath(os.path.join(os.path.abspath(os.path.dirname(__file__)),'..','..','..','lib','bftools'))
         self.convert_cmd = os.path.join(tool_dir,'bfconvert')+' -no-upgrade -compression zlib  "{0}" "{1}"'
