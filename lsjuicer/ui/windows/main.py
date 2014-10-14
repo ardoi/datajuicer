@@ -57,7 +57,7 @@ class MainUI(QW.QMainWindow):
             self.filetype_combo.setCurrentIndex(2)
         else:
             raise ValueError("wrong filetype %s"%self.ftype)
-        index = self.fview.currentIndex()
+        index = self.dir_index
         self.newsignal.emit(index)
 
     #def destroyed(self, obj):
@@ -218,17 +218,16 @@ class MainUI(QW.QMainWindow):
         frame.setFrameStyle(QW.QFrame.HLine)
         frame.setFrameShadow(QW.QFrame.Sunken)
         inspect_layout.addWidget(frame)
-        self.inspect_pb = QW.QPushButton('Inspect')
+        self.inspect_pb = QW.QPushButton('Read files')
         inspect_layout.setAlignment(self.inspect_pb, QC.Qt.AlignCenter)
         self.inspect_pb.setSizePolicy(QW.QSizePolicy.Maximum,QW.QSizePolicy.Maximum)
         self.inspect_pb.setEnabled(False)
         inspect_layout.addWidget(self.inspect_pb)
         inspect_layout.addStretch()
-        if 1:
-            self.inspect_progressbar = QW.QProgressBar()
-            self.inspect_progressbar.setFormat("%p% - %v out of %m files done")
-            self.inspect_progressbar.setVisible(False)
-            inspect_layout.addWidget(self.inspect_progressbar)
+        self.inspect_progressbar = QW.QProgressBar()
+        self.inspect_progressbar.setFormat("%p% - %v out of %m files done")
+        self.inspect_progressbar.setVisible(False)
+        inspect_layout.addWidget(self.inspect_progressbar)
 
         fselectLayout.addLayout(inspect_layout)
         fselectWidget = QW.QWidget()
@@ -265,10 +264,15 @@ class MainUI(QW.QMainWindow):
         pb_layout = QW.QHBoxLayout()
         pb_layout.setContentsMargins(0,0,0,0)
         pb_widget.setLayout(pb_layout)
+        self.convert_label = QW.QLabel("")
+        self.convert_label.setVisible(False)
         self.convert_pb = QW.QPushButton('Convert')
         self.convert_pb.setVisible(False)
-        recheck_pb = QW.QPushButton("Recheck files")
+        recheck_pb = QW.QPushButton("Refresh file info")
+        self.recheck_pb = recheck_pb
+        recheck_pb.setToolTip("Reread and refresh all image information from files ")
         pb_layout.addStretch()
+        pb_layout.addWidget(self.convert_label)
         pb_layout.addWidget(self.convert_pb)
         pb_layout.addWidget(recheck_pb)
         recheck_pb.clicked.connect(self.recheck_from_files)
@@ -290,18 +294,9 @@ class MainUI(QW.QMainWindow):
         location_layout.addStretch()
         file_action_layout.addLayout(location_layout)
 
-        #if os.name =="posix":
-        #    username = os.environ['USER']
-        #    rootdir = '/home/%s'%username
-        #else:
-        #    rootdir = "C:"
-        rootdir = os.getenv('HOME')
+        rootdir = os.path.expanduser("~")
         self.fmodel.setRootPath(rootdir)
-        #fmodel.setNameFilters(strList([str("*.lsm"),str("*.ome")]))
-        #self.fmodel.setNameFilters(strList([str("*.lsm")]))
-        #ftype = Config.get_property('filetype')
         ftype ="tif"
-        print 'ftype is %s'%ftype
         self.change_filetype(ftype)
         #self.fmodel.setNameFilters(strList([str("*.%s"%ftype)]))
 #        fmodel.setNameFilters(str("*.lsm *.ome"))
@@ -336,7 +331,10 @@ class MainUI(QW.QMainWindow):
         rmodel.omexml_maker.filesConverted[int].connect(self.converted)
         rmodel.convert_progress_visible[bool].connect(convert_progress_widget.setVisible)
         rmodel.convert_pb_visible[bool].connect(self.convert_pb.setVisible)
+        rmodel.convert_pb_visible[bool].connect(self.convert_label.setVisible)
+        #rmodel.convert_pb_visible[bool].connect(lambda x: self.recheck_pb.setVisible(not x))
         rmodel.conversion_finished.connect(lambda:convert_progress_widget.setVisible(False))
+        rmodel.conversion_finished.connect(lambda:self.recheck_pb.setVisible(True))
 
         self.fmodel.setTarget(rmodel)
 
@@ -421,9 +419,9 @@ class MainUI(QW.QMainWindow):
 
     def new_file_selection(self, index):
         print 'new selection',index
-        if self.fmodel.isDir(index):
-            self.newsignal.emit(index)
-            self.analyses_widget.clear()
+        ii = self.dir_index
+        self.newsignal.emit(ii)
+        self.analyses_widget.clear()
 
     def db_data_update(self):
         selected = self.tview.selectedIndexes()
@@ -454,13 +452,16 @@ class MainUI(QW.QMainWindow):
         #selected = self.tview.selectedIndexes()
         #self.plot_pb.setVisible(bool(selected))
 
+    @property
+    def dir_index(self):
+        index = self.fview.currentIndex()
+        if self.fmodel.isDir(index):
+            return index
+        else:
+            return index.parent()
 
     def do_inspect(self):
-        index = self.fview.currentIndex()
-        self.fmodel.updateTarget(index)
-        #print index,location
-        #self.inspect_pb.setEnabled(False)
-        #self.location_label.setVisible(True)
+        self.fmodel.updateTarget(self.dir_index)
 
     def close_and_expand(self, index):
         self.fview.collapseAll()
@@ -475,15 +476,20 @@ class MainUI(QW.QMainWindow):
         self.convert_progressbar.setValue(value)
 
     def set_inspectpb_text(self, value):
-        self.inspect_pb.setText("Inspect %i files"%value)
+        self.inspect_pb.setText("Read %i files"%value)
 
     def set_conversion_needed(self, value):
         if value>0:
+            self.convert_label.setText("<html><div style='background:orange'>{} files need to be imported <br>before analysis. Click Import &rarr;</div></html>".format(value))
+            self.convert_label.setVisible(True)
             self.convert_pb.setVisible(True)
-            self.convert_pb.setText("Convert %i files"%value)
+            self.recheck_pb.setVisible(False)
+            self.convert_pb.setText("Import %i files"%value)
             self.convert_progressbar.setMaximum(value)
         else:
             self.convert_pb.setVisible(False)
+            self.convert_label.setVisible(False)
+            self.recheck_pb.setVisible(True)
 
     def start_plot_with_analysis(self, analysis):
         print "got analysis:",analysis

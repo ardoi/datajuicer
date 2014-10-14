@@ -349,8 +349,6 @@ class LSMReader(OMEXMLReader):
 
 class OIBReader(OMEXMLReader):
     def _get_typespecific_extra_info(self):
-        print "\n\n\n GET SPECFIC"
-        print self.active_type
         raw_keys = self.raw_annotation.keys()
         raw_keys.sort()
         frame_time = None

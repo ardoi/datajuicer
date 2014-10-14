@@ -422,7 +422,6 @@ class RandomDataModel(QC.QAbstractTableModel):
     plotFile = QC.pyqtSignal(object)
     def __init__(self, parent=None):
         super(RandomDataModel, self).__init__(parent)
-        print 'parent', parent
         self.columns = 16
         self.dirname = ""
         self.data = []
@@ -500,6 +499,7 @@ class RandomDataModel(QC.QAbstractTableModel):
     @timeIt
     def updateData(self):
         print '\n\n\n\ndata update'
+        print self.dirname
         import time
         t0=time.time()
         self.dirdatas = []
@@ -514,6 +514,7 @@ class RandomDataModel(QC.QAbstractTableModel):
         self.omexml_maker.reset_convert_list()
         t0 = time.time()
         for i,f in enumerate(files):
+            QW.QApplication.processEvents()
             print '\n\n read',f
             new_files = True
             im = ImageMaker.check_in_database(f, self.session)
@@ -717,19 +718,14 @@ class RandomDataModel(QC.QAbstractTableModel):
             return QC.QVariant()
 
     def setDir(self, dirname):
-        #if dirname != self.dirname:
-        if 1:
-            self.dirname = str(dirname)
-            print 'new dir',str(self.dirname)
-            self.modelAboutToBeReset.emit()
-            self.layoutAboutToBeChanged.emit((),0)
-            self.updateData()
- #           self.beginResetModel()
-            self.modelReset.emit()
-            self.layoutChanged.emit((),0)
-            #self.emit(QC.SIGNAL('fitColumns()'))
-        else:
-            print 'old dir'
+        self.dirname = str(dirname)
+        print 'new dir',str(self.dirname)
+        self.modelAboutToBeReset.emit()
+        self.layoutAboutToBeChanged.emit((),0)
+        self.updateData()
+        self.modelReset.emit()
+        self.layoutChanged.emit((),0)
+
     def data_update(self, tl, br):
         self.dataChanged.emit(tl, br)
         #self.emit(QC.SIGNAL('modelAboutToBeReset()'))

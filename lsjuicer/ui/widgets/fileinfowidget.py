@@ -555,18 +555,18 @@ class ExpInfoWidget(QW.QGroupBox):
 
 
         button_layout = QW.QHBoxLayout()
-        update_pb = QW.QPushButton(QG.QIcon('://database_go.png'),"Apply")
-        reuse_pb = QW.QPushButton("Copy from last")
-        close_pb = QW.QPushButton("Close")
+        update_pb = QW.QPushButton(QG.QIcon('://database_go.png'),"Save changes")
+        reuse_pb = QW.QPushButton("Copy from last file")
+        #close_pb = QW.QPushButton("Close")
         status_label = QW.QLabel('<html style="background:red;">Not saved</html>')
         self.status_label = status_label
         button_layout.addWidget(status_label)
         button_layout.addWidget(update_pb)
         button_layout.addWidget(reuse_pb)
-        button_layout.addWidget(close_pb)
+        #button_layout.addWidget(close_pb)
         prop_layout.addLayout(button_layout)
         update_pb.clicked.connect(self.save_exp_info)
-        close_pb.clicked.connect(self.close)
+        #close_pb.clicked.connect(self.close)
         reuse_pb.clicked.connect(self.reuse)
 
 
