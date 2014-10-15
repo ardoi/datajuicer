@@ -481,7 +481,7 @@ def remove_fits(vec, fitdict):
     return s2
 
 
-def fit_2_stage(data, plot=False, min_snr=4.20, two_stage=True, regions = None):
+def fit_2_stage(data, plot=False, min_snr=4.20, two_stage=True, regions = None, max_width = 120):
     """Perform a 2 stage fitting routine. In the first stage all found events
     are fitted. For the second stage the baseline obtained in first stage is
     subtracted from the data and fit is performed again
@@ -490,7 +490,7 @@ def fit_2_stage(data, plot=False, min_snr=4.20, two_stage=True, regions = None):
     baseline which is taken from the first fit"""
     if not regions:
         #regions = rf.get_regions(data, min_snr=min_snr, max_width=200)
-        regions = rf.get_regions(data, min_snr=min_snr, max_width=120, step=2)
+        regions = rf.get_regions(data, min_snr=min_snr, max_width=max_width, step=2)
     #res_out = fit_regs(data, regions[max(regions.keys())], plot, two_stage)
     res_out = fit_regs(data, regions, plot, two_stage)
     return res_out

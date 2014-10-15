@@ -286,27 +286,27 @@ class AutoFitTransientTab(QW.QTabWidget):
 
 
         ####
-        #smoothing
+        #minsnr
         #
         self.smooth_widget = QW.QWidget()
         smooth_widget_layout = QW.QVBoxLayout()
         smooth_widget_layout.setContentsMargins(0,0,0,0)
         self.smooth_widget.setLayout(smooth_widget_layout)
-        initval = 1
+        initval = 42
 #        initval=5
-        self.label_smoothing_value = QW.QLabel("Smoothing: " + str(initval))
-        self.label_smoothing_value.setToolTip('Amount of smoothing to be done \non fluorescence signal')
-        smooth_widget_layout.addWidget(self.label_smoothing_value)
+        self.label_minsnr = QW.QLabel("Minimum SNR: " + str(initval))
+        self.label_minsnr.setToolTip('Minimum event SNR')
+        smooth_widget_layout.addWidget(self.label_minsnr)
         detection_layout.addWidget(self.smooth_widget)
 
-        self.slider_smoothing = QW.QSlider(QC.Qt.Horizontal)
-        self.slider_smoothing.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
-        self.slider_smoothing.setSingleStep(1)
-        self.slider_smoothing.setValue(initval)
-        self.slider_smoothing.setRange(0, 40)
-        smooth_widget_layout.addWidget(self.slider_smoothing)
-        self.slider_smoothing.valueChanged[int].connect(
-            lambda x: self.label_smoothing_value.setText("Smoothing: %i"%x))
+        self.slider_minsnr = QW.QSlider(QC.Qt.Horizontal)
+        self.slider_minsnr.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
+        self.slider_minsnr.setSingleStep(1)
+        self.slider_minsnr.setRange(10, 200)
+        smooth_widget_layout.addWidget(self.slider_minsnr)
+        self.slider_minsnr.valueChanged[int].connect(
+            lambda x: self.label_minsnr.setText("Minimum SNR: %.1f"%(float(x)/10.)))
+        self.slider_minsnr.setValue(initval)
         #
         ####
 
@@ -317,18 +317,18 @@ class AutoFitTransientTab(QW.QTabWidget):
         detection_widget_layout.setContentsMargins(0,0,0,0)
         self.detection_widget = QW.QWidget()
         self.detection_widget.setLayout(detection_widget_layout)
-        initval = 15
-        self.label_detection_value = QW.QLabel("Detection: "+str(initval))
-        self.label_detection_value.setToolTip('Amount of smoothing to be done \ non fluorescence signal')
+        initval = 120
+        self.label_detection_value = QW.QLabel("Detection window: "+str(initval))
+        self.label_detection_value.setToolTip('Event search window')
         detection_widget_layout.addWidget(self.label_detection_value)
         detection_layout.addWidget(self.detection_widget)
 
 
         self.slider_detection = QW.QSlider(QC.Qt.Horizontal)
         self.slider_detection.setSizePolicy(QW.QSizePolicy.Minimum, QW.QSizePolicy.Minimum)
-        self.slider_detection.setSingleStep(10)
+        self.slider_detection.setSingleStep(5)
         self.slider_detection.setValue(initval)
-        self.slider_detection.setRange(1, 200)
+        self.slider_detection.setRange(50, 400)
         detection_widget_layout.addWidget(self.slider_detection)
         self.slider_detection.setObjectName('Detection slider')
         detection_layout.addWidget(self.detection_widget)
@@ -398,7 +398,9 @@ class AutoFitTransientTab(QW.QTabWidget):
     def find_transients(self):
         channel_fl_data = self.channel_fl_datas[0]
         yvals = channel_fl_data.fl.data
-        self.fit_result = tf.fit_2_stage(yvals)
+        min_snr = self.slider_minsnr.value()/10.
+        max_width = self.slider_detection.value()
+        self.fit_result = tf.fit_2_stage(yvals, min_snr=min_snr, max_width = max_width)
         self.fit_res_datamodel.set_fit_result(self.fit_result)
         self.show_fit()
 
