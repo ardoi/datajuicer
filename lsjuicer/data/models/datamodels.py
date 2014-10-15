@@ -1,6 +1,8 @@
 import glob
 import os
 
+import numpy as n
+
 from PyQt5 import QtGui as QG
 from PyQt5 import QtWidgets as QW
 
@@ -20,7 +22,7 @@ class FitResultDataModel(QC.QAbstractTableModel):
     def __init__(self, parent = None):
         super(FitResultDataModel, self).__init__(parent)
         self.fit_result = None
-        self.columns = 7
+        self.columns = 9
 
     @property
     def regions(self):
@@ -100,7 +102,11 @@ class FitResultDataModel(QC.QAbstractTableModel):
                 elif section == 5:
                     return 'decay'
                 elif section == 6:
-                    return 'dF/F0'
+                    return 'FDHM'
+                elif section == 7:
+                    return 'dF/F0 s'
+                elif section == 8:
+                    return 'dF/F0 e'
                 else:
                     return QC.QVariant()
             else:
@@ -124,15 +130,20 @@ class FitResultDataModel(QC.QAbstractTableModel):
                     elif col == 1:
                         return "%.4g"%sol['A']
                     elif col==2:
-                        return "%i"%sol['m2']
+                        return "%.2f"%sol['m2']
                     elif col==3:
-                        return "%i"%sol['d']
+                        return "%.2f"%sol['d']
                     elif col==4:
-                        return "%i"%sol['d2']
+                        return "%.2f"%sol['d2']
                     elif col==5:
-                        return "%i"%sol['tau2']
+                        return "%.2f"%sol['tau2']
                     elif col==6:
-                        return "%.3f %.3f"%(self.ff0_func(sol['m2']), self.ff0_func.event_ff0(sol['m2'], key))
+                        fdhm = sol['d'] + sol['tau2']*n.log(2.0) + sol['d']/2.*n.log((n.exp(2.0)+1)/2.)
+                        return "%.2f"%fdhm
+                    elif col==7:
+                        return "%.3f"%(self.ff0_func(sol['m2']))
+                    elif col==8:
+                        return "%.3f"%(self.ff0_func.event_ff0(sol['m2'], key))
                     else:
                         return QC.QVariant()
 

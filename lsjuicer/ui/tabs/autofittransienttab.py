@@ -383,7 +383,7 @@ class AutoFitTransientTab(QW.QTabWidget):
         main_layout.addLayout(tool_layout,0,1,2,1)
         main_layout.setRowStretch(0,10)
         main_layout.setRowStretch(1,1)
-        main_layout.setColumnStretch(0,5)
+        main_layout.setColumnStretch(0,4)
         main_layout.setColumnStretch(1,1)
         self.roi_manager = BoundaryManager(self.fplot.fscene, selection_types.data['transienttab'])
         #selection_widget = SelectionWidget()

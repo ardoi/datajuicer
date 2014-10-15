@@ -6,7 +6,7 @@ AUTHOR = "ardoi"
 user_dir = appdirs.user_data_dir(APPNAME, AUTHOR)
 db_file = os.path.join(user_dir, 'tables.db')
 folders = {'user_folder': user_dir,
-           'ome_folder': os.path.join(user_dir, 'converter'),
+           'ome_folder': os.path.join(user_dir, 'converted'),
            'log_folder': os.path.join(user_dir, 'log')}
 
 def create_folder(folder_name):
